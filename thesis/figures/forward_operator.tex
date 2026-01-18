@@ -1,0 +1,39 @@
+\begin{figure}[htbp]
+    \centering
+    \begin{tikzpicture}[
+        >=stealth,
+        line width=0.9pt,
+        every node/.style={font=\large}
+    ]
+    % Boxes
+    \draw (0,0) rectangle (4,3);
+    \draw (5,0) rectangle (7,3);
+    
+    % Space labels L^2
+    \node at (2,-0.5) {$L^2(\Omega)$};
+    \node at (6,-0.5) {$L^2(\partial\Omega)$};
+    
+    % f, u, and y points
+    \node (f) at (0.5,2) {$f$};
+    \node (u) at (3.5,1) {$u$};
+    \node (y) at (6,1) {$y$};
+    
+    % Operator S
+    \draw[->]
+      (f) -- (u)
+      node[midway, below left] {$\mathcal S$};
+    
+    % Operator T
+    \draw[->]
+      (u) -- (y)
+      node[midway, below, xshift=-2.8mm] {$\mathcal T$};
+    
+    % Operator K
+    \draw[->]
+      (f) to[out=20, in=140]
+      node[midway, above] {$\mathcal{K}$}
+      (y);
+    \end{tikzpicture}
+    \caption{The forward operator $\mathcal K = \mathcal T \circ \mathcal S$ which maps $f$ to $y$.}
+    \label{fig:forward_operator}
+\end{figure}

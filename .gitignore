@@ -1,0 +1,30 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# LaTeX generated files
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.gz
+*.out
+*.bcf
+*.lof
+*.lot
+*.run.xml
+*.toc
+Thesis/*pdf
+
+.vscode
+*.npy
+*.npz

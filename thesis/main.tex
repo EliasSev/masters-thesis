@@ -2,7 +2,7 @@
 
 % If you'd like to use chapters instead of sections, add 'book' to the options, as \documentclass[book,...]{NMBU}. Recall that you now have to use \chapter{} and then \section{}, \subsection{}, ... 
 
-% \usepackage[nohyperlinks]{acronym} % If you need a List of Acronyms, consider using this package
+%\usepackage[nohyperlinks]{acronym} % If you need a List of Acronyms, consider using this package
 
 % \usepackage[font=small]{caption} % if you prefer smaller captions
 % \captionsetup{width=0.9\linewidth} 
@@ -16,6 +16,8 @@
 % Additional packages
 \usepackage{algorithm}
 \usepackage{algpseudocode}  % modern and recommended
+\usepackage[intoc]{nomencl}
+\makenomenclature
 
 \renewcommand{\algorithmicrequire}{\textbf{Input:}}
 \renewcommand{\algorithmicensure}{\textbf{Output:}}
@@ -38,31 +40,53 @@
 \thesisyear{2026}
 \credits{30}
 \faculty{Faculty of Science and Technology}
+\studyprogramme{Data Science}
 \supervisor{Ole Løseth Elvetun, Jonas Kusch} % Include the name of the supervisor or supervisors (this is added to the metadata of the PDF)
 %\engtitle{} % Only if you write a thesis in a Scandinavian language
 
 % You should also use the "\abstract" and "\sammendrag" to produce those. If you are writing in a Scandinavian language, the sammendrag will appear first.
 \abstract{This thesis uses randomized linear algebra for estimation of a discrete PDE operator.}
-%\sammendrag{Write your sammendrag here}
+\sammendrag{Denne masteroppgaven bruker randomisert lineær algebra for mastrise-fri estimering av PDE-operatorer.}
 %\acknowledgements{} You can add acknowledgements here. In Scandinavian languages, use "\foreword{}" (or if in English you prefer Foreword to Acknowledgements). The foreword comes before the abstract.
 
 \begin{document}
 
 % If you need a List of Acronyms, place them before the \startthesis command. You will need "\usepackage[nohyperlinks]{acronym}", see line 4.
 
-% \section*{List of Acronyms}
+%\section*{List of Symbols}
 % \begin{acronym}
 %   \acro{TSO}{Transmission System Operator}
 %   \acro{LSTM}{Long Short-Term Memory}
-% \end{acronym}
+%\end{acronym}
+
+\section*{List of Symbols}
+
+\begin{tabular}{ll}
+    $\Omega$ & Problem domain \\
+    $\partial\Omega$ & Domain boundary \\
+    $A$ & Stiffness matrix \\
+    $M$ & (Domain) mass matrix \\
+    $M_{ds}$ & Boundary mass matrix \\
+    $K$ & Discrete forward operator \\
+    $K^*$ & Adjoint of the discrete forward operator \\
+    $W$ & Weight matrix in the regularization \\
+    $\lambda$ & Regularization parameter \\
+    $\Xi$ & Random test matrix
+\end{tabular}
+
 
 \startthesis % This command will separate the Roman-numbered pages above and the Arabic-numbered pages below as well as create the table of contents, list of figures, list of tables, and potentially list of acronyms
 
-
 \section{Introduction}
 
-\clearpage % separate each section with a \clearpage
+\clearpage
 \section{Mathematical background}
+
+\nomenclature{$\Omega$}{Computational domain}
+\nomenclature{$\partial\Omega$}{Boundary of the domain}
+\nomenclature{$A$}{Stiffness matrix}
+\nomenclature{$M$}{Mass matrix}
+
 \subsection{The forward operator}
 \input{figures/forward_operator.tex}
 
@@ -73,60 +97,74 @@ Let $\Omega \subset \mathbb R^2$ be a bounded domain with boundary $\partial \Om
     \frac{\partial u}{\partial \v n} &= 0 \quad \text{on } \partial\Omega,
     \end{aligned}
 \end{eqnarray}
-where $k > 0$ and $\sigma, f \in L^2(\Omega)$ (TODO: hva er $\sigma$). This is a diffusion-reaction equation with Neumann boundary conditions. Equation~\eqref{eq:pde} defines a mapping $\mathcal S: L^2(\Omega) \rightarrow L^2(\Omega)$. If $f \in L^2(\omega)$ is the source function (the input), then Equation~\eqref{eq:pde} maps $f$ to $\mathcal S f = u$ (the output). 
+where $k > 0$ and $\sigma, f \in H^1(\Omega)$ (TODO: hva er $\sigma$). This is a diffusion-reaction equation with Neumann boundary conditions. Equation~\eqref{eq:pde} defines a mapping $\mathcal S: H^1(\Omega) \rightarrow H^1(\Omega)$. If $f \in H^1(\Omega)$ is the source function (the input), then Equation~\eqref{eq:pde} maps $f$ to $\mathcal S f = u$ (the output). 
 
-Introduce the trace operator $\mathcal T: L^2(\Omega) \rightarrow L^2(\partial\Omega)$, defined by
+Introduce the trace operator $\mathcal T: H^1(\Omega) \rightarrow H^1(\partial\Omega)$, defined by
 \begin{equation}\label{eq:trace}
     \mathcal T: u \mapsto g = u|_{\partial\Omega}.
 \end{equation}
-$\mathcal T u$ represents the observed values of $u$ on the boundary of $\Omega$. Operator~\eqref{eq:pde} and \eqref{eq:trace} defines the forward operator $\mathcal K: L^2(\Omega) \rightarrow L^2(\partial\Omega)$, 
+$\mathcal T u$ represents the observed values of $u$ on the boundary of $\Omega$. Operator~\eqref{eq:pde} and \eqref{eq:trace} defines the forward operator $\mathcal K: H^1(\Omega) \rightarrow H^1(\partial\Omega)$, 
 \begin{equation}
     \mathcal K = \mathcal T \circ \mathcal S,
 \end{equation}
-which is a mapping from the source function $f$ to the observed output $g = \mathcal K f$ on the boundary $\partial \Omega$. Figure~\ref{fig:forward_operator} illustrates the components of the forward operator.
+which is a mapping from the source function $f$ to the observed output $g = \mathcal K f$ on the boundary $\partial \Omega$. Figure~\ref{fig:forward_operator} illustrates the components of the forward operator, which defines the inverse problem: given observed boundary function $g$, we seek a source function $f$ such that $\mathcal{K} f = g$. In order to solve such a problem computationally, the problem must be discretized. This is done through the finite element method, described in the following sections.
 
 
 \subsection{The variational formulation}
-To derive a finite element formulation of Eq.~\eqref{eq:pde} and the forward operator $\mathcal K$, I first reformulate the boundary value problem in its variational formulation, also the its weak formulation.
-
-Multiplying the differential equation by a test function $v \in L^2(\Omega)$, integrating over $\Omega$, and using Green's equation, yields to the following variational formulation: find $u \in L^2(\Omega)$ such that
-\begin{equation}
+To derive a finite element formulation of Eq.~\eqref{eq:pde} and the forward operator $\mathcal K$, I first reformulate the boundary value problem in its variational (weak) from. Multiplying the differential equation by a test function $v \in H^1(\Omega)$, integrating over $\Omega$, and applying Green's identity and the Neumann boundary conditions, results in the following variational formulation: find $u \in H^1(\Omega)$ such that
+\begin{equation}\label{eq:variational_formulation}
     \int_{\Omega} (\sigma \nabla u \cdot \nabla v + k u v) \, dx = \int_{\Omega} f v \space \, dx,
-    \text{ for all } v \in L^2(\Omega).
+    \text{ for all } v \in H^1(\Omega).
 \end{equation}
-For details, see Section~4 in Larson and Bengzon \cite{larson_finite_2013}.
+For further details, see Section~4 in Larson and Bengzon \cite{larson_finite_2013}.
 
 
 \subsection{The finite element method}
 \input{figures/triangulation.tex}
-Let $\mathcal M$ be a triangulation of $\Omega$ made up of $N$ nodes, with $N_b$ boundary nodes. See Fig.~\ref{fig:triangulation}. and define the finite element space
+Let $\mathcal M$ be a triangulation of $\Omega$ made up of $N$ nodes, with $N_b$ boundary nodes, see Fig.~\ref{fig:triangulation} as an example. The finite element space is the finite-dimensional $V_h \subset H^1(\Omega)$,
 \begin{equation}\label{eq:fem_space}
-    V_h = \{v \in C^0(\Omega) : v|_K \text{ is linear for all } M \in \mathcal M \}.
+    V_h = \{v \in C^0(\Omega) : v|_M \text{ is linear for all } M \in \mathcal M \}.
 \end{equation}
-This is the subspace $V_h \subset L^2(\Omega)$ of all continuous functions which are piecewise linear on $\mathcal M$. Multiplying Eq.~\eqref{eq:pde} by a function $v \in V_h$, integrating over $\Omega$, and using Green's formula, the finite element formulation of Eq.~\eqref{eq:pde} reads: find $u_h \in V_h$ such that
-\begin{equation}\label{eq:fem_formulation}
-    \int_\Omega \sigma \nabla u \cdot \nabla \phi_i \space dx + \int_\Omega k u \phi_i \space dx
-= \int_\Omega f \phi_i \space dx, \quad i = 1,...,N,
+This is the space of all continuous functions which are piecewise linear on $\mathcal{M}$. Let $\Phi = \{\phi_1, \dots, \phi_N\}$ be a basis $V_h$, i.e., $\operatorname{span}(\Phi) = V_h$. The basis functions $\phi_1, \dots, \phi_N$ are typically hat functions (see \parencite[p.~51]{larson_finite_2013}). For each node making up the mesh $\mathcal{M}$, there is a corresponding basis function. Since the mesh $\mathcal{M}$ consists of $N$ nodes and $N_b$ boundary nodes, then the basis set $\Phi$ must contain $N$ basis function, with $N_b$ being located on the mesh boundary.
+
+By replacing $H^1(\Omega)$ with $V_h$ in Eq.~\eqref{eq:variational_formulation}, I get the finite element method: find $u_h \in V_h$ such that
+ \begin{equation}\label{eq:fem_formulation}
+    \int_{\Omega} (\sigma \nabla u_h \cdot \nabla v + k u_h v) \, dx = \int_{\Omega} f v \space \, dx,
+    \text{ for all } v \in V_h.
 \end{equation}
-where $\{ \phi_1, \dots, \phi_N \}$ is a basis for $V_h$. See Section 4 in Larson and Bengzon for details \cite{larson_finite_2013}. Assume that $f \in V_h$. Then, both $f$ and $u_h$ can be written in terms of their basis functions,
-\begin{equation}\label{eq:uh_and_f}
-    u_h = \sum_{j=1}^{N} \xi_j \phi_j, \quad
-    f = \sum_{j=1}^{N} \eta_j \phi_j.
+
+
+\subsection{The discrete inverse problem}
+In order to represent the forward operator $\mathcal{K} = \mathcal{T} \circ \mathcal{S}$ in a discrete form which can be represented computationally, both the PDE operator $\mathcal S$ and the trace $\mathcal T$ must be discretized, i.e., their matrix representations $S$ and $T$ must be found. Using finite element representations of $f$, $u$ and $g$, the problem $\mathcal{K}f = g$ can be expressed in terms of a system of linear equations.
+
+Discretizing the PDE operator $\mathcal{S}$, which represents the finite element formulation in Eq.~\eqref{eq:fem_formulation}, is done by replacing the source function $f$ by its finite element approximation $f_h \in V_h$. Since both $u_h$ and $f_h$ are functions of the subspace $V_h$, they may be written as a linear combinations of the basis functions $\phi_1, \dots, \phi_N$,
+\begin{equation}\label{eq:uh_and_fh}
+    u_h = \sum_{j=1}^{N} u_j \phi_j, \quad
+    f_h = \sum_{j=1}^{N} x_j \phi_j.
 \end{equation}
-Inserting Eq.~\eqref{eq:uh_and_f} into Eq.~\eqref{eq:fem_formulation} gives the following matrix-vector equation,
-\begin{equation}
-    A \v{\xi} = M \v{\eta},
+where $\{ \phi_1, \dots, \phi_N \}$ is a basis for $V_h$. Let $\v x = [x_1, \, \dots, \, x_N]$ and $\v u = [u_1, \, \dots, \, u_N]$ be the coefficient vectors for $f_h$ and $u_h$, respectively.
+By inserting Eq.~\eqref{eq:uh_and_fh} into the finite element formulation in Eq.~\eqref{eq:fem_formulation}, following system of linear equations (matrix-vector equation) is obtained:
+\begin{equation}\label{eq:matrix_vector_equation}
+    A \v x = M \v u.
 \end{equation}
-where $A$ is the stiffness matrix, $M$ the mass matrix, and $\v \xi = [\xi_1, \cdots, \xi_N]^T$ and $\v \eta = [\eta_1, \cdots, \eta_N]^T$ are the coefficients vectors of $u_h$ and $f$, respectively. The discretization $S: \mathbb{R}^N \to \mathbb{R}^N$ of $\mathcal S$ is therefore
+$A$ is known as the stiffness matrix and $M$ the mass matrix. Solving Eq.~\eqref{eq:matrix_vector_equation} for $\v x$, we get that $\v x = A^{-1} M \v u$, so the discretization $S\in \mathbb{R}^{N \times N}$ of the PDE operator $\mathcal S$ is therefore
 \begin{equation}\label{eq:discrete_S}
     S = A^{-1}M.
 \end{equation}
+Note that $S$ maps the coefficients $\v x$ of $f_h$ to the coefficients $\v u$ of $u_h$ in their finite element representations given in Eq.~\eqref{eq:uh_and_fh}.
 
-The mesh $\mathcal M$ of the domain $\Omega$ is made up of $N$ nodes, with $N_i$ boundary nodes, which defines non-overlapping elements $M_i$, typically triangles in 2D. The discretization $T: \mathbb{R}^N \rightarrow \mathbb{R}^{N_i}$ of $\mathcal T$ is a matrix which extracts the boundary coefficients of a function. Each row has one element equal to 1, corresponding to the boundary node index, and 0s elsewhere. The discretized version of the forward operator $\mathcal K = \mathcal T \circ \mathcal S$ is therefore
-\begin{equation}
-    K = T S = T A^{-1} M.
+The discretization $T: \mathbb{R}^N \rightarrow \mathbb{R}^{N_b}$ of $\mathcal T$ is a $N_b \times N$ matrix which extracts the boundary coefficients of a function. Each row has one element equal to 1, corresponding to the boundary node index, and 0s elsewhere. Next, using the discrete operators $S$ and $T$, we get that the discretized formulation of the forward operator $\mathcal K = \mathcal T \circ \mathcal S$ is
+\begin{equation}\label{eq:discrete_K}
+    K = T S = T A^{-1} M \in \mathbb R^{N_b \times N}.
 \end{equation}
-So, given the coefficients $\v \eta \in \mathbb{R}^N$ of a discrete source function $f$, $\v y = K \v \eta \in \mathbb{R}^{N_i}$ are the boundary coefficients of the output function $u_h$.
+
+By denoting the boundary coefficients of $\v u$ by $\v y$, i.e., $T \v u = \v y$, we can formulate $\mathcal{K}f = u|_{\partial\Omega}$ in its discretized version:
+\begin{equation}\label{eq:inverse_problem}
+    K \v x = \v y.
+\end{equation}
+Equation~\eqref{eq:inverse_problem} represents the discrete inverse problem: given observed boundary data $\v y$, we seek the coefficient vector $\v x$ of the source term $f_h$.
+
+%In practice, this system is often **ill-posed** due to the large null space of $K$ and the accumulation of numerical errors in $A^{-1}$. As a result, naive solutions of Eq.~\eqref{eq:inverse_problem} are highly sensitive to noise in $\v y$, motivating the need for regularization techniques. In the following section, we discuss classical Tikhonov regularization and introduce the weighted approach that will be explored in this thesis.
 
 
 \subsection{Tikhonov regularization}
@@ -139,7 +177,7 @@ Theory on Tikhonov regularization,
 \subsection{Randomized SVD}
 \input{figures/rsvd.tex}
 The rSVD is a technique used to compute a rank-$k$ approximation of an $m\times n$ matrix without computing the SVD. The core idea is to use random sampling to find a low-rank matrix $Q$ which approximates the range of $A$, project $A$ onto $\operatorname{span}(Q)$, and compute the SVD of the projection. The projection $B=Q^TA$ will, with high probability, capture the dominant actions of $A$, and the SVD of $B$ will yield a good approximation \cite{halko_finding_2011}. This procedure is summarized in Algorithm \ref{alg:rsvd}. The construction of an orthonormal basis $Q$ of $Y$ is done through a QR factorization. Note that the approximation $A\approx QQ^T A$ and the approximate factorization $A\approx U\Sigma V^T$ produced by rSVD have the same error. This can be seen by observing that $QQ^TA = QB = Q\tilde U\Sigma V^T$, and setting $U=Q\tilde U$.
-\begin{algorithm}[!h]
+\begin{algorithm}[!htbp]
 \caption{rSVD}
 \label{alg:rsvd}
 \begin{algorithmic}[1]

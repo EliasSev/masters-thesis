@@ -62,32 +62,44 @@
 \section{Introduction}
 
 \clearpage % separate each section with a \clearpage
-\section{Theory}
-\subsection{The continuous problem}
+\section{Mathematical background}
+\subsection{The forward operator}
 \input{figures/forward_operator.tex}
 
-Let $\Omega \subset \mathbb R^2$ and consider the problem
+Let $\Omega \subset \mathbb R^2$ be a bounded domain with boundary $\partial \Omega$. I consider the following second-oder elliptic boundary value problem (BVP):
 \begin{eqnarray}\label{eq:pde}
     \begin{aligned}
-    -\nabla \cdot \sigma\nabla u + ku &= f \quad \text{in } \Omega \\
-    \partial_n u &= 0 \quad \text{on } \partial\Omega
+    -\nabla \cdot \sigma\nabla u + ku &= f \quad \text{in } \Omega, \\
+    \frac{\partial u}{\partial \v n} &= 0 \quad \text{on } \partial\Omega,
     \end{aligned}
 \end{eqnarray}
-Equation~\eqref{eq:pde} defines a mapping $\mathcal S: L^2(\Omega) \rightarrow L^2(\Omega)$. If $f \in L^2$ is the source function (the input), then Equation~\eqref{eq:pde} maps $f$ to $\mathcal S f = u$ (the output). Introduce the trace operator $\mathcal T: L^2(\Omega) \rightarrow L^2(\partial\Omega)$. This is the observed values of $u$ on the boundary of $\Omega$,
+where $k > 0$ and $\sigma, f \in L^2(\Omega)$ (TODO: hva er $\sigma$). This is a diffusion-reaction equation with Neumann boundary conditions. Equation~\eqref{eq:pde} defines a mapping $\mathcal S: L^2(\Omega) \rightarrow L^2(\Omega)$. If $f \in L^2(\omega)$ is the source function (the input), then Equation~\eqref{eq:pde} maps $f$ to $\mathcal S f = u$ (the output). 
+
+Introduce the trace operator $\mathcal T: L^2(\Omega) \rightarrow L^2(\partial\Omega)$, defined by
 \begin{equation}\label{eq:trace}
-    \mathcal T: u \mapsto y = u|_{\partial\Omega}.
+    \mathcal T: u \mapsto g = u|_{\partial\Omega}.
 \end{equation}
-Operator~\eqref{eq:pde} and \eqref{eq:trace} defines the forward operator $\mathcal K: L^2(\Omega) \rightarrow L^2(\partial\Omega)$, 
+$\mathcal T u$ represents the observed values of $u$ on the boundary of $\Omega$. Operator~\eqref{eq:pde} and \eqref{eq:trace} defines the forward operator $\mathcal K: L^2(\Omega) \rightarrow L^2(\partial\Omega)$, 
 \begin{equation}
     \mathcal K = \mathcal T \circ \mathcal S,
 \end{equation}
-which is a mapping from the source function $f$ to the observed output $y = \mathcal K f$.
+which is a mapping from the source function $f$ to the observed output $g = \mathcal K f$ on the boundary $\partial \Omega$. Figure~\ref{fig:forward_operator} illustrates the components of the forward operator.
 
-The problem which I investigate in this Master's thesis is: given observed boundary values $y = u|_{\partial\Omega}$, find a source $f$ such that $y = \mathcal K$. This is visualized in Fig.~\ref{fig:forward_operator}.
+
+\subsection{The variational formulation}
+To derive a finite element formulation of Eq.~\eqref{eq:pde} and the forward operator $\mathcal K$, I first reformulate the boundary value problem in its variational formulation, also the its weak formulation.
+
+Multiplying the differential equation by a test function $v \in L^2(\Omega)$, integrating over $\Omega$, and using Green's equation, yields to the following variational formulation: find $u \in L^2(\Omega)$ such that
+\begin{equation}
+    \int_{\Omega} (\sigma \nabla u \cdot \nabla v + k u v) \, dx = \int_{\Omega} f v \space \, dx,
+    \text{ for all } v \in L^2(\Omega).
+\end{equation}
+For details, see Section~4 in Larson and Bengzon \cite{larson_finite_2013}.
 
 
 \subsection{The finite element method}
-Let $\mathcal M$ be a mesh of $\Omega$ and define the finite element space
+\input{figures/triangulation.tex}
+Let $\mathcal M$ be a triangulation of $\Omega$ made up of $N$ nodes, with $N_b$ boundary nodes. See Fig.~\ref{fig:triangulation}. and define the finite element space
 \begin{equation}\label{eq:fem_space}
     V_h = \{v \in C^0(\Omega) : v|_K \text{ is linear for all } M \in \mathcal M \}.
 \end{equation}
@@ -148,16 +160,23 @@ When you are closely following a book to explain something, which is often the c
 
 A Master's~\cite{LastName2045norwegian} or a PhD thesis~\cite{Temult2038binding} should include the name of the university wherein it was written, as well as the year. Moreover, it should include a URL to the work, when available.
 
+\clearpage
+\section{Methods}
+\input{figures/S_and_T_example.tex}
+
 
 \clearpage
 \section{Literature Review}
+
 
 \clearpage
 \section{Methodology}
 In the methodology, you might include mentions of various \texttt{python} (or other programming languages) packages.
 
+
 \clearpage
 \section{Results}
+
 
 \clearpage
 \section{Discussion}

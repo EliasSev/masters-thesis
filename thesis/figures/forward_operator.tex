@@ -16,7 +16,7 @@
     % f, u, and y points
     \node (f) at (0.5,2) {$f$};
     \node (u) at (3.5,1) {$u$};
-    \node (y) at (6,1) {$y$};
+    \node (g) at (6,1) {$g$};
     
     % Operator S
     \draw[->]
@@ -25,15 +25,15 @@
     
     % Operator T
     \draw[->]
-      (u) -- (y)
+      (u) -- (g)
       node[midway, below, xshift=-2.8mm] {$\mathcal T$};
     
     % Operator K
     \draw[->]
       (f) to[out=20, in=140]
       node[midway, above] {$\mathcal{K}$}
-      (y);
+      (g);
     \end{tikzpicture}
-    \caption{The forward operator $\mathcal K = \mathcal T \circ \mathcal S$ which maps $f$ to $y$.}
+    \caption{The forward operator $\mathcal K = \mathcal T \circ \mathcal S$ which maps $f$ to $g$.}
     \label{fig:forward_operator}
 \end{figure}

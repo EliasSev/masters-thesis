@@ -51,7 +51,7 @@
 % \engtitle{} % Only if you write a thesis in a Scandinavian language
 
 
-\ProvidesClass{superclass}
+%\ProvidesClass{superclass}
 
 % better option processing
 \RequirePackage{xkeyval} 

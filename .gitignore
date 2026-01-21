@@ -23,7 +23,8 @@ wheels/
 *.lot
 *.run.xml
 *.toc
-Thesis/*pdf
+*.nlo
+thesis/*pdf
 
 .vscode
 *.npy

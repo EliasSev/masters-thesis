@@ -202,6 +202,38 @@ A Master's~\cite{LastName2045norwegian} or a PhD thesis~\cite{Temult2038binding}
 \section{Methods}
 \input{figures/S_and_T_example.tex}
 
+\begin{algorithm}[!htbp]
+\caption{Discrete Operator rSVD Approximation of $K$}
+\label{alg:discrete_rsvd}
+\begin{algorithmic}[1]
+    \Require Forward operator $K: \mathbb{R}^N \to \mathbb{R}^{N_b}$, adjoint operator $K^*: \mathbb{R}^{N_b} \to \mathbb{R}^N$, mass matrices $M_{dx}, M_{ds}$, target rank $p$
+    \Ensure Approximate rank-$p$ factorization $K \approx U \Sigma V^T$
+    
+    \State \textbf{Range sketch:}
+    \For{$i = 1, \dots, p$}
+        \State Draw a random vector $\v \xi_i \in \mathbb{R}^N$
+        \State Apply the forward operator: $\v y_i = K \v \xi_i \in \mathbb{R}^{N_b}$
+    \EndFor
+
+    \State Form the matrix $Y = [\v y_1, \dots, \v y_p] \in \mathbb{R}^{N_b \times p}$ \Comment{Equivalent to $Y = K \Xi$}
+    \State Compute an orthonormal basis: $Q = \text{orth}(Y)$
+
+    \State \textbf{Projection onto the basis:}
+    \For{$i = 1, \dots, p$}
+        \State Let $\v q_i$ be the $i$-th column of $Q$
+        \State Compute $\tilde{\v{q}}_i = M_{ds}^{-1} \v{q}_i$
+        \State Set $\v{b}_{\text{adj},i} = K^* \tilde{\v{q}}_i$
+        \State Let $\v{b}_i = b_{\text{adj},i}^T M_{dx}$ \Comment{$i$-th row of $B$}
+    \EndFor
+    \State Form the projected matrix $B = \begin{bmatrix} b_1 \\ \vdots \\ b_p \end{bmatrix} \in \mathbb{R}^{p \times N}$ \Comment{Equivalent to $B = Q^T Y$}
+
+    \State Compute the SVD: $B = \tilde U \Sigma V^T$
+    \State Set $U = Q \tilde U$
+    
+\end{algorithmic}
+\end{algorithm}
+
+
 
 \clearpage
 \section{Literature Review}

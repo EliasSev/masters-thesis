@@ -175,7 +175,6 @@ Theory on Tikhonov regularization,
 
 
 \subsection{Randomized SVD}
-\input{figures/rsvd.tex}
 The rSVD is a technique used to compute a rank-$k$ approximation of an $m\times n$ matrix without computing the SVD. The core idea is to use random sampling to find a low-rank matrix $Q$ which approximates the range of $A$, project $A$ onto $\operatorname{span}(Q)$, and compute the SVD of the projection. The projection $B=Q^TA$ will, with high probability, capture the dominant actions of $A$, and the SVD of $B$ will yield a good approximation \cite{halko_finding_2011}. This procedure is summarized in Algorithm \ref{alg:rsvd}. The construction of an orthonormal basis $Q$ of $Y$ is done through a QR factorization. Note that the approximation $A\approx QQ^T A$ and the approximate factorization $A\approx U\Sigma V^T$ produced by rSVD have the same error. This can be seen by observing that $QQ^TA = QB = Q\tilde U\Sigma V^T$, and setting $U=Q\tilde U$.
 \begin{algorithm}[!htbp]
 \caption{rSVD}
@@ -200,7 +199,60 @@ A Master's~\cite{LastName2045norwegian} or a PhD thesis~\cite{Temult2038binding}
 
 \clearpage
 \section{Methods}
-\input{figures/S_and_T_example.tex}
+\subsection{Matrix-free randomized SVD}
+\input{figures/rsvd.tex}
+Let $K$ be the $N_b \times N$ discrete forward operator given in Eq. (eqref). We are interested in a rank-$k$ approximation $K_k$ of the matrix $K$. By the Eckart–Young–Mirsky theorem, the optimal rank-$k$ approximation of $K$ is the truncated SVD obtained by keeping the $k$ first singular values, and their corresponding singular values. The randomized SVD provides an efficient alternative, by computing an approximate rank-$k$ factorization $K \approx U_k \Sigma_k V_k$, which also approximates the optimal truncated rank-$k$ SVD decomposition. We will now present a matrix-free variation of the rSVD algorithm, suited for problems where the matrix $K$ is not explicitly known.
+
+Like the rSVD, this matrix-free formulation consists of two stages. In the first stage, an approximate basis $Q$ of $K$ is constructed through random sampling of the column space of $K$. In the second stage, the matrix $K$ is projected onto the subspace $\operatorname{span}(Q)$, and a SVD factorization is computed of the projected matrix.
+
+In the first stage, we apply $K$ on $k$ random vectors $\psi_1, \psi_2, \dots, \psi_l$ drawn from some distribution, typically the normal distribution. This yields the random samples $y_1, y_2, \dots, y_k$, where $y_i = K \psi_i$. If we gather the samples and random vectors into matrices $Y = [y_i]_{i=1}^k$ and $\Psi = [\psi_i]_{i}$, we can express $Y$ as
+\begin{equation}
+    Y = K \Psi.
+\end{equation}
+(something about how $y_i$ is most likely to line up with the first singular vector). Geometrically, we want the $i$'th sample $y_i$ to approximately point in the direction of the the $i$ right singular vector $v_i$. To remove contributions of the previous right singular vectors $v_{i-1}, v_{i-2}, \dots, v_{1}$ on $y_i$, we must orthogonalize the random samples. A QR-factorization
+\begin{equation}
+    QR = Y
+\end{equation}
+achieves such an orthogonalization, obtaining the matrix $Q$ which contains the orthogonalized column-vectors $q_1, q_2, \dots, q_k$. This concludes the first step, where we have obtained an approximation of the column space of $K$:
+\begin{equation}
+    \operatorname{span}\{q_1, q_2, \dots, q_k \} \approx \operatorname{span}(K)
+\end{equation}
+
+For the second stage, we project $K$ down to the subspace $\operatorname{span}(Q)$. This is typically done by computing $B = Q^T K$, however, since we do not know $K$ explicitly, we instead compute $B^* = K^* Q$, and then $B$ can be found with as $B = (B^*)^*$. To do this, we do as follows: for $q_1, q_2, \dots, q_k$, compute $\tilde q_i = M_{ds}^{-1} q_i$, and set $\tilde b = K^* \tilde q$, and let
+\begin{equation}
+    b_i = \tilde b_i^T M_{dx} = (K^* \tilde q_i)^T M_{dx}.
+\end{equation}
+From the definition of $K^*$ we know that
+\begin{equation}
+    (K^* z)^T M_{dx} = z^T M_{ds}K,
+\end{equation}
+for all $z$. Hence, setting $z = \tilde q_i$, we have that $(K^* \tilde q_i)^T M_{dx} = \tilde q_i^T M_{ds} K$, and from Eq~\eqref{}, we get that
+\begin{equation}
+\begin{aligned}
+    b_i &= \tilde q_i^T M_{ds} K \\
+    &= (M_{ds}^{-1} q_i)^T M_{ds} K \\
+    &= q_i^T M_{ds}^{-1} M_{ds} K \\
+    &= q_i^T K
+\end{aligned}
+\end{equation}
+where used the fact that $M_{ds}$ is symmetric to get that $(M^{-1})^T = M^{-1}$. By repeating this for $i=1,2,\dots,k$, we can construct the $k \times N$ matrix
+\begin{equation}
+    B = \begin{bmatrix} b_1 \\ \vdots \\ b_p \end{bmatrix}
+\end{equation}
+and since $b_i = q_i^T K$, we conclude that
+\begin{equation}
+    B = Q^T K.
+\end{equation}
+We have therefore been able to project $K$ onto $Q$ by solving $k$ adjoint problems $\tilde b_i = K^* \tilde q_i$. As the final part of the second stage, we take the SVD of $B$,
+\begin{equation}
+    B = \tilde U_k \Sigma_k V_k^T
+\end{equation}
+and by letting $U_k = Q \tilde U_k$, we get an approximate SVD decomposition of the form
+\begin{equation}
+    K \approx U_k \Sigma_k V_k^T.
+\end{equation}
+By noting that $U_k \Sigma_k V_k^T = Q \tilde U_k \Sigma_k V_k^T = Q B = Q Q^T K$, and that $\operatorname{rank}(Q) = k$, we know that the factorization in Eq~\eqref{} is a rank-$k$ approximation of $K$. The procedure is summarized in Algorithm~\ref{alg:discrete_rsvd}.
+
 
 \begin{algorithm}[!htbp]
 \caption{Discrete Operator rSVD Approximation of $K$}

@@ -1,11 +1,12 @@
 import numpy as np
+from typing import Optional
 from numpy.typing import NDArray
-from scipy.sparse import csr_matrix
-from scipy.sparse.linalg import spsolve
+from scipy.sparse import csr_matrix, spmatrix
+from scipy.sparse.linalg import spsolve, LinearOperator, cg
 from fenics import (
     FunctionSpace, Function, TrialFunction, TestFunction,
     Constant, DirichletBC, dot, grad, dx, ds, solve, assemble,
-    as_backend_type
+    as_backend_type, LUSolver
 )
 
 
@@ -14,6 +15,9 @@ class MatrixFreeRSVD:
         self.V_h = V_h
         self.sigma = sigma
         self.k = k
+        self._Uk: Optional[NDArray] = None
+        self._Sk: Optional[NDArray] = None
+        self._VkT: Optional[NDArray] = None
 
         # Setup constants and constant matrices
         self.boundary_dofs = self.get_boundary_dofs()
@@ -25,12 +29,34 @@ class MatrixFreeRSVD:
         # Variational form for `apply_S`
         u = TrialFunction(V_h)
         v = TestFunction(V_h)
-        self.A = Constant(sigma) * dot(grad(u), grad(v)) * dx + Constant(k) * u * v * dx
+        self.A = assemble(Constant(sigma) * dot(grad(u), grad(v)) * dx + Constant(k) * u * v * dx)
+        self.S_solver = LUSolver()  # or PETScKrylovSolver
+        self.S_solver.set_operator(self.A)
 
         # Variational form for `apply_K_star`
         v = TrialFunction(V_h)
         w = TestFunction(V_h)
-        self.A_star = (dot(Constant(sigma) * grad(v), grad(w)) + Constant(k) * v * w) * dx
+        self.A_star = assemble((dot(Constant(sigma) * grad(v), grad(w)) + Constant(k) * v * w) * dx)
+        self.K_star_solver = LUSolver()  # or PETScKrylovSolver
+        self.K_star_solver.set_operator(self.A_star)
+
+    @property 
+    def Uk(self) -> NDArray:
+        if self._Uk is None:
+            raise ValueError("Uk is not computed yet.")
+        return self._Uk
+    
+    @property 
+    def Sk(self) -> NDArray:
+        if self._Sk is None:
+            raise ValueError("Sk is not computed yet.")
+        return self._Sk
+    
+    @property 
+    def VkT(self) -> NDArray:
+        if self._VkT is None:
+            raise ValueError("VkT is not computed yet.")
+        return self._VkT
     
     def mf_rsvd(self, k: int) -> tuple[NDArray, NDArray, NDArray]:
         """
@@ -60,6 +86,8 @@ class MatrixFreeRSVD:
         # Step 5-6
         U_tilde, S, Vt = np.linalg.svd(B, full_matrices=False)
         U = Q @ U_tilde
+        
+        self._Uk, self._Sk, self._VkT = U, S, Vt
         return U, S, Vt
     
     def apply_K(self, x: NDArray) -> NDArray:
@@ -76,12 +104,15 @@ class MatrixFreeRSVD:
         """
         v = TestFunction(self.V_h)
 
+        # TODO: make f attribute, update its coefficients
+        # then L can also be kept as an attribute, dependent of f 
         f = Function(self.V_h)
         f.vector()[:] = x  # x is the nodal coefficient vector
         L = f * v * dx
+        rhs = assemble(L)
 
         u_sol = Function(self.V_h)
-        solve(self.A == L, u_sol)
+        self.S_solver.solve(u_sol.vector(), rhs)
         return u_sol
 
     def apply_T(self, u: Function) -> NDArray:
@@ -103,13 +134,14 @@ class MatrixFreeRSVD:
         g.vector()[:] = y_filled
         
         w = TestFunction(self.V_h)
-        L_adj = g * w * ds  # Surface integral
+        L_star = g * w * ds  # Surface integral
+        rhs = assemble(L_star)
 
-        f = Function(self.V_h)
-        solve(self.A_star == L_adj, f)
-        return f
+        v_sol = Function(self.V_h)
+        self.K_star_solver.solve(v_sol.vector(), rhs)
+        return v_sol
 
-    def get_M_dx(self) -> csr_matrix:
+    def get_M_dx(self) -> spmatrix:
         """
         Get the mass matrix M_dx as a scipy sparse CSR matrix.
         """
@@ -124,7 +156,7 @@ class MatrixFreeRSVD:
         indptr, indices, data = mat.getValuesCSR()
         return csr_matrix((data, indices, indptr))
 
-    def get_M_ds(self) -> csr_matrix:
+    def get_M_ds(self) -> spmatrix:
         """
         Get the boundary mass matrix M_ds as a scipy sparse CSR matrix.
         """
@@ -149,3 +181,59 @@ class MatrixFreeRSVD:
         bc = DirichletBC(self.V_h, Constant(0.0), boundary)
         bc_dict = bc.get_boundary_values()
         return np.array(sorted(bc_dict.keys()), dtype=int)
+
+
+def get_approximate_W(Vk: NDArray, M_dx: spmatrix) -> NDArray:
+    C = Vk.T @ M_dx @ Vk
+    w_sq = np.sum(Vk * (Vk @ C), axis=1)
+    
+    volumes = np.array(M_dx.sum(axis=1)).flatten()
+    w = np.sqrt(np.maximum(w_sq, 0)) / volumes
+    
+    return np.array(w)
+
+
+def tikhonov_solver(rsvd: MatrixFreeRSVD, W_diag: NDArray, y: NDArray, lambda_: float):
+    """
+    Solves (K^T M_ds K + lambda^2 W M_dx W) f = K^T M_ds y
+    using the rank-k SVD components: K = Uk @ diag(sk) @ Vk.T
+    """
+    Uk = rsvd.Uk
+    sk = rsvd.Sk
+    Vk = rsvd.VkT.T
+    M_ds = rsvd.M_ds
+    M_dx = rsvd.M_dx
+
+    N = Vk.shape[0]
+    W = W_diag # Assuming this is a 1D array of weights
+    
+    # Pre-compute the Right Hand Side (RHS)
+    # K^T * M_ds * y
+    rhs = Vk @ (sk * (Uk.T @ (M_ds @ y)))
+
+    # Define the Matrix-Vector Product (Action of the LHS)
+    def lhs_action(f):
+        # 1. Term: K^T @ M_ds @ K @ f
+        # Forward: K @ f
+        Kf = Uk @ (sk * (Vk.T @ f))
+        # Adjoint: K^T @ (M_ds @ Kf)
+        term1 = Vk @ (sk * (Uk.T @ (M_ds @ Kf)))
+        
+        # 2. Term: lambda^2 @ W @ M_dx @ W @ f
+        # Since W is diagonal, W @ f is element-wise multiplication
+        Wf = W * f
+        term2 = (lambda_**2) * (W * (M_dx @ Wf))
+        
+        return term1 + term2
+
+    # Wrap as a LinearOperator
+    A_op = LinearOperator((N, N), matvec=lhs_action)
+
+    # Solve using Conjugate Gradient
+    # tol: stop when residual is small enough
+    f_hat, info = cg(A_op, rhs, rtol=1e-8)
+    
+    if info > 0:
+        print("Warning: CG did not converge")
+        
+    return f_hat

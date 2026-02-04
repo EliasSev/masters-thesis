@@ -1,12 +1,13 @@
 import numpy as np
+from time import time
 from typing import Optional
 from numpy.typing import NDArray
 from scipy.sparse import csr_matrix, spmatrix
 from scipy.sparse.linalg import spsolve, LinearOperator, cg
 from fenics import (
     FunctionSpace, Function, TrialFunction, TestFunction,
-    Constant, DirichletBC, dot, grad, dx, ds, solve, assemble,
-    as_backend_type, LUSolver
+    Constant, DirichletBC, dot, grad, dx, ds, assemble,
+    as_backend_type, LUSolver, Expression, interpolate
 )
 
 
@@ -18,6 +19,7 @@ class MatrixFreeRSVD:
         self._Uk: Optional[NDArray] = None
         self._Sk: Optional[NDArray] = None
         self._VkT: Optional[NDArray] = None
+        self.times = None
 
         # Setup constants and constant matrices
         self.boundary_dofs = self.get_boundary_dofs()
@@ -58,22 +60,29 @@ class MatrixFreeRSVD:
             raise ValueError("VkT is not computed yet.")
         return self._VkT
     
-    def mf_rsvd(self, k: int) -> tuple[NDArray, NDArray, NDArray]:
+    def mf_rsvd(self, k: int, distribution: str = 'standard') -> tuple[NDArray, NDArray, NDArray]:
         """
         Implementation of the Discrete Operator rSVD algorithms, which approximates
         the discrete operator K: f -> u through random sampling of the operator.
         """
+        self.times = []
         # Step 1
+        t0 = time()
         Y = np.zeros((self.N_b, k))
         for i in range(k):
+            psi_i = self.draw_random_vector(distribution)
             psi_i = np.random.randn(self.N)
             y_i = self.apply_K(psi_i)
             Y[:, i] = y_i
+        self.times.append(time() - t0)
 
         # Step 2
+        t0 = time()
         Q, _ = np.linalg.qr(Y, mode='reduced')
+        self.times.append(time() - t0)
 
         # Step 3-4
+        t0 = time()
         B = np.zeros((k, self.N))
         for i in range(k):
             q_i = Q[:, i].copy()
@@ -82,13 +91,36 @@ class MatrixFreeRSVD:
             q_unweighted = spsolve(self.M_ds, q_i) 
             b_mod = self.apply_K_star(q_unweighted).vector().get_local()
             B[i, :] = b_mod.T @ self.M_dx
+        self.times.append(time() - t0)
 
         # Step 5-6
+        t0 = time()
         U_tilde, S, Vt = np.linalg.svd(B, full_matrices=False)
         U = Q @ U_tilde
+        self.times.append(time() - t0)
         
         self._Uk, self._Sk, self._VkT = U, S, Vt
         return U, S, Vt
+    
+    def draw_random_vector(self, distribution: str) -> NDArray:
+        if distribution == 'standard':
+            return np.random.randn(self.N)
+        
+        elif distribution == 'rademacher':
+            return np.random.choice([-0.5, 0.5], size=self.N, p=[0.5, 0.5])
+        
+        elif distribution == 'peaks':
+            sigma, A = 0.15, 1.0
+            x, y = np.random.uniform(0, 1, size=2)
+            f_expr = Expression(
+                "A*exp(-((x[0]-x0)*(x[0]-x0) + (x[1]-y0)*(x[1]-y0)) / (2*sigma*sigma))",
+                degree=4, A=A, x0=x, y0=y, sigma=sigma
+            )
+            f = interpolate(f_expr, self.V_h)
+            return f.vector().get_local()
+
+        else:
+            raise ValueError(f"Unknown distribution: '{distribution}'")
     
     def apply_K(self, x: NDArray) -> NDArray:
         """
@@ -193,7 +225,7 @@ def get_approximate_W(Vk: NDArray, M_dx: spmatrix) -> NDArray:
     return np.array(w)
 
 
-def tikhonov_solver(rsvd: MatrixFreeRSVD, W_diag: NDArray, y: NDArray, lambda_: float):
+def tikhonov_solver(rsvd: MatrixFreeRSVD, W_diag: NDArray, y: NDArray, lambda_: float) -> NDArray:
     """
     Solves (K^T M_ds K + lambda^2 W M_dx W) f = K^T M_ds y
     using the rank-k SVD components: K = Uk @ diag(sk) @ Vk.T

@@ -17,7 +17,7 @@
       \draw[thick,->] (0,0) -- (2,0) node[right] {$\mathbf e_1$};
       \draw[thick,->] (0,0) -- (0,2) node[above] {$\mathbf e_2$};
       % omega, length=2, angle=35
-      \draw[thick,->,Green] (0,0) -- ({2*cos(35)},{2*sin(35)}) node[above right] {$\boldsymbol{\omega}$};
+      \draw[thick,->,Green] (0,0) -- ({2*cos(35)},{2*sin(35)}) node[above right] {$\boldsymbol{\psi}$};
     \end{scope}
     
     % Middle: K arrow
@@ -43,9 +43,9 @@
         node[above] {$\mathbf u_2$};
       % omega
       \draw[thick,->,Green] (0,0) -- (3.2,0.6)
-      node[above, xshift=5pt, yshift=2pt] {$K\boldsymbol{\omega}$};
+      node[above, xshift=5pt, yshift=2pt] {$K\boldsymbol{\psi}$};
     \end{scope}
     \end{tikzpicture}
-    \caption{The geometry of the rSVD. A random sample $K\v\omega$ aligns mostly with the first left singular value. The illustration is inspired by Fig.~9.1 in Tropp \cite{tropp_acm_2021}.}
+    \caption{The geometry of the rSVD. A random sample $K\v\psi$ aligns mostly with the first left singular value. The illustration is inspired by Fig.~9.1 in Tropp \cite{tropp_acm_2021}.}
     \label{fig:rsvd}
 \end{figure}

@@ -9,3 +9,6 @@ dependencies:
   - fenics
   - ipykernel
   - mshr
+  - pip
+  - pip:
+    - -e .

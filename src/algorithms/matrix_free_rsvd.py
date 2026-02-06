@@ -7,8 +7,9 @@ from scipy.sparse.linalg import spsolve, LinearOperator, cg
 from fenics import (
     FunctionSpace, Function, TrialFunction, TestFunction,
     Constant, DirichletBC, dot, grad, dx, ds, assemble,
-    as_backend_type, LUSolver, Expression, interpolate
+    as_backend_type, LUSolver, Expression, interpolate, set_log_level
 )
+set_log_level(30)
 
 
 class MatrixFreeRSVD:
@@ -60,18 +61,22 @@ class MatrixFreeRSVD:
             raise ValueError("VkT is not computed yet.")
         return self._VkT
     
-    def mf_rsvd(self, k: int, distribution: str = 'standard') -> tuple[NDArray, NDArray, NDArray]:
+    def mf_rsvd(self,
+            k: int, distribution: str = 'standard', seed: Optional[int] = None
+        ) -> tuple[NDArray, NDArray, NDArray]:
         """
         Implementation of the Discrete Operator rSVD algorithms, which approximates
         the discrete operator K: f -> u through random sampling of the operator.
         """
+        # Random number generator
+        rng = np.random.default_rng(seed=seed)
+
         self.times = []
         # Step 1
         t0 = time()
         Y = np.zeros((self.N_b, k))
         for i in range(k):
-            psi_i = self.draw_random_vector(distribution)
-            psi_i = np.random.randn(self.N)
+            psi_i = self.draw_random_vector(distribution, rng=rng)
             y_i = self.apply_K(psi_i)
             Y[:, i] = y_i
         self.times.append(time() - t0)
@@ -102,19 +107,18 @@ class MatrixFreeRSVD:
         self._Uk, self._Sk, self._VkT = U, S, Vt
         return U, S, Vt
     
-    def draw_random_vector(self, distribution: str) -> NDArray:
+    def draw_random_vector(self, distribution: str, rng: np.random.Generator, **kwargs) -> NDArray:
         if distribution == 'standard':
-            return np.random.randn(self.N)
+            return rng.random(self.N)
         
         elif distribution == 'rademacher':
-            return np.random.choice([-0.5, 0.5], size=self.N, p=[0.5, 0.5])
+            return rng.choice([-0.5, 0.5], size=self.N, p=[0.5, 0.5])
         
         elif distribution == 'peaks':
-            sigma, A = 0.15, 1.0
-            x, y = np.random.uniform(0, 1, size=2)
+            x, y = rng.uniform(low=0, high=1, size=2)
             f_expr = Expression(
                 "A*exp(-((x[0]-x0)*(x[0]-x0) + (x[1]-y0)*(x[1]-y0)) / (2*sigma*sigma))",
-                degree=4, A=A, x0=x, y0=y, sigma=sigma
+                degree=4, A=kwargs.get('A', 1.0), x0=x, y0=y, sigma=kwargs.get('sigma', 0.2)
             )
             f = interpolate(f_expr, self.V_h)
             return f.vector().get_local()

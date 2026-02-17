@@ -43,6 +43,13 @@ class MatrixFreeRSVD:
         self.K_star_solver = LUSolver()  # or PETScKrylovSolver
         self.K_star_solver.set_operator(self.A_star)
 
+        # Set up vec to matrix and matrix to vec utils
+        coords = V_h.tabulate_dof_coordinates()
+        self.grid_indices = np.lexsort((coords[:, 0], coords[:, 1]))
+        self.dof_indices = np.argsort(self.grid_indices)
+        self.n = int(np.sqrt(V_h.dim()))
+
+
     @property 
     def Uk(self) -> NDArray:
         if self._Uk is None:
@@ -62,7 +69,10 @@ class MatrixFreeRSVD:
         return self._VkT
     
     def mf_rsvd(self,
-            k: int, distribution: str = 'standard', seed: Optional[int] = None
+            k: int,
+            distribution: str = 'standard',
+            seed: Optional[int] = None,
+            **kwargs
         ) -> tuple[NDArray, NDArray, NDArray]:
         """
         Implementation of the Discrete Operator rSVD algorithms, which approximates
@@ -76,7 +86,7 @@ class MatrixFreeRSVD:
         t0 = time()
         Y = np.zeros((self.N_b, k))
         for i in range(k):
-            psi_i = self.draw_random_vector(distribution, rng=rng)
+            psi_i = self.draw_random_vector(distribution, rng=rng, **kwargs)
             y_i = self.apply_K(psi_i)
             Y[:, i] = y_i
         self.times.append(time() - t0)

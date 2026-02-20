@@ -78,11 +78,34 @@
 \startthesis % This command will separate the Roman-numbered pages above and the Arabic-numbered pages below as well as create the table of contents, list of figures, list of tables, and potentially list of acronyms
 
 \section{Introduction}
-How do you model the spread of an infectious virus, the flow of traffic during morning rush hour, the airflow over an airplane, the interactions between fundamental particles which make up all matter, or the space and time of the universe? Despite the apparent diversity, these phenomena all describe how quantities change across time and space. Partial differential equations (PDEs) arise naturally, and are central in the modelling of such systems.
+%How do you model the spread of an infectious virus, the flow of traffic during morning rush hour, the airflow over an airplane, the interactions between fundamental particles which make up all matter, or the space and time of the universe? Despite the apparent diversity, these phenomena all describe how quantities change across time and space. Partial differential equations (PDEs) arise naturally, and are central in the modelling of such systems.
 
-For instance, an epidemiologist can use the SIR-model to predict the spread of an infectious virus through a population \cite{kroger_analytical_2020}. A traffic engineer may wish to investigate how an initial congestion on an intersection spreads through the road network by using the method of kinematic waves \cite{lighthill_kinematic_1955}. An airplane company can model airflow and turbulence of an aircraft by the use of the Navier-Stokes equations \cite{j_m_mathematical_1948}. A particle scientist can model particle interactions by the use of Schrödinger equations \cite{schrodinger_quantisierung_1926}. And a astro astrophysicist can use Einsteins field equations to model the evolution of the universe, the death of a star, or the properties of a black hole \cite{einstein_grundlage_1916}. These are only some examples of PDEs and their applications.
+%For instance, an epidemiologist can use the SIR-model to predict the spread of an infectious virus through a population \cite{kroger_analytical_2020}. A traffic engineer may wish to investigate how an initial congestion on an intersection spreads through the road network by using the method of kinematic waves \cite{lighthill_kinematic_1955}. An airplane company can model airflow and turbulence of an aircraft by the use of the Navier-Stokes equations \cite{j_m_mathematical_1948}. A particle scientist can model particle interactions by the use of Schrödinger equations \cite{schrodinger_quantisierung_1926}. And a astro astrophysicist can use Einsteins field equations to model the evolution of the universe, the death of a star, or the properties of a black hole \cite{einstein_grundlage_1916}. These are only some examples of PDEs and their applications.
 
-In this thesis, we will study a class of PDEs called elliptic PDEs.
+Partial differential equations (PDEs) are essential in modern modelling. They have applications in finance, physics, medicine, and biology, to name a few. The discretization of PDEs, which enables numerical solutions of such equations, can produce linear systems of equations with a large number of unknowns. For instance, in modern applications, it is not uncommon with billions of unknowns. It is therefore essential with efficient algorithms to handle large scale linear systems of equations.
+
+In this thesis, we study the class of elliptic PDEs, which typically occur in time-independent problems. This class of PDEs show up in steady-state problems, stochastic processes, and the diffusion and flow a quantity in a region of space \cite{pavliotisStochasticProcessesApplications2014, evansPartialDifferentialEquations2010}.
+
+In particular, we study the inverse problem of the form
+\begin{equation*}
+    \min_{f} \left\| \mathcal{K} f - y \right\|_{L^2(\partial\Omega)}^2
+    + \lambda^2 \left\| W f \right\|_{L^2(\Omega)}^2
+\end{equation*}
+subject to
+\begin{eqnarray*}
+    \begin{aligned}
+    -\nabla \cdot \sigma\nabla u + ku &= f \quad \text{in } \Omega, \\
+    \frac{\partial u}{\partial \v n} &= 0 \quad \text{on } \partial\Omega.
+    \end{aligned}
+\end{eqnarray*}
+This problem has numerous applications, such as inverse imaging, crack determination, and electromagnetic brain mapping \cite{elvetun_regularization_2020}. This problem is a source identification task: we are given observed data $y$, and seek to find the original source term $f$ such that $\mathcal K f = y$, where $\mathcal K: f \to u|_{\partial\Omega}$ is the mapping from the source $f$ to the output on the boundary of $\Omega$, $u|_{\partial\Omega}$.
+
+However, source identification problems of this form are ill-posed, as the operator $\mathcal K$ has a large null space. Consequently, solutions are not uniquely determined by the data. Moreover, small perturbations the observed data may result in large variations in the reconstructed source. Due to these challenges, typical techniques such as Tikhonov regularization fail to recover a meaningful source term.
+
+%[Large null space, ill-posed]
+%[Vis til klassisk Tikhonov]
+%However, the methods presented in this thesis are not limitied to this particular equation, and may be applied to elliptic PDEs in general.]
+
 
 \clearpage
 \section{Mathematical background}
@@ -259,7 +282,7 @@ and by letting $U_k = Q \tilde U_k$, we get an approximate SVD decomposition of 
 By noting that $U_k \Sigma_k V_k^T = Q \tilde U_k \Sigma_k V_k^T = Q B = Q Q^T K$, and that $\operatorname{rank}(Q) = k$, we know that the factorization in Eq~\eqref{} is a rank-$k$ approximation of $K$. The procedure is summarized in Algorithm~\ref{alg:discrete_rsvd}.
 
 
-\begin{algorithm}[!htbp]
+\begin{algorithm}[!thbp]
 \caption{Discrete Operator rSVD Approximation of $K$}
 \label{alg:discrete_rsvd}
 \begin{algorithmic}[1]
@@ -290,6 +313,56 @@ By noting that $U_k \Sigma_k V_k^T = Q \tilde U_k \Sigma_k V_k^T = Q B = Q Q^T K
 \end{algorithmic}
 \end{algorithm}
 
+\clearpage
+\subsection{Dynamic low-rank solver}
+Let $X = \operatorname{matrix}(x)$ and $X = U_x \Sigma_x V_x^T$ be the SVD of $X$ and let $\Phi(x)$ be some differentiable cost function of $x$, and $D = \operatorname{matrix}(\nabla \Phi(x))$ its matrix equivalent. We wish to update $X^{(k)}$ according to
+$$
+X^{(k+1)} = X^{(k)}-\alpha D
+$$
+Inserting the SVD of $X^{(k)}$ at step $k$, $X^{(k)} = U_x^{(k)} \Sigma_x^{(k)} (V_x^{(k)})^T$, we get that
+$$
+U_x^{(k+1)} \Sigma_x^{(k+1)} (V_x^{(k+1)})^T = U_x^{(k)} \Sigma_x^{(k)} (V_x^{(k)})^T - \alpha D. \quad (1)
+$$
+If we right-multiply by $V_x^{(k)}$ and let $W^{(k)} = U_x^{(k)} \Sigma_x^{(k)}$, we get
+$$
+W^{(k+1)}(V_x^{(k+1)})^T(V_x^{(k)}) = W^{(k)} - \alpha D V_x^{(k)}.
+$$
+The approximation $(V_x^{(k+1)})^T(V_x^{(k)}) \approx I$ suggests the following updating scheme:
+$$
+W^{(k+1)} = W^{(k)} - \alpha D V_x^{(k)}.
+$$
+If we transpose  Equation $(1)$, right-multiply by $U_x^{(k)}$ and denote $L^{(k)} = V_x^{(k)} (\Sigma_x^{(k)})^T$, we get a similar updating scheme for $L^{(k)}$,
+$$
+L^{(k+1)} = L^{(k)} - \alpha D^T U_x^{(k)}.
+$$
+We now have update schemes for $W^{(k)} = U_x^{(k)} \Sigma_x^{(k)}$ and $L^{(k)} = V_x^{(k)} (\Sigma_x^{(k)})^T$. Further, we expand and orthogonalize the basis' $U^{(k)}$ and $V^{(k)}$ with the updated weighted basis' $W^{(k+1)}$ and $L^{(k+1)}$, respectively, in the following way:
+$$
+\begin{aligned}
+\hat U &= \operatorname{orth}\begin{bmatrix} U_x^{(k)} & W^{(k+1)}\end{bmatrix}, \\
+\hat V &= \operatorname{orth}\begin{bmatrix} V_x^{(k)} & L^{(k+1)}\end{bmatrix}.
+\end{aligned}
+$$
+Currently, we have obtained an approximation $X \approx \hat U \Sigma_x \hat V^T$. In terms of $\Sigma_x$, we have
+$$
+\Sigma_x \approx \hat U^T X \hat V.
+$$
+Substituting $X = U_x \Sigma_x V_x^T$ gives the approximation $\hat \Sigma^{(k)}$ of $\Sigma_x$,
+$$
+\Sigma_x \approx \hat \Sigma^{(k)} =(\hat U^T U_x)\Sigma_x(V_x^T \hat V). \quad (2)
+$$
+Now, if we write the gradient descent scheme $X^{(k+1)} = X^{(k)} - \alpha D$ as
+$$
+\hat U^T X^{(k+1)} \hat V = \hat U^TX^{(k)}\hat V - \alpha \hat U^T D \hat V,
+$$
+and use Equation $(2)$, we get the following updating scheme for $\hat \Sigma^{(k)}$,
+$$
+\hat \Sigma^{(k+1)} = \hat \Sigma^{(k)} - \alpha \hat U^T D \hat V.
+$$
+The final step is then to truncate these updated matrices to obtain
+$$
+U_x^{(k+1)}, \Sigma_x^{(k+1)}, V_x^{(k+1)} = \operatorname{truncate}(\hat U, \hat \Sigma, \hat V)
+$$
+and finally, set $X^{(k+1)} = U_x^{(k+1)} \Sigma_x^{(k+1)} (V_x^{(k+1)})^T$.
 
 
 \clearpage

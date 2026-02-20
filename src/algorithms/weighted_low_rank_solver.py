@@ -48,8 +48,14 @@ def alpha_Lipschitz(VkT, Sk, w):
 
 class WeightedLowRankSolver:
     def __init__(
-            self, V_h: FunctionSpace, M_dx: spmatrix,
-            M_ds: spmatrix, U: NDArray, S: NDArray, VT: NDArray
+            self,
+            V_h: FunctionSpace,
+            M_dx: spmatrix,
+            M_ds: spmatrix,
+            U: NDArray,
+            S: NDArray,
+            VT: NDArray,
+            x_true: Optional[NDArray] = None
         ) -> None:
         self.V_h = V_h
         self.M_dx = M_dx
@@ -57,6 +63,7 @@ class WeightedLowRankSolver:
         self.U = U
         self.S = S
         self.VT = VT
+        self.x_true = x_true
 
         # Set up vec to matrix and matrix to vec utils
         coords = V_h.tabulate_dof_coordinates()
@@ -65,10 +72,7 @@ class WeightedLowRankSolver:
         self.n = int(np.sqrt(V_h.dim()))
 
         # Record history
-        self.grads_P = []
-        self.grads_Q = []
-        self.X_rel = []
-        self.errors = []
+        self._initialize_records()
 
     def matrix_to_vec(self, X: NDArray) -> NDArray:
         return X.flatten()[self.dof_indices]
@@ -76,6 +80,23 @@ class WeightedLowRankSolver:
     def vec_to_matrix(self, x: NDArray) -> NDArray:
         return x[self.grid_indices].reshape((self.n, self.n))
     
+    def _initialize_records(self) -> None:
+        self.grads_P = []
+        self.grads_Q = []
+        self.X_rel = []
+        self.residuals = []
+        if self.x_true is not None:
+            self.errors = []
+
+    def _update_records(
+            self, grad_P: NDArray, grad_Q: NDArray, residual: NDArray, x_hat: NDArray
+        ) -> None:
+        self.grads_P.append(np.linalg.norm(grad_P, 'fro'))
+        self.grads_Q.append(np.linalg.norm(grad_Q, 'fro'))
+        self.residuals.append(np.linalg.norm(residual))
+        if self.x_true is not None:
+            self.errors.append(np.linalg.norm(x_hat - self.x_true))
+
     def solve(
             self,
             y: NDArray,
@@ -89,8 +110,7 @@ class WeightedLowRankSolver:
             tol: float = 1e-4,
             **kwargs
         ) -> Function:
-        # Reset records
-        self.grads_P, self.grads_Q, self.X_rel, self.errors = [], [], [], []
+        self._initialize_records()
 
         # Initialize P and Q
         rng = np.random.default_rng(seed)
@@ -118,9 +138,7 @@ class WeightedLowRankSolver:
             grad_P_Phi = G @ Q
             grad_Q_Phi = G.T @ P
 
-            self.errors.append(np.linalg.norm(r))
-            self.grads_P.append(np.linalg.norm(grad_P_Phi, 'fro'))
-            self.grads_Q.append(np.linalg.norm(grad_Q_Phi, 'fro'))
+            self._update_records(grad_P_Phi, grad_Q_Phi, r, x)
 
             # Gradient descent
             P -= alpha * grad_P_Phi
@@ -162,8 +180,7 @@ class WeightedLowRankSolver:
         if sol_criteria not in ('error', 'last'):
             raise ValueError(f"Unknown 'sol_criteria': {sol_criteria}")
         
-        # Reset records
-        self.grads_P, self.grads_Q, self.X_rel, self.errors = [], [], [], []
+        self._initialize_records()
 
         # Initialize P and Q
         rng = np.random.default_rng(seed)
@@ -202,9 +219,7 @@ class WeightedLowRankSolver:
             grad_P_Phi = G @ Q
             grad_Q_Phi = G.T @ P
             
-            self.errors.append(np.linalg.norm(r))
-            self.grads_P.append(np.linalg.norm(grad_P_Phi, 'fro'))
-            self.grads_Q.append(np.linalg.norm(grad_Q_Phi, 'fro'))
+            self._update_records(grad_P_Phi, grad_Q_Phi, r, x)
             
             # Store the best X, P and Q
             e = np.linalg.norm(r)
@@ -275,8 +290,7 @@ class WeightedLowRankSolver:
         if sol_criteria not in ('error', 'last'):
             raise ValueError(f"Unknown 'sol_criteria': {sol_criteria}")
         
-        # Reset records
-        self.grads_P, self.grads_Q, self.X_rel, self.errors = [], [], [], []
+        self._initialize_records()
 
         # Initialize P and Q
         rng = np.random.default_rng(seed)
@@ -313,9 +327,7 @@ class WeightedLowRankSolver:
             grad_P_Phi = G @ Q
             grad_Q_Phi = G.T @ P
             
-            self.errors.append(np.linalg.norm(r))
-            self.grads_P.append(np.linalg.norm(grad_P_Phi, 'fro'))
-            self.grads_Q.append(np.linalg.norm(grad_Q_Phi, 'fro'))
+            self._update_records(grad_P_Phi, grad_Q_Phi, r, x)
             
             # Store the best X, P and Q
             e = np.linalg.norm(r)
@@ -388,8 +400,7 @@ class WeightedLowRankSolver:
         if sol_criteria not in ('error', 'last'):
             raise ValueError(f"Unknown 'sol_criteria': {sol_criteria}")
         
-        # Reset records
-        self.grads_P, self.grads_Q, self.X_rel, self.errors = [], [], [], []
+        self._initialize_records()
 
         # 1D difference operator
         D = get_1d_diff_operator(self.n)
@@ -433,9 +444,7 @@ class WeightedLowRankSolver:
             grad_P_Phi = G @ Q + beta * grad_P_tv
             grad_Q_Phi = G.T @ P + beta * grad_Q_tv
             
-            self.errors.append(np.linalg.norm(r))
-            self.grads_P.append(np.linalg.norm(grad_P_Phi, 'fro'))
-            self.grads_Q.append(np.linalg.norm(grad_Q_Phi, 'fro'))
+            self._update_records(grad_P_Phi, grad_Q_Phi, r, x)
             
             # Store the best X, P and Q
             e = np.linalg.norm(r)
@@ -536,8 +545,7 @@ class WeightedLowRankSolver:
             max_iter: int = 100, seed: Optional[int] = None,
             tol: float = 1e-3
         ) -> Function:
-        self.grads_P = []
-        self.grads_Q = []
+        self._initialize_records()
 
         D = get_1d_diff_operator(self.n)
         

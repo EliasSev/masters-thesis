@@ -16,7 +16,7 @@
     % f, u, and y points
     \node (f) at (0.5,2) {$f$};
     \node (u) at (3.5,1) {$u$};
-    \node (g) at (6,1) {$g$};
+    \node (g) at (6,1) {$u|_{\partial\Omega}$};
     
     % Operator S
     \draw[->]
@@ -34,6 +34,6 @@
       node[midway, above] {$\mathcal{K}$}
       (g);
     \end{tikzpicture}
-    \caption{The forward operator $\mathcal K = \mathcal T \circ \mathcal S$ which maps $f$ to $g$.}
+    \caption{The forward operator $\mathcal K = \mathcal T \circ \mathcal S$ which maps $f$ to $u|_{\partial\Omega}$.}
     \label{fig:forward_operator}
 \end{figure}

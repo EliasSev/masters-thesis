@@ -78,33 +78,35 @@
 \startthesis % This command will separate the Roman-numbered pages above and the Arabic-numbered pages below as well as create the table of contents, list of figures, list of tables, and potentially list of acronyms
 
 \section{Introduction}
-%How do you model the spread of an infectious virus, the flow of traffic during morning rush hour, the airflow over an airplane, the interactions between fundamental particles which make up all matter, or the space and time of the universe? Despite the apparent diversity, these phenomena all describe how quantities change across time and space. Partial differential equations (PDEs) arise naturally, and are central in the modelling of such systems.
-
-%For instance, an epidemiologist can use the SIR-model to predict the spread of an infectious virus through a population \cite{kroger_analytical_2020}. A traffic engineer may wish to investigate how an initial congestion on an intersection spreads through the road network by using the method of kinematic waves \cite{lighthill_kinematic_1955}. An airplane company can model airflow and turbulence of an aircraft by the use of the Navier-Stokes equations \cite{j_m_mathematical_1948}. A particle scientist can model particle interactions by the use of Schrödinger equations \cite{schrodinger_quantisierung_1926}. And a astro astrophysicist can use Einsteins field equations to model the evolution of the universe, the death of a star, or the properties of a black hole \cite{einstein_grundlage_1916}. These are only some examples of PDEs and their applications.
-
 Partial differential equations (PDEs) are essential in modern modelling. They have applications in finance, physics, medicine, and biology, to name a few. The discretization of PDEs, which enables numerical solutions of such equations, can produce linear systems of equations with a large number of unknowns. For instance, in modern applications, it is not uncommon with billions of unknowns. It is therefore essential with efficient algorithms to handle large scale linear systems of equations.
 
 In this thesis, we study the class of elliptic PDEs, which typically occur in time-independent problems. This class of PDEs show up in steady-state problems, stochastic processes, and the diffusion and flow a quantity in a region of space \cite{pavliotisStochasticProcessesApplications2014, evansPartialDifferentialEquations2010}.
 
 In particular, we study the inverse problem of the form
-\begin{equation*}
+\begin{equation}\label{eq:problem}
     \min_{f} \left\| \mathcal{K} f - y \right\|_{L^2(\partial\Omega)}^2
     + \lambda^2 \left\| W f \right\|_{L^2(\Omega)}^2
-\end{equation*}
+\end{equation}
 subject to
-\begin{eqnarray*}
+\begin{eqnarray}\label{eq:pde}
     \begin{aligned}
     -\nabla \cdot \sigma\nabla u + ku &= f \quad \text{in } \Omega, \\
     \frac{\partial u}{\partial \v n} &= 0 \quad \text{on } \partial\Omega.
     \end{aligned}
-\end{eqnarray*}
-This problem has numerous applications, such as inverse imaging, crack determination, and electromagnetic brain mapping \cite{elvetun_regularization_2020}. This problem is a source identification task: we are given observed data $y$, and seek to find the original source term $f$ such that $\mathcal K f = y$, where $\mathcal K: f \to u|_{\partial\Omega}$ is the mapping from the source $f$ to the output on the boundary of $\Omega$, $u|_{\partial\Omega}$.
+\end{eqnarray}
+Here, $\mathcal{K}$ is the forward operator which maps the source $f$ to the boundary values $\mathcal{K}f = u|_{\partial\Omega}$, $\sigma$ is the \textcolor{red}{[...]}, $k$ is the \textcolor{red}{[...]}, and $y$ is the observed data. This problem has numerous applications, such as inverse imaging, crack determination, and electromagnetic brain mapping \cite{elvetun_regularization_2020}. This problem is a source identification task: we are given observed data $y$, and seek to find the original source term $f$ such that $\mathcal K f = y$.
 
 However, source identification problems of this form are ill-posed, as the operator $\mathcal K$ has a large null space. Consequently, solutions are not uniquely determined by the data. Moreover, small perturbations the observed data may result in large variations in the reconstructed source. Due to these challenges, typical techniques such as Tikhonov regularization fail to recover a meaningful source term.
 
-%[Large null space, ill-posed]
-%[Vis til klassisk Tikhonov]
-%However, the methods presented in this thesis are not limitied to this particular equation, and may be applied to elliptic PDEs in general.]
+Due to the structure of the forward operator $\mathcal K$, Tikhonov reconstructions tend to appear on or near the boundary of the domain, corresponding to directions which appear near the null space of the operator. To address this issue, Elvetun and Nielsen proposed a weighted formulation which uses knowledge about the operator \cite{elvetun_regularization_2020}. The resulting weights $W$ are constructed in a way to punish solutions which are located near the boundary. This method shows promising results, with reconstructions being located correctly, but with smoothing artifacts and a loss of the original source magnitude.
+
+However, the construction of the weights $W$ is computationally expensive. Each column of $W$ is obtained by solving \eqref{eq:pde} with a corresponding basis function as right-hand side. Thus, the method requires one PDE solve per mesh node (or degree of freedom) in the discretization of $\Omega$, hence, the computation cost grows with the resolution of the mesh. In two spatial dimensions, the number of mesh nodes, denoted $N$, increases quadratically with the mesh resolution, whereas in three dimensions it increases cubically. This makes the method computationally infeasible for fine discretizations or large domains.
+
+This address this issue, we propose a low-rank approximation strategy based on the randomized singular value decomposition (rSVD). The key idea is to use random sampling of $\mathcal{K}$ to find an approximate rank-$p$ SVD $K_p = U \Sigma V^T$, which then can be used to effectively construct the weights $W$. Due to the large null space of $\mathcal{K}$, and it's rapid decay of singular values, the target rank $p$ can be selected much smaller than $N$.
+
+% In addition, I use a dynamic low-rank solver to find low-rank solutions (rank 1), and explore different additional regularization techniques (TV regularization, penalty methods)
+
+% However, the methods presented in this thesis are not limitied to this particular equation, and may be applied to elliptic PDEs in general.]
 
 
 \clearpage
@@ -118,24 +120,22 @@ However, source identification problems of this form are ill-posed, as the opera
 \subsection{The forward operator}
 \input{figures/forward_operator.tex}
 
-Let $\Omega \subset \mathbb R^2$ be a bounded domain with boundary $\partial \Omega$. I consider the following second-oder elliptic boundary value problem (BVP):
-\begin{eqnarray}\label{eq:pde}
-    \begin{aligned}
-    -\nabla \cdot \sigma\nabla u + ku &= f \quad \text{in } \Omega, \\
-    \frac{\partial u}{\partial \v n} &= 0 \quad \text{on } \partial\Omega,
-    \end{aligned}
-\end{eqnarray}
-where $k > 0$ and $\sigma, f \in H^1(\Omega)$ (TODO: hva er $\sigma$). This is a diffusion-reaction equation with Neumann boundary conditions. Equation~\eqref{eq:pde} defines a mapping $\mathcal S: H^1(\Omega) \rightarrow H^1(\Omega)$. If $f \in H^1(\Omega)$ is the source function (the input), then Equation~\eqref{eq:pde} maps $f$ to $\mathcal S f = u$ (the output). 
+Let $\Omega \subset \mathbb R^2$ be a bounded domain with boundary $\partial \Omega$, and consider the boundary value problem (BVP) in Equation~\eqref{eq:pde}. The coefficient $\sigma = \sigma(x) > 0$ denotes the diffusion coefficient and determines the rate and direction of diffusion in the problem. It may be scalar-valued or matrix-valued, and in the latter case, we assume that $\sigma(x)$ is symmetric and positive definite (see Appendix [...]). The reaction coefficient $k = k(x) > 0$ describes the absorption or decay within the problem. Finally, $f = f(x)$ denotes the source term, which is the unknown input of the inverse problem.
 
-Introduce the trace operator $\mathcal T: H^1(\Omega) \rightarrow H^1(\partial\Omega)$, defined by
-\begin{equation}\label{eq:trace}
-    \mathcal T: u \mapsto g = u|_{\partial\Omega}.
-\end{equation}
-$\mathcal T u$ represents the observed values of $u$ on the boundary of $\Omega$. Operator~\eqref{eq:pde} and \eqref{eq:trace} defines the forward operator $\mathcal K: H^1(\Omega) \rightarrow H^1(\partial\Omega)$, 
+Equation~\eqref{eq:pde} is a diffusion-reaction problem with Neumann boundary conditions, and defines a mapping $\mathcal S: H^1(\Omega) \rightarrow H^1(\Omega)$,
 \begin{equation}
-    \mathcal K = \mathcal T \circ \mathcal S,
+    \mathcal{S}: f \mapsto u.
 \end{equation}
-which is a mapping from the source function $f$ to the observed output $g = \mathcal K f$ on the boundary $\partial \Omega$. Figure~\ref{fig:forward_operator} illustrates the components of the forward operator, which defines the inverse problem: given observed boundary function $g$, we seek a source function $f$ such that $\mathcal{K} f = g$. In order to solve such a problem computationally, the problem must be discretized. This is done through the finite element method, described in the following sections.
+
+Introduce the trace operator $\mathcal T: H^1(\Omega) \rightarrow H^1(\partial\Omega)$ defined by
+\begin{equation}\label{eq:trace}
+    \mathcal T: u \mapsto u|_{\partial\Omega}.
+\end{equation}
+$\mathcal T u$ represents the observed values of $u$ on the boundary of $\Omega$. The PDE operator $\mathcal{S}$ and the trace operator $\mathcal{T}$ defines a forward operator $\mathcal K: H^1(\Omega) \rightarrow H^1(\partial\Omega)$,
+\begin{equation}
+    \mathcal K = \mathcal T \circ \mathcal S: f \mapsto u|_{\partial\Omega},
+\end{equation}
+which is a mapping from the source function $f$ to the observed output $u|_{\partial\Omega} = \mathcal K f$ on the boundary $\partial \Omega$. Figure~\ref{fig:forward_operator} illustrates forward operator, which defines the inverse problem: given an observed boundary function $u|_{\partial\Omega}$, we seek a source function $f$ such that $\mathcal{K} f = g$. In order to solve such a problem computationally, the problem must be discretized. This is done through the finite element method, described in the following sections.
 
 
 \subsection{The variational formulation}
@@ -153,7 +153,7 @@ Let $\mathcal M$ be a triangulation of $\Omega$ made up of $N$ nodes, with $N_b$
 \begin{equation}\label{eq:fem_space}
     V_h = \{v \in C^0(\Omega) : v|_M \text{ is linear for all } M \in \mathcal M \}.
 \end{equation}
-This is the space of all continuous functions which are piecewise linear on $\mathcal{M}$. Let $\Phi = \{\phi_1, \dots, \phi_N\}$ be a basis $V_h$, i.e., $\operatorname{span}(\Phi) = V_h$. The basis functions $\phi_1, \dots, \phi_N$ are typically hat functions (see \parencite[p.~51]{larson_finite_2013}). For each node making up the mesh $\mathcal{M}$, there is a corresponding basis function. Since the mesh $\mathcal{M}$ consists of $N$ nodes and $N_b$ boundary nodes, then the basis set $\Phi$ must contain $N$ basis function, with $N_b$ being located on the mesh boundary.
+This is the space of all continuous functions which are piecewise linear on $\mathcal{M}$. Let $\Phi = \{\phi_1, \dots, \phi_N\}$ be a basis $V_h$, i.e., $\operatorname{span}(\Phi) = V_h$. The basis functions $\phi_1, \dots, \phi_N$ are typically hat functions (see \parencite[p.~51]{larson_finite_2013}). For each node making up the mesh $\mathcal{M}$, there is a corresponding basis function. The mesh $\mathcal{M}$ consists of $N$ nodes and $N_b$ boundary nodes, meaning that $\Phi$ contains $N$ basis function, with $N_b$ being located on the mesh boundary.
 
 By replacing $H^1(\Omega)$ with $V_h$ in Eq.~\eqref{eq:variational_formulation}, I get the finite element method: find $u_h \in V_h$ such that
  \begin{equation}\label{eq:fem_formulation}
@@ -196,10 +196,11 @@ Equation~\eqref{eq:inverse_problem} represents the discrete inverse problem: giv
 
 
 \subsection{Tikhonov regularization}
-Theory on Tikhonov regularization,
-\begin{equation}
-    \min_{x \in \mathbb R^n} \| A x - b \|^2 + \lambda^2 \| x \|^2
+Let $K$ be an $N_b \times N$ matrix, and consider the problem
+\begin{equation}\label{eq:tikhonov}
+    \min_{x \in \mathbb R^N} \| K x - y \|^2 + \lambda^2 \| W x \|^2,
 \end{equation}
+where $\lambda \ge 0$ is the regularization parameter and $W \in \mathbb{R}^{N \times N}$ are the regularization weights. The solution $x_\lambda$ of Eq.~\eqref{eq:tikhonov} is known as the Tikhonov solution of $K x = y$. The term $\| W x \|^2$ punishes the weighted norm $x$ preventing the norm of $x$ from exploding, which often is a problem in ill-posed problems \textcolor{red}{(reference)}.
 
 
 \subsection{Randomized SVD}
@@ -390,5 +391,12 @@ In the methodology, you might include mentions of various \texttt{python} (or ot
 
 \clearpage
 \appendices % This command is needed to start the appendix section and number the figures and tables accordingly. You should still use "\section"s to make your appendices.
+\section{Mathematical preliminaries}
+\subsection{Positive definiteness}
+Let $\sigma = \sigma(x)$ be a symmetric $N \times N$ matrix. We say that $\sigma(x)$ is positive definite if
+\begin{equation}
+    y^T \sigma(x) y \ge 0
+\end{equation}
+for all $y \in \mathbb{R}^N$.
 
 \end{document}

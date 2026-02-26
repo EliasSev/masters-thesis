@@ -403,6 +403,37 @@ In the methodology, you might include mentions of various \texttt{python} (or ot
 \clearpage
 \appendices % This command is needed to start the appendix section and number the figures and tables accordingly. You should still use "\section"s to make your appendices.
 \section{Mathematical preliminaries}
+\subsection{Function spaces}
+Let $\Omega \subset \mathbb{R}^d$ be an open set and $\mathbb{F}$ denote either $\mathbb{R}$ or $\mathbb{C}$. The space $L^2(\Omega)$, often referred to as the Lebesgue space of square integrable functions, is defined as 
+\begin{equation}
+    L^2(\Omega) =
+    \left\{
+        f : \Omega \to \mathbb{F} \, \Bigg| \,
+        \int_{\Omega} |f(x)|^2 \, dx < \infty
+    \right\},
+\end{equation}
+with inner product
+\begin{equation}
+    \langle f,\, g \rangle_{L^2(\Omega)} = \int_\Omega f(x) \overline{g(x)} \, dx.
+\end{equation}
+The space $L^2(\Omega)$ is a Hilbert space, i.e., a complete inner product space. For details, see Section~3 in Kreyszig \cite{kreyszigIntroductoryFunctionalAnalysis1989}.
+
+The space $H^1(\Omega)$, known as the first-order Sobolev space, is defined as
+\begin{equation}
+    H^1(\Omega) =
+    \left\{
+        f \in L^2(\Omega) \, \Bigg| \,
+        \frac{\partial f}{\partial x_i} \in L^2(\Omega),\, i = 1, \dots, d  
+    \right\},
+\end{equation}
+with inner product
+\begin{equation}
+    \langle f,\, g \rangle_{H^1(\Omega)} = 
+    \langle f,\, g \rangle_{L^2(\Omega)} +
+    \langle \nabla f,\, \nabla g \rangle_{L^2(\Omega)}.
+\end{equation}
+The space $H^1(\Omega)$ is a Hilbert space. See Section~2 in Quarteroni for further details \cite{quarteroniNumericalModelsDifferential2014}.
+
 \subsection{Positive definiteness}\label{sec:positive_definiteness}
 Let $\sigma = \sigma(x)$ be a symmetric $N \times N$ matrix. We say that $\sigma(x)$ is positive definite if
 \begin{equation}

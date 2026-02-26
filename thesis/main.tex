@@ -120,22 +120,30 @@ This address this issue, we propose a low-rank approximation strategy based on t
 \subsection{The forward operator}
 \input{figures/forward_operator.tex}
 
-Let $\Omega \subset \mathbb R^2$ be a bounded domain with boundary $\partial \Omega$, and consider the boundary value problem (BVP) in Equation~\eqref{eq:pde}. The coefficient $\sigma = \sigma(x) > 0$ denotes the diffusion coefficient and determines the rate and direction of diffusion in the problem. It may be scalar-valued or matrix-valued, and in the latter case, we assume that $\sigma(x)$ is symmetric and positive definite (see Appendix [...]). The reaction coefficient $k = k(x) > 0$ describes the absorption or decay within the problem. Finally, $f = f(x)$ denotes the source term, which is the unknown input of the inverse problem.
+Let $\Omega \subset \mathbb R^2$ be a bounded domain with boundary $\partial \Omega$, and consider the boundary value problem (BVP) in Equation~\eqref{eq:pde}. The coefficient $\sigma = \sigma(x) > 0$ denotes the diffusion coefficient and determines the rate and direction of diffusion in the problem. It may be either scalar-valued or matrix-valued. In the latter case, we assume that $\sigma(x)$ is symmetric and positive definite (see Appendix~\ref{sec:positive_definiteness}) to keep the problem elliptic. The reaction coefficient $k = k(x) > 0$ describes the absorption or decay within the problem. Finally, $f = f(x)$ denotes the source term, which is the unknown input of the inverse problem.
 
-Equation~\eqref{eq:pde} is a diffusion-reaction problem with Neumann boundary conditions, and defines a mapping $\mathcal S: H^1(\Omega) \rightarrow H^1(\Omega)$,
+Equation~\eqref{eq:pde} is a linear diffusion-reaction problem with Neumann boundary conditions, and defines a mapping
 \begin{equation}
-    \mathcal{S}: f \mapsto u.
+    \mathcal S: L^2(\Omega) \rightarrow H^1(\Omega), \quad \mathcal{S} f = u.
 \end{equation}
 
-Introduce the trace operator $\mathcal T: H^1(\Omega) \rightarrow H^1(\partial\Omega)$ defined by
+To model boundary observations, we introduce the trace operator
 \begin{equation}\label{eq:trace}
-    \mathcal T: u \mapsto u|_{\partial\Omega}.
+    \mathcal T: H^1(\Omega) \rightarrow L^2(\partial\Omega), \quad \mathcal{T} u = u|_{\partial\Omega}
 \end{equation}
-$\mathcal T u$ represents the observed values of $u$ on the boundary of $\Omega$. The PDE operator $\mathcal{S}$ and the trace operator $\mathcal{T}$ defines a forward operator $\mathcal K: H^1(\Omega) \rightarrow H^1(\partial\Omega)$,
+The term $\mathcal T u$ represents the observed values of $u$ on the boundary of $\Omega$.
+
+The forward operator is then defined as the composition
 \begin{equation}
-    \mathcal K = \mathcal T \circ \mathcal S: f \mapsto u|_{\partial\Omega},
+    \mathcal K = \mathcal T \circ \mathcal S, \quad \mathcal{K} f = u|_{\partial\Omega},
 \end{equation}
-which is a mapping from the source function $f$ to the observed output $u|_{\partial\Omega} = \mathcal K f$ on the boundary $\partial \Omega$. Figure~\ref{fig:forward_operator} illustrates forward operator, which defines the inverse problem: given an observed boundary function $u|_{\partial\Omega}$, we seek a source function $f$ such that $\mathcal{K} f = g$. In order to solve such a problem computationally, the problem must be discretized. This is done through the finite element method, described in the following sections.
+which is a mapping from the source function $f$ to the observed output $u|_{\partial\Omega} = \mathcal K f$ on the boundary $\partial \Omega$. See Figure~\ref{fig:forward_operator}.
+
+The associated inverse problem can now be formulated as follows: given boundary data $u|_{\partial\Omega}$, determine a source function $f$ such that
+\begin{equation}
+    \mathcal{K} f = u|_{\partial\Omega}.
+\end{equation}
+In order to solve such a problem computationally, the problem must be discretized. In this thesis, the discretization is done using the finite element method (FEM), described in the following sections.
 
 
 \subsection{The variational formulation}
@@ -196,6 +204,9 @@ Equation~\eqref{eq:inverse_problem} represents the discrete inverse problem: giv
 
 
 \subsection{Tikhonov regularization}
+% Introduce general min problem, and normal equation.
+% Then introduce Tikhonov 
+% Then introduce general Tikhonov
 Let $K$ be an $N_b \times N$ matrix, and consider the problem
 \begin{equation}\label{eq:tikhonov}
     \min_{x \in \mathbb R^N} \| K x - y \|^2 + \lambda^2 \| W x \|^2,
@@ -392,7 +403,7 @@ In the methodology, you might include mentions of various \texttt{python} (or ot
 \clearpage
 \appendices % This command is needed to start the appendix section and number the figures and tables accordingly. You should still use "\section"s to make your appendices.
 \section{Mathematical preliminaries}
-\subsection{Positive definiteness}
+\subsection{Positive definiteness}\label{sec:positive_definiteness}
 Let $\sigma = \sigma(x)$ be a symmetric $N \times N$ matrix. We say that $\sigma(x)$ is positive definite if
 \begin{equation}
     y^T \sigma(x) y \ge 0

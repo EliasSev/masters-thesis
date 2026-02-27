@@ -15,15 +15,29 @@
 
 % Additional packages
 \usepackage{algorithm}
-\usepackage{algpseudocode}  % modern and recommended
-\usepackage[intoc]{nomencl}
+\usepackage{algpseudocode}
+\usepackage[intoc,refpage]{nomencl}
+
 \makenomenclature
+\renewcommand{\nomname}{List of Symbols}
+\renewcommand{\pagedeclaration}[1]{\dotfill #1}
+\setlength{\nomitemsep}{0pt}
+\renewcommand{\nomgroup}[1]{%
+  \item[\bfseries
+  \ifstrequal{#1}{A}{Geometry}{%
+    \ifstrequal{#1}{B}{PDE coefficients}{%
+      \ifstrequal{#1}{C}{Continuous operators}{%
+        \ifstrequal{#1}{D}{Function spaces}{%
+          \ifstrequal{#1}{E}{Discrete operators \& matrices}
+        }}}}%
+  ]
+}
 
 \renewcommand{\algorithmicrequire}{\textbf{Input:}}
 \renewcommand{\algorithmicensure}{\textbf{Output:}}
 \renewcommand{\v}[1]{\boldsymbol{#1}}
 
-% If you would like to have a bibliography with named authors, organised alphabetically, add "namedauthors" to the parameters of the document class.
+% If you would like to have a bibliography with named authors, organized alphabetically, add "namedauthors" to the parameters of the document class.
 \addbibresource{bib.bib} % here you include the bibliography file. 
 \graphicspath{{../figures/}}
 
@@ -59,21 +73,7 @@
 %   \acro{LSTM}{Long Short-Term Memory}
 %\end{acronym}
 
-\section*{List of Symbols}
-
-\begin{tabular}{ll}
-    $\Omega$ & Problem domain \\
-    $\partial\Omega$ & Domain boundary \\
-    $A$ & Stiffness matrix \\
-    $M$ & (Domain) mass matrix \\
-    $M_{ds}$ & Boundary mass matrix \\
-    $K$ & Discrete forward operator \\
-    $K^*$ & Adjoint of the discrete forward operator \\
-    $W$ & Weight matrix in the regularization \\
-    $\lambda$ & Regularization parameter \\
-    $\Xi$ & Random test matrix
-\end{tabular}
-
+\printnomenclature
 
 \startthesis % This command will separate the Roman-numbered pages above and the Arabic-numbered pages below as well as create the table of contents, list of figures, list of tables, and potentially list of acronyms
 
@@ -106,37 +106,42 @@ This address this issue, we propose a low-rank approximation strategy based on t
 
 % In addition, I use a dynamic low-rank solver to find low-rank solutions (rank 1), and explore different additional regularization techniques (TV regularization, penalty methods)
 
-% However, the methods presented in this thesis are not limitied to this particular equation, and may be applied to elliptic PDEs in general.]
+% However, the methods presented in this thesis are not limited to this particular equation, and may be applied to elliptic PDEs in general.]
 
 
 \clearpage
 \section{Mathematical background}
 
-\nomenclature{$\Omega$}{Computational domain}
-\nomenclature{$\partial\Omega$}{Boundary of the domain}
-\nomenclature{$A$}{Stiffness matrix}
-\nomenclature{$M$}{Mass matrix}
-
 \subsection{The forward operator}
 \input{figures/forward_operator.tex}
 
 Let $\Omega \subset \mathbb R^2$ be a bounded domain with boundary $\partial \Omega$, and consider the boundary value problem (BVP) in Equation~\eqref{eq:pde}. The coefficient $\sigma = \sigma(x) > 0$ denotes the diffusion coefficient and determines the rate and direction of diffusion in the problem. It may be either scalar-valued or matrix-valued. In the latter case, we assume that $\sigma(x)$ is symmetric and positive definite (see Appendix~\ref{sec:positive_definiteness}) to keep the problem elliptic. The reaction coefficient $k = k(x) > 0$ describes the absorption or decay within the problem. Finally, $f = f(x)$ denotes the source term, which is the unknown input of the inverse problem.
+\nomenclature[A]{$\Omega$}{Computational domain}
+\nomenclature[A]{$\partial\Omega$}{Boundary of the domain}
+\nomenclature[B]{$\sigma,\, \sigma(x)$}{Diffusion coefficient}
+\nomenclature[B]{$k,\, k(x)$}{Reaction coefficient}
 
 Equation~\eqref{eq:pde} is a linear diffusion-reaction problem with Neumann boundary conditions, and defines a mapping
 \begin{equation}
     \mathcal S: L^2(\Omega) \rightarrow H^1(\Omega), \quad \mathcal{S} f = u.
 \end{equation}
+Here, $L^2(\Omega)$ is the space of square integrable functions and $H^1(\Omega) \subset L^2(\Omega)$ the first-order Sobolev space, see Appendix~\ref{appendix:function_spaces}
+\nomenclature[C]{$\mathcal{S}$}{PDE operator}
+\nomenclature[D]{$L^2(\Omega)$}{Space of square integrable functions}
+\nomenclature[D]{$H^1(\Omega)$}{First-order Sobolev space}
 
 To model boundary observations, we introduce the trace operator
 \begin{equation}\label{eq:trace}
     \mathcal T: H^1(\Omega) \rightarrow L^2(\partial\Omega), \quad \mathcal{T} u = u|_{\partial\Omega}
 \end{equation}
+\nomenclature[C]{$\mathcal{T}$}{Trace operator}
 The term $\mathcal T u$ represents the observed values of $u$ on the boundary of $\Omega$.
 
 The forward operator is then defined as the composition
 \begin{equation}
     \mathcal K = \mathcal T \circ \mathcal S, \quad \mathcal{K} f = u|_{\partial\Omega},
 \end{equation}
+\nomenclature[C]{$\mathcal{K}$}{Forward operator}
 which is a mapping from the source function $f$ to the observed output $u|_{\partial\Omega} = \mathcal K f$ on the boundary $\partial \Omega$. See Figure~\ref{fig:forward_operator}.
 
 The associated inverse problem can now be formulated as follows: given boundary data $u|_{\partial\Omega}$, determine a source function $f$ such that
@@ -162,6 +167,10 @@ Let $\mathcal M$ be a triangulation of $\Omega$ made up of $N$ nodes, with $N_b$
     V_h = \{v \in C^0(\Omega) : v|_M \text{ is linear for all } M \in \mathcal M \}.
 \end{equation}
 This is the space of all continuous functions which are piecewise linear on $\mathcal{M}$. Let $\Phi = \{\phi_1, \dots, \phi_N\}$ be a basis $V_h$, i.e., $\operatorname{span}(\Phi) = V_h$. The basis functions $\phi_1, \dots, \phi_N$ are typically hat functions (see \parencite[p.~51]{larson_finite_2013}). For each node making up the mesh $\mathcal{M}$, there is a corresponding basis function. The mesh $\mathcal{M}$ consists of $N$ nodes and $N_b$ boundary nodes, meaning that $\Phi$ contains $N$ basis function, with $N_b$ being located on the mesh boundary.
+\nomenclature[A]{$\mathcal{M}$}{Triangulation (mesh)}
+\nomenclature[A]{$N$}{Number of mesh nodes}
+\nomenclature[A]{$N_b$}{Number of boundary mesh nodes}
+\nomenclature[D]{$V_h$}{Finite element space}
 
 By replacing $H^1(\Omega)$ with $V_h$ in Eq.~\eqref{eq:variational_formulation}, I get the finite element method: find $u_h \in V_h$ such that
  \begin{equation}\label{eq:fem_formulation}
@@ -199,6 +208,11 @@ By denoting the boundary coefficients of $\v u$ by $\v y$, i.e., $T \v u = \v y$
     K \v x = \v y.
 \end{equation}
 Equation~\eqref{eq:inverse_problem} represents the discrete inverse problem: given observed boundary data $\v y$, we seek the coefficient vector $\v x$ of the source term $f_h$.
+
+\nomenclature[E]{$M_{dx}$}{Volume mass matrix}
+\nomenclature[E]{$M_{ds}$}{Boundary mass matrix}
+\nomenclature[E]{$K$}{Discrete forward operator}
+
 
 %In practice, this system is often **ill-posed** due to the large null space of $K$ and the accumulation of numerical errors in $A^{-1}$. As a result, naive solutions of Eq.~\eqref{eq:inverse_problem} are highly sensitive to noise in $\v y$, motivating the need for regularization techniques. In the following section, we discuss classical Tikhonov regularization and introduce the weighted approach that will be explored in this thesis.
 
@@ -266,7 +280,7 @@ From the definition of $K^*$ we know that
 \begin{equation}
     (K^* z)^T M_{dx} = z^T M_{ds}K,
 \end{equation}
-for all $z$. Hence, setting $z = \tilde q_i$, we have that $(K^* \tilde q_i)^T M_{dx} = \tilde q_i^T M_{ds} K$, and from Eq~\eqref{}, we get that
+for all $z$. Hence, setting $z = \tilde q_i$, we have that $(K^* \tilde q_i)^T M_{dx} = \tilde q_i^T M_{ds} K$, and from Eq~ eqref, we get that
 \begin{equation}
 \begin{aligned}
     b_i &= \tilde q_i^T M_{ds} K \\
@@ -291,7 +305,7 @@ and by letting $U_k = Q \tilde U_k$, we get an approximate SVD decomposition of 
 \begin{equation}
     K \approx U_k \Sigma_k V_k^T.
 \end{equation}
-By noting that $U_k \Sigma_k V_k^T = Q \tilde U_k \Sigma_k V_k^T = Q B = Q Q^T K$, and that $\operatorname{rank}(Q) = k$, we know that the factorization in Eq~\eqref{} is a rank-$k$ approximation of $K$. The procedure is summarized in Algorithm~\ref{alg:discrete_rsvd}.
+By noting that $U_k \Sigma_k V_k^T = Q \tilde U_k \Sigma_k V_k^T = Q B = Q Q^T K$, and that $\operatorname{rank}(Q) = k$, we know that the factorization in Eq~ eqref is a rank-$k$ approximation of $K$. The procedure is summarized in Algorithm~\ref{alg:discrete_rsvd}.
 
 
 \begin{algorithm}[!thbp]
@@ -388,7 +402,10 @@ In the methodology, you might include mentions of various \texttt{python} (or ot
 
 \clearpage
 \section{Results}
+\subsection{Forward operator computational time}
+\input{figures/exact_vs_rsvd_comp_time.tex}
 
+\subsection{Weights computational time}
 
 \clearpage
 \section{Discussion}
@@ -402,8 +419,11 @@ In the methodology, you might include mentions of various \texttt{python} (or ot
 
 \clearpage
 \appendices % This command is needed to start the appendix section and number the figures and tables accordingly. You should still use "\section"s to make your appendices.
+\renewcommand{\theequation}{A\arabic{equation}}
+\setcounter{equation}{0}
+
 \section{Mathematical preliminaries}
-\subsection{Function spaces}
+\subsection{Function spaces}\label{appendix:function_spaces}
 Let $\Omega \subset \mathbb{R}^d$ be an open set and $\mathbb{F}$ denote either $\mathbb{R}$ or $\mathbb{C}$. The space $L^2(\Omega)$, often referred to as the Lebesgue space of square integrable functions, is defined as 
 \begin{equation}
     L^2(\Omega) =
@@ -432,7 +452,7 @@ with inner product
     \langle f,\, g \rangle_{L^2(\Omega)} +
     \langle \nabla f,\, \nabla g \rangle_{L^2(\Omega)}.
 \end{equation}
-The space $H^1(\Omega)$ is a Hilbert space. See Section~2 in Quarteroni for further details \cite{quarteroniNumericalModelsDifferential2014}.
+The space $H^1(\Omega)$ is a Hilbert space and a subspace of $L^2(\Omega)$. See Section~2 in Quarteroni for further details \cite{quarteroniNumericalModelsDifferential2014}.
 
 \subsection{Positive definiteness}\label{sec:positive_definiteness}
 Let $\sigma = \sigma(x)$ be a symmetric $N \times N$ matrix. We say that $\sigma(x)$ is positive definite if

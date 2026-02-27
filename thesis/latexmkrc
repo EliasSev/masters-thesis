@@ -1,0 +1,10 @@
+# Run makeindex for nomencl package
+add_cus_dep('nlo', 'nls', 0, 'make_nomencl');
+
+sub make_nomencl {
+    my ($base) = @_;
+    return system("makeindex -s nomencl.ist -o \"$base.nls\" \"$base.nlo\" -l");
+}
+
+# Tell latexmk that .nls is generated from .nlo
+push @generated_exts, 'nls';

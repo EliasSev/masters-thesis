@@ -24,6 +24,8 @@ wheels/
 *.run.xml
 *.toc
 *.nlo
+*.ilg
+*.nls
 thesis/*pdf
 
 .vscode

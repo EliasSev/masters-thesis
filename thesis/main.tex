@@ -22,15 +22,17 @@
 \renewcommand{\nomname}{List of Symbols}
 \renewcommand{\pagedeclaration}[1]{\dotfill #1}
 \setlength{\nomitemsep}{0pt}
+\newcommand{\nomgroupname}[1]{%
+  \ifstrequal{#1}{A}{Geometry}{}%
+  \ifstrequal{#1}{B}{PDE coefficients}{}%
+  \ifstrequal{#1}{C}{Continuous operators}{}%
+  \ifstrequal{#1}{D}{Function spaces}{}%
+  \ifstrequal{#1}{E}{Discrete operators \& matrices}{}%
+  \ifstrequal{#1}{F}{Regularization parameters}{}%
+  \ifstrequal{#1}{G}{Randomized SVD}{}
+}
 \renewcommand{\nomgroup}[1]{%
-  \item[\bfseries
-  \ifstrequal{#1}{A}{Geometry}{%
-    \ifstrequal{#1}{B}{PDE coefficients}{%
-      \ifstrequal{#1}{C}{Continuous operators}{%
-        \ifstrequal{#1}{D}{Function spaces}{%
-          \ifstrequal{#1}{E}{Discrete operators \& matrices}
-        }}}}%
-  ]
+  \item[\bfseries \nomgroupname{#1}]
 }
 
 \renewcommand{\algorithmicrequire}{\textbf{Input:}}
@@ -90,11 +92,11 @@ In particular, we study the inverse problem of the form
 subject to
 \begin{eqnarray}\label{eq:pde}
     \begin{aligned}
-    -\nabla \cdot \sigma\nabla u + ku &= f \quad \text{in } \Omega, \\
+    -\nabla \cdot \sigma\nabla u + c u &= f \quad \text{in } \Omega, \\
     \frac{\partial u}{\partial \v n} &= 0 \quad \text{on } \partial\Omega.
     \end{aligned}
 \end{eqnarray}
-Here, $\mathcal{K}$ is the forward operator which maps the source $f$ to the boundary values $\mathcal{K}f = u|_{\partial\Omega}$, $\sigma$ is the \textcolor{red}{[...]}, $k$ is the \textcolor{red}{[...]}, and $y$ is the observed data. This problem has numerous applications, such as inverse imaging, crack determination, and electromagnetic brain mapping \cite{elvetun_regularization_2020}. This problem is a source identification task: we are given observed data $y$, and seek to find the original source term $f$ such that $\mathcal K f = y$.
+Here, $\mathcal{K}$ is the forward operator which maps the source $f$ to the boundary values $\mathcal{K}f = u|_{\partial\Omega}$, $\sigma$ is the diffusion coefficient, $c$ is the reaction coefficient, and $y$ is the observed boundary data. This problem has numerous applications, such as inverse imaging, crack determination, and electromagnetic brain mapping \cite{elvetun_regularization_2020}. This problem is a source identification task: we are given observed data $y$, and seek to find the original source term $f$ such that $\mathcal K f = y$.
 
 However, source identification problems of this form are ill-posed, as the operator $\mathcal K$ has a large null space. Consequently, solutions are not uniquely determined by the data. Moreover, small perturbations the observed data may result in large variations in the reconstructed source. Due to these challenges, typical techniques such as Tikhonov regularization fail to recover a meaningful source term.
 
@@ -115,11 +117,11 @@ This address this issue, we propose a low-rank approximation strategy based on t
 \subsection{The forward operator}
 \input{figures/forward_operator.tex}
 
-Let $\Omega \subset \mathbb R^2$ be a bounded domain with boundary $\partial \Omega$, and consider the boundary value problem (BVP) in Equation~\eqref{eq:pde}. The coefficient $\sigma = \sigma(x) > 0$ denotes the diffusion coefficient and determines the rate and direction of diffusion in the problem. It may be either scalar-valued or matrix-valued. In the latter case, we assume that $\sigma(x)$ is symmetric and positive definite (see Appendix~\ref{sec:positive_definiteness}) to keep the problem elliptic. The reaction coefficient $k = k(x) > 0$ describes the absorption or decay within the problem. Finally, $f = f(x)$ denotes the source term, which is the unknown input of the inverse problem.
+Let $\Omega \subset \mathbb R^2$ be a bounded domain with boundary $\partial \Omega$, and consider the boundary value problem (BVP) in Equation~\eqref{eq:pde}. The coefficient $\sigma = \sigma(x) > 0$ denotes the diffusion coefficient and determines the rate and direction of diffusion in the problem. It may be either scalar-valued or matrix-valued. In the latter case, we assume that $\sigma(x)$ is symmetric and positive definite (see Appendix~\ref{sec:positive_definiteness}) to keep the problem elliptic. The reaction coefficient $c = c(x) > 0$ describes the absorption or decay within the problem. Finally, $f = f(x)$ denotes the source term, which is the unknown input of the inverse problem.
 \nomenclature[A]{$\Omega$}{Computational domain}
 \nomenclature[A]{$\partial\Omega$}{Boundary of the domain}
 \nomenclature[B]{$\sigma,\, \sigma(x)$}{Diffusion coefficient}
-\nomenclature[B]{$k,\, k(x)$}{Reaction coefficient}
+\nomenclature[B]{$c,\, c(x)$}{Reaction coefficient}
 
 Equation~\eqref{eq:pde} is a linear diffusion-reaction problem with Neumann boundary conditions, and defines a mapping
 \begin{equation}
@@ -138,7 +140,7 @@ To model boundary observations, we introduce the trace operator
 The term $\mathcal T u$ represents the observed values of $u$ on the boundary of $\Omega$.
 
 The forward operator is then defined as the composition
-\begin{equation}
+\begin{equation}\label{eq:K}
     \mathcal K = \mathcal T \circ \mathcal S, \quad \mathcal{K} f = u|_{\partial\Omega},
 \end{equation}
 \nomenclature[C]{$\mathcal{K}$}{Forward operator}
@@ -151,68 +153,104 @@ The associated inverse problem can now be formulated as follows: given boundary 
 In order to solve such a problem computationally, the problem must be discretized. In this thesis, the discretization is done using the finite element method (FEM), described in the following sections.
 
 
-\subsection{The variational formulation}
-To derive a finite element formulation of Eq.~\eqref{eq:pde} and the forward operator $\mathcal K$, I first reformulate the boundary value problem in its variational (weak) from. Multiplying the differential equation by a test function $v \in H^1(\Omega)$, integrating over $\Omega$, and applying Green's identity and the Neumann boundary conditions, results in the following variational formulation: find $u \in H^1(\Omega)$ such that
+\subsection{The finite element method}
+\input{figures/triangulation.tex}
+Consider the PDE in Eq.~\eqref{eq:pde}. Multiplying the equation by a test function $v \in H^1(\Omega)$, integrating over $\Omega$, and applying Green's identity yields the weak formulation: find $u \in H^1(\Omega)$ such that
 \begin{equation}\label{eq:variational_formulation}
     \int_{\Omega} (\sigma \nabla u \cdot \nabla v + k u v) \, dx = \int_{\Omega} f v \space \, dx,
     \text{ for all } v \in H^1(\Omega).
 \end{equation}
-For further details, see Section~4 in Larson and Bengzon \cite{larson_finite_2013}.
+For details on the derivation, see Section~4 in Larson and Bengzon \cite{larson_finite_2013}.
 
-
-\subsection{The finite element method}
-\input{figures/triangulation.tex}
-Let $\mathcal M$ be a triangulation of $\Omega$ made up of $N$ nodes, with $N_b$ boundary nodes, see Fig.~\ref{fig:triangulation} as an example. The finite element space is the finite-dimensional $V_h \subset H^1(\Omega)$,
+Let $\mathcal M$ be a triangulation of $\Omega$ made up of $N$ nodes, with $N_b$ boundary nodes, see Fig.~\ref{fig:triangulation} as an example. Introduce the finite element space $V_h \subset H^1(\Omega)$,
 \begin{equation}\label{eq:fem_space}
     V_h = \{v \in C^0(\Omega) : v|_M \text{ is linear for all } M \in \mathcal M \}.
 \end{equation}
-This is the space of all continuous functions which are piecewise linear on $\mathcal{M}$. Let $\Phi = \{\phi_1, \dots, \phi_N\}$ be a basis $V_h$, i.e., $\operatorname{span}(\Phi) = V_h$. The basis functions $\phi_1, \dots, \phi_N$ are typically hat functions (see \parencite[p.~51]{larson_finite_2013}). For each node making up the mesh $\mathcal{M}$, there is a corresponding basis function. The mesh $\mathcal{M}$ consists of $N$ nodes and $N_b$ boundary nodes, meaning that $\Phi$ contains $N$ basis function, with $N_b$ being located on the mesh boundary.
+Let $\{\phi_1, \dots, \phi_N\}$ denote a basis for $V_h$, so that
+\begin{equation}
+    V_h = \operatorname{span}\{ \phi_1, \dots, \phi_N \}.
+\end{equation}
+The basis functions $\phi_i$ are piecewise linear hat functions associated with the nodes of the mesh (see \cite[p.~51]{larson_finite_2013}).
+
 \nomenclature[A]{$\mathcal{M}$}{Triangulation (mesh)}
 \nomenclature[A]{$N$}{Number of mesh nodes}
 \nomenclature[A]{$N_b$}{Number of boundary mesh nodes}
 \nomenclature[D]{$V_h$}{Finite element space}
 
-By replacing $H^1(\Omega)$ with $V_h$ in Eq.~\eqref{eq:variational_formulation}, I get the finite element method: find $u_h \in V_h$ such that
+The finite element approximation of \eqref{eq:variational_formulation} then reads: 
+find $u_h \in V_h$ such that
  \begin{equation}\label{eq:fem_formulation}
     \int_{\Omega} (\sigma \nabla u_h \cdot \nabla v + k u_h v) \, dx = \int_{\Omega} f v \space \, dx,
     \text{ for all } v \in V_h.
 \end{equation}
 
 
-\subsection{The discrete inverse problem}
-In order to represent the forward operator $\mathcal{K} = \mathcal{T} \circ \mathcal{S}$ in a discrete form which can be represented computationally, both the PDE operator $\mathcal S$ and the trace $\mathcal T$ must be discretized, i.e., their matrix representations $S$ and $T$ must be found. Using finite element representations of $f$, $u$ and $g$, the problem $\mathcal{K}f = g$ can be expressed in terms of a system of linear equations.
+\subsection{The discrete forward operator}
+To obtain a discrete representation of the forward operator 
+$\mathcal{K} = \mathcal{T} \circ \mathcal{S}$, 
+we discretize both the PDE operator $\mathcal{S}$ and the trace operator $\mathcal{T}$ using the finite element space $V_h$.
 
-Discretizing the PDE operator $\mathcal{S}$, which represents the finite element formulation in Eq.~\eqref{eq:fem_formulation}, is done by replacing the source function $f$ by its finite element approximation $f_h \in V_h$. Since both $u_h$ and $f_h$ are functions of the subspace $V_h$, they may be written as a linear combinations of the basis functions $\phi_1, \dots, \phi_N$,
+Let $f_h, u|_{\partial\Omega, h} \in V_h$ denote the finite element approximations of $f$ and $u|_{\partial\Omega}$, respectively. Since $V_h = \operatorname{span}\{\phi_1,\dots,\phi_N\}$, they can be written as
 \begin{equation}\label{eq:uh_and_fh}
-    u_h = \sum_{j=1}^{N} u_j \phi_j, \quad
-    f_h = \sum_{j=1}^{N} x_j \phi_j.
+    u_h = \sum_{j=1}^{N} u_j \phi_j, 
+    \quad
+    f_h = \sum_{j=1}^{N} x_j \phi_j,
 \end{equation}
-where $\{ \phi_1, \dots, \phi_N \}$ is a basis for $V_h$. Let $\v x = [x_1, \, \dots, \, x_N]$ and $\v u = [u_1, \, \dots, \, u_N]$ be the coefficient vectors for $f_h$ and $u_h$, respectively.
-By inserting Eq.~\eqref{eq:uh_and_fh} into the finite element formulation in Eq.~\eqref{eq:fem_formulation}, following system of linear equations (matrix-vector equation) is obtained:
-\begin{equation}\label{eq:matrix_vector_equation}
-    A \v x = M \v u.
-\end{equation}
-$A$ is known as the stiffness matrix and $M$ the mass matrix. Solving Eq.~\eqref{eq:matrix_vector_equation} for $\v x$, we get that $\v x = A^{-1} M \v u$, so the discretization $S\in \mathbb{R}^{N \times N}$ of the PDE operator $\mathcal S$ is therefore
-\begin{equation}\label{eq:discrete_S}
-    S = A^{-1}M.
-\end{equation}
-Note that $S$ maps the coefficients $\v x$ of $f_h$ to the coefficients $\v u$ of $u_h$ in their finite element representations given in Eq.~\eqref{eq:uh_and_fh}.
+with coefficient vectors $\v u = (u_1,\dots,u_N)^T$ 
+and $\v x = (x_1,\dots,x_N)^T$.
 
-The discretization $T: \mathbb{R}^N \rightarrow \mathbb{R}^{N_b}$ of $\mathcal T$ is a $N_b \times N$ matrix which extracts the boundary coefficients of a function. Each row has one element equal to 1, corresponding to the boundary node index, and 0s elsewhere. Next, using the discrete operators $S$ and $T$, we get that the discretized formulation of the forward operator $\mathcal K = \mathcal T \circ \mathcal S$ is
+Inserting \eqref{eq:uh_and_fh} into the finite element formulation \eqref{eq:fem_formulation} and testing with the basis functions 
+$\{\phi_i\}_{i=1}^N$ yields the linear system
+\begin{equation}\label{eq:matrix_system}
+    A \mathbf{u} = M \mathbf{x},
+\end{equation}
+where $A \in \mathbb{R}^{N \times N}$ is the stiffness matrix and $M \in \mathbb{R}^{N \times N}$ the mass matrix, see Appendix \textcolor{red}{(ref)} for details. Equation~\eqref{eq:matrix_system} implies the discrete PDE operator $S$ takes the form
+\begin{equation}
+    S = A^{-1} M \in \mathbb{R}^{N \times N}
+\end{equation}
+Note that $S$ is a mapping of coefficients vectors: mapping $\v x$ to $\v u$.
+
+The trace operator is discretized by a matrix 
+$T \in \mathbb{R}^{N_b \times N}$ that extracts the boundary coefficients. If $\mathbf{y}$ denotes the vector of boundary coefficients, then
+\begin{equation}
+    \v y = T \v u.
+\end{equation}
+
+Combining the discrete PDE and trace operators yields the matrix representation of the forward operator,
 \begin{equation}\label{eq:discrete_K}
-    K = T S = T A^{-1} M \in \mathbb R^{N_b \times N}.
+    K = T S = T A^{-1} M \in \mathbb{R}^{N_b \times N}.
 \end{equation}
-
-By denoting the boundary coefficients of $\v u$ by $\v y$, i.e., $T \v u = \v y$, we can formulate $\mathcal{K}f = u|_{\partial\Omega}$ in its discretized version:
-\begin{equation}\label{eq:inverse_problem}
-    K \v x = \v y.
-\end{equation}
-Equation~\eqref{eq:inverse_problem} represents the discrete inverse problem: given observed boundary data $\v y$, we seek the coefficient vector $\v x$ of the source term $f_h$.
 
 \nomenclature[E]{$M_{dx}$}{Volume mass matrix}
 \nomenclature[E]{$M_{ds}$}{Boundary mass matrix}
 \nomenclature[E]{$K$}{Discrete forward operator}
 
+\subsection{Discrete inner product and norm}
+Let $V_h$ be the finite element space introduced in Eq.~\eqref{eq:fem_space} and let $f_h, g_h \in V_h$, with coefficient vectors $\v x, \v y \in \mathbb{R}^N$, respectively. The $L^2(\Omega)$ inner product (see Eq.~\eqref{eq:L2_inner_product}) of $f_h$ and $g_h$, can be written as
+\begin{equation}
+    \langle f_h, g_h \rangle_{L^2(\Omega)} = \v x^T M \v y,
+\end{equation}
+where $M$ is the mass matrix. 
+
+This induces a discrete inner product on $\mathbb{R}^N$, with associated norm, defined by
+\begin{equation}
+    \langle \v x, \v y \rangle_M = \v x^T M \v y,
+    \quad
+    \| \v x \|_M = \sqrt{\v x^T M \v x}.
+\end{equation}
+
+Similarly, let $\v u, \v v \in \mathbb{R}^{N_b}$ 
+denote coefficient vectors corresponding to the traces 
+$u_h|_{\partial\Omega}$ and $v_h|_{\partial\Omega}$. The $L^2(\partial\Omega)$ inner product induces a discrete inner product and norm on $\mathbb{R}^{N_b}$, given by
+\begin{equation}
+    \langle \mathbf{u}, \mathbf{v} \rangle_{M_{\partial}}
+    = \mathbf{u}^T M_{\partial} \mathbf{v},
+    \quad
+    \| \v  u \|_{M_{\partial}}
+    =
+    \sqrt{ \v  u^T M_{\partial} \v u},
+\end{equation}
+where $M_\partial$ denotes the boundary mass matrix, see Appendix~\textcolor{red}{(reference)}.
 
 %In practice, this system is often **ill-posed** due to the large null space of $K$ and the accumulation of numerical errors in $A^{-1}$. As a result, naive solutions of Eq.~\eqref{eq:inverse_problem} are highly sensitive to noise in $\v y$, motivating the need for regularization techniques. In the following section, we discuss classical Tikhonov regularization and introduce the weighted approach that will be explored in this thesis.
 
@@ -255,7 +293,8 @@ A Master's~\cite{LastName2045norwegian} or a PhD thesis~\cite{Temult2038binding}
 \section{Methods}
 \subsection{Matrix-free randomized SVD}
 \input{figures/rsvd.tex}
-Let $K$ be the $N_b \times N$ discrete forward operator given in Eq. (eqref). We are interested in a rank-$k$ approximation $K_k$ of the matrix $K$. By the Eckart–Young–Mirsky theorem, the optimal rank-$k$ approximation of $K$ is the truncated SVD obtained by keeping the $k$ first singular values, and their corresponding singular values. The randomized SVD provides an efficient alternative, by computing an approximate rank-$k$ factorization $K \approx U_k \Sigma_k V_k$, which also approximates the optimal truncated rank-$k$ SVD decomposition. We will now present a matrix-free variation of the rSVD algorithm, suited for problems where the matrix $K$ is not explicitly known.
+Let $K$ be the $N_b \times N$ discrete forward operator given in Eq.~\eqref{eq:K}. We are interested in a rank-$k$ approximation $K_k$ of the matrix $K$. By the Eckart–Young–Mirsky theorem, the optimal rank-$k$ approximation of $K$ is the truncated SVD obtained by keeping the $k$ first singular values, and their corresponding singular values. The randomized SVD provides an efficient alternative, by computing an approximate rank-$k$ factorization $K \approx U_k \Sigma_k V_k$, which also approximates the optimal truncated rank-$k$ SVD decomposition. We will now present a matrix-free variation of the rSVD algorithm, suited for problems where the matrix $K$ is not explicitly known.
+\nomenclature[G]{$k$}{Target rank}
 
 Like the rSVD, this matrix-free formulation consists of two stages. In the first stage, an approximate basis $Q$ of $K$ is constructed through random sampling of the column space of $K$. In the second stage, the matrix $K$ is projected onto the subspace $\operatorname{span}(Q)$, and a SVD factorization is computed of the projected matrix.
 
@@ -269,75 +308,94 @@ In the first stage, we apply $K$ on $k$ random vectors $\psi_1, \psi_2, \dots, \
 \end{equation}
 achieves such an orthogonalization, obtaining the matrix $Q$ which contains the orthogonalized column-vectors $q_1, q_2, \dots, q_k$. This concludes the first step, where we have obtained an approximation of the column space of $K$:
 \begin{equation}
-    \operatorname{span}\{q_1, q_2, \dots, q_k \} \approx \operatorname{span}(K)
+    \operatorname{span}(Q) \approx \operatorname{span}(K)
 \end{equation}
+\nomenclature[G]{$Y$}{Sample matrix}
+\nomenclature[G]{$\Psi$}{Random matrix}
 
-For the second stage, we project $K$ down to the subspace $\operatorname{span}(Q)$. This is typically done by computing $B = Q^T K$, however, since we do not know $K$ explicitly, we instead compute $B^* = K^* Q$, and then $B$ can be found with as $B = (B^*)^*$. To do this, we do as follows: for $q_1, q_2, \dots, q_k$, compute $\tilde q_i = M_{ds}^{-1} q_i$, and set $\tilde b = K^* \tilde q$, and let
-\begin{equation}
-    b_i = \tilde b_i^T M_{dx} = (K^* \tilde q_i)^T M_{dx}.
+For the second stage, we project $K$ down to the subspace $\operatorname{span}(Q)$. This is typically done by computing $B = Q^T K$. However, since we do not know $K$ explicitly, we instead compute $B^* = K^* Q$, and then $B$ can be found by computing $B = (B^*)^*$.
+
+To do this in practice, we use the the definition of $K^*$ under the finite element space $V_h$,
+\begin{equation}\label{eq:K_star}
+    (K^* z)^T M_{dx} = z^T M_{ds} K.
 \end{equation}
-From the definition of $K^*$ we know that
-\begin{equation}
-    (K^* z)^T M_{dx} = z^T M_{ds}K,
+If we choose $z = M_{ds}^{-1} q_i$ and insert it into Eq.~\eqref{eq:K_star}, we see that
+\begin{equation}\label{eq:rsvd_relation}
+    (K^* z)^T M_{dx}
+    = (M_{ds}^{-1} q_i)^T M_{ds} K
+    = q_i^T K.
 \end{equation}
-for all $z$. Hence, setting $z = \tilde q_i$, we have that $(K^* \tilde q_i)^T M_{dx} = \tilde q_i^T M_{ds} K$, and from Eq~ eqref, we get that
-\begin{equation}
-\begin{aligned}
-    b_i &= \tilde q_i^T M_{ds} K \\
-    &= (M_{ds}^{-1} q_i)^T M_{ds} K \\
-    &= q_i^T M_{ds}^{-1} M_{ds} K \\
-    &= q_i^T K
-\end{aligned}
+Hence, if we let
+\begin{equation}\label{eq:rsvd_adjoint_problem}
+    b_i = (K^* (M_{ds}^{-1} q_i))^T M_{dx}
 \end{equation}
-where used the fact that $M_{ds}$ is symmetric to get that $(M^{-1})^T = M^{-1}$. By repeating this for $i=1,2,\dots,k$, we can construct the $k \times N$ matrix
+for $i = 1, 2, \dots, k$, and define the $k \times N$ matrix
 \begin{equation}
-    B = \begin{bmatrix} b_1 \\ \vdots \\ b_p \end{bmatrix}
+    B = \begin{bmatrix} b_1 \\ \vdots \\ b_k \end{bmatrix}
 \end{equation}
-and since $b_i = q_i^T K$, we conclude that
+it must be that, by Eq.~\eqref{eq:rsvd_relation},
 \begin{equation}
-    B = Q^T K.
+    B = Q^T K,
 \end{equation}
-We have therefore been able to project $K$ onto $Q$ by solving $k$ adjoint problems $\tilde b_i = K^* \tilde q_i$. As the final part of the second stage, we take the SVD of $B$,
+as desired.
+
+We have computed the projection $B = Q^T K$ by solving the adjoint problem in Eq.~\eqref{eq:rsvd_adjoint_problem} $k$ times. In the final part of the second stage, we take the SVD of $B$,
 \begin{equation}
-    B = \tilde U_k \Sigma_k V_k^T
+    B = \tilde U_k \Sigma_k V_k^T,
 \end{equation}
-and by letting $U_k = Q \tilde U_k$, we get an approximate SVD decomposition of the form
-\begin{equation}
+and set $U_k = Q \tilde U_k$. This gives an approximate SVD decomposition of the form
+\begin{equation}\label{eq:rsvd_approx}
     K \approx U_k \Sigma_k V_k^T.
 \end{equation}
-By noting that $U_k \Sigma_k V_k^T = Q \tilde U_k \Sigma_k V_k^T = Q B = Q Q^T K$, and that $\operatorname{rank}(Q) = k$, we know that the factorization in Eq~ eqref is a rank-$k$ approximation of $K$. The procedure is summarized in Algorithm~\ref{alg:discrete_rsvd}.
+By noting that $U_k \Sigma_k V_k^T = Q \tilde U_k \Sigma_k V_k^T = Q B = Q Q^T K$, and that $\operatorname{rank}(Q) = k$, we know that the factorization in Eq.~\eqref{eq:rsvd_approx} is a rank-$k$ approximation of $K$. The procedure is summarized in Algorithm~\ref{alg:discrete_rsvd}.
 
 
 \begin{algorithm}[!thbp]
 \caption{Discrete Operator rSVD Approximation of $K$}
 \label{alg:discrete_rsvd}
 \begin{algorithmic}[1]
-    \Require Forward operator $K: \mathbb{R}^N \to \mathbb{R}^{N_b}$, adjoint operator $K^*: \mathbb{R}^{N_b} \to \mathbb{R}^N$, mass matrices $M_{dx}, M_{ds}$, target rank $p$
-    \Ensure Approximate rank-$p$ factorization $K \approx U \Sigma V^T$
+    \Require Forward operator $K: \mathbb{R}^N \to \mathbb{R}^{N_b}$, adjoint operator $K^*: \mathbb{R}^{N_b} \to \mathbb{R}^N$, mass matrices $M_{dx}, M_{ds}$, target rank $k$
+    \Ensure Approximate rank-$k$ factorization $K \approx U \Sigma V^T$
     
     \State \textbf{Range sketch:}
-    \For{$i = 1, \dots, p$}
-        \State Draw a random vector $\v \xi_i \in \mathbb{R}^N$
-        \State Apply the forward operator: $\v y_i = K \v \xi_i \in \mathbb{R}^{N_b}$
+    \For{$i = 1, \dots, k$}
+        \State Draw a random vector $\psi_i \in \mathbb{R}^N$
+        \State Apply the forward operator: $y_i = K \psi_i \in \mathbb{R}^{N_b}$
     \EndFor
 
-    \State Form the matrix $Y = [\v y_1, \dots, \v y_p] \in \mathbb{R}^{N_b \times p}$ \Comment{Equivalent to $Y = K \Xi$}
+    \State Form the matrix $Y = [y_1, \dots, y_k] \in \mathbb{R}^{N_b \times k}$ \Comment{Equivalent to $Y = K \Psi$}
     \State Compute an orthonormal basis: $Q = \text{orth}(Y)$
 
     \State \textbf{Projection onto the basis:}
     \For{$i = 1, \dots, p$}
-        \State Let $\v q_i$ be the $i$-th column of $Q$
-        \State Compute $\tilde{\v{q}}_i = M_{ds}^{-1} \v{q}_i$
-        \State Set $\v{b}_{\text{adj},i} = K^* \tilde{\v{q}}_i$
-        \State Let $\v{b}_i = b_{\text{adj},i}^T M_{dx}$ \Comment{$i$-th row of $B$}
+        \State Let $q_i$ be the $i$-th column of $Q$
+        \State Apply the adjoint operator: $\tilde b_i = K^* (M_{ds}^{-1} q_i)$
+        \State Set $b_i = \tilde b_i^T M_{dx}$ \Comment{$i$-th row of $B$}
     \EndFor
-    \State Form the projected matrix $B = \begin{bmatrix} b_1 \\ \vdots \\ b_p \end{bmatrix} \in \mathbb{R}^{p \times N}$ \Comment{Equivalent to $B = Q^T Y$}
+    \State Form the projected matrix $B = \begin{bmatrix} b_1 \\ \vdots \\ b_k \end{bmatrix} \in \mathbb{R}^{k \times N}$ \Comment{Equivalent to $B = Q^T Y$}
 
     \State Compute the SVD: $B = \tilde U \Sigma V^T$
     \State Set $U = Q \tilde U$
     
 \end{algorithmic}
 \end{algorithm}
+
+
+\clearpage
+\subsection{Weighted Tikhonov using rSVD}
+Let $K_k = U_k \Sigma_k V_k^T$ be the rank-$k$ approximate SVD of $K$ obtained using Algorithm~\ref{alg:discrete_rsvd}. The weights $W = \operatorname{diag}(w_i)_{i=1}^N$ \textcolor{red}{(referer tilbake til metoden Elvetun \cite{elvetun_regularization_2020})}, i.e.,
+\begin{equation}
+    w_i = \frac
+    { \sqrt{y_i^T M_{dx} y_i} }
+    { \int_{\Omega} \phi_i \, dx }, \quad
+    y_i = K^+ K e_i,
+\end{equation}
+where $K^+$ denotes the pseudoinverse of $K$. We may now replace $K$ with its rank-$k$ approximate factorization $U_k \Sigma_k V_k^T$ to obtain
+\begin{equation}
+    y_i = V_k V_k^T e_i.
+\end{equation}
+
+
 
 \clearpage
 \subsection{Dynamic low-rank solver}
@@ -433,7 +491,7 @@ Let $\Omega \subset \mathbb{R}^d$ be an open set and $\mathbb{F}$ denote either 
     \right\},
 \end{equation}
 with inner product
-\begin{equation}
+\begin{equation}\label{eq:L2_inner_product}
     \langle f,\, g \rangle_{L^2(\Omega)} = \int_\Omega f(x) \overline{g(x)} \, dx.
 \end{equation}
 The space $L^2(\Omega)$ is a Hilbert space, i.e., a complete inner product space. For details, see Section~3 in Kreyszig \cite{kreyszigIntroductoryFunctionalAnalysis1989}.
@@ -453,6 +511,29 @@ with inner product
     \langle \nabla f,\, \nabla g \rangle_{L^2(\Omega)}.
 \end{equation}
 The space $H^1(\Omega)$ is a Hilbert space and a subspace of $L^2(\Omega)$. See Section~2 in Quarteroni for further details \cite{quarteroniNumericalModelsDifferential2014}.
+
+
+\subsection{Weak derivative}
+Let $\Omega \subset \mathbb{R}^d$ be an open set and $u \in L^2(\Omega)$. A function $v$ is said to be the weak derivative of $u$ if
+\begin{equation}
+    \int_\Omega u(x) \frac{\partial \phi}{\partial x_i} \, dx =
+    - \int_\Omega v \phi \, dx
+\end{equation}
+for all infinitely differentiable $\phi$ with compact support on $\Omega$. For details, see Section~2 in Quarteroni \cite{quarteroniNumericalModelsDifferential2014}.
+
+
+\subsection{The stiffness and the mass matrix}
+Let $V_h \subset H^1(\Omega)$ be the finite element space defined in Eq.~\eqref{eq:fem_space}. Under the basis $\{\phi_i\}_{i=1}^N$, the stiffness matrix $A \in \mathbb{R}^{N \times N}$ and mass matrix $M \in \mathbb{R}^{N \times N}$ are defined as
+\begin{equation}
+    A_{ij} = \int_\Omega 
+    \left( \sigma \nabla \phi_j \cdot \nabla \phi_i 
+    + k \phi_j \phi_i \right) dx,
+    \quad
+    M_{ij} = \int_\Omega \phi_j \phi_i \, dx.
+\end{equation}
+Both matrices are symmetric. Under the standing assumptions that $\sigma$ is positive definite and $c \ge 0$, the stiffness matrix $A$ is positive definite and therefore invertible. 
+
+In addition, both $A$ and $M$ are sparse matrices, since $A_{ij}$ and $M_{ij}$ are non-zero only if $\phi_i$ and $phi_j$ share a element in the mesh.
 
 \subsection{Positive definiteness}\label{sec:positive_definiteness}
 Let $\sigma = \sigma(x)$ be a symmetric $N \times N$ matrix. We say that $\sigma(x)$ is positive definite if

@@ -1,0 +1,31 @@
+\section{Introduction}
+
+Partial differential equations (PDEs) are essential in modern modelling. They have applications in finance, physics, medicine, and biology, to name a few. The discretization of PDEs, which enables numerical solutions of such equations, can produce linear systems of equations with a large number of unknowns. For instance, in modern applications, it is not uncommon with billions of unknowns. It is therefore essential with efficient algorithms to handle large scale linear systems of equations.
+
+In this thesis, we study the class of elliptic PDEs, which typically occur in time-independent problems. This class of PDEs show up in steady-state problems, stochastic processes, and the diffusion and flow a quantity in a region of space \cite{pavliotisStochasticProcessesApplications2014, evansPartialDifferentialEquations2010}.
+
+In particular, we study the inverse problem of the form
+\begin{equation}\label{eq:problem}
+    \min_{f} \left\| \mathcal{K} f - y \right\|_{L^2(\partial\Omega)}^2
+    + \lambda^2 \left\| W f \right\|_{L^2(\Omega)}^2
+\end{equation}
+subject to
+\begin{eqnarray}\label{eq:pde}
+    \begin{aligned}
+    -\nabla \cdot \sigma\nabla u + c u &= f \quad \text{in } \Omega, \\
+    \frac{\partial u}{\partial \v n} &= 0 \quad \text{on } \partial\Omega.
+    \end{aligned}
+\end{eqnarray}
+Here, $\mathcal{K}$ is the forward operator which maps the source $f$ to the boundary values $\mathcal{K}f = u|_{\partial\Omega}$, $\sigma$ is the diffusion coefficient, $c$ is the reaction coefficient, and $y$ is the observed boundary data. This problem has numerous applications, such as inverse imaging, crack determination, and electromagnetic brain mapping \cite{elvetun_regularization_2020}. This problem is a source identification task: we are given observed data $y$, and seek to find the original source term $f$ such that $\mathcal K f = y$.
+
+However, source identification problems of this form are ill-posed, as the operator $\mathcal K$ has a large null space. Consequently, solutions are not uniquely determined by the data. Moreover, small perturbations the observed data may result in large variations in the reconstructed source. Due to these challenges, typical techniques such as Tikhonov regularization fail to recover a meaningful source term.
+
+Due to the structure of the forward operator $\mathcal K$, Tikhonov reconstructions tend to appear on or near the boundary of the domain, corresponding to directions which appear near the null space of the operator. To address this issue, Elvetun and Nielsen proposed a weighted formulation which uses knowledge about the operator \cite{elvetun_regularization_2020}. The resulting weights $W$ are constructed in a way to punish solutions which are located near the boundary. This method shows promising results, with reconstructions being located correctly, but with smoothing artifacts and a loss of the original source magnitude.
+
+However, the construction of the weights $W$ is computationally expensive. Each column of $W$ is obtained by solving \eqref{eq:pde} with a corresponding basis function as right-hand side. Thus, the method requires one PDE solve per mesh node (or degree of freedom) in the discretization of $\Omega$, hence, the computation cost grows with the resolution of the mesh. In two spatial dimensions, the number of mesh nodes, denoted $N$, increases quadratically with the mesh resolution, whereas in three dimensions it increases cubically. This makes the method computationally infeasible for fine discretizations or large domains.
+
+This address this issue, we propose a low-rank approximation strategy based on the randomized singular value decomposition (rSVD). The key idea is to use random sampling of $\mathcal{K}$ to find an approximate rank-$p$ SVD $K_p = U \Sigma V^T$, which then can be used to effectively construct the weights $W$. Due to the large null space of $\mathcal{K}$, and it's rapid decay of singular values, the target rank $p$ can be selected much smaller than $N$.
+
+% In addition, I use a dynamic low-rank solver to find low-rank solutions (rank 1), and explore different additional regularization techniques (TV regularization, penalty methods)
+
+% However, the methods presented in this thesis are not limited to this particular equation, and may be applied to elliptic PDEs in general.]

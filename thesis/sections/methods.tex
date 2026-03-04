@@ -1,0 +1,158 @@
+\section{Methods}
+
+\subsection{Matrix-free randomized SVD}
+\input{figures/rsvd.tex}
+Let $K$ be the $N_b \times N$ discrete forward operator given in Eq.~\eqref{eq:K}. We are interested in a rank-$k$ approximation $K_k$ of the matrix $K$. By the Eckart–Young–Mirsky theorem, the optimal rank-$k$ approximation of $K$ is the truncated SVD obtained by keeping the $k$ first singular values, and their corresponding singular values. The randomized SVD provides an efficient alternative, by computing an approximate rank-$k$ factorization $K \approx U_k \Sigma_k V_k$, which also approximates the optimal truncated rank-$k$ SVD decomposition. We will now present a matrix-free variation of the rSVD algorithm, suited for problems where the matrix $K$ is not explicitly known.
+\nomenclature[G]{$k$}{Target rank}
+
+Like the rSVD, this matrix-free formulation consists of two stages. In the first stage, an approximate basis $Q$ of $K$ is constructed through random sampling of the column space of $K$. In the second stage, the matrix $K$ is projected onto the subspace $\operatorname{span}(Q)$, and a SVD factorization is computed of the projected matrix.
+
+In the first stage, we apply $K$ on $k$ random vectors $\psi_1, \psi_2, \dots, \psi_l$ drawn from some distribution, typically the normal distribution. This yields the random samples $y_1, y_2, \dots, y_k$, where $y_i = K \psi_i$. If we gather the samples and random vectors into matrices $Y = [y_i]_{i=1}^k$ and $\Psi = [\psi_i]_{i}$, we can express $Y$ as
+\begin{equation}
+    Y = K \Psi.
+\end{equation}
+(something about how $y_i$ is most likely to line up with the first singular vector). Geometrically, we want the $i$'th sample $y_i$ to approximately point in the direction of the the $i$ right singular vector $v_i$. To remove contributions of the previous right singular vectors $v_{i-1}, v_{i-2}, \dots, v_{1}$ on $y_i$, we must orthogonalize the random samples. A QR-factorization
+\begin{equation}
+    QR = Y
+\end{equation}
+achieves such an orthogonalization, obtaining the matrix $Q$ which contains the orthogonalized column-vectors $q_1, q_2, \dots, q_k$. This concludes the first step, where we have obtained an approximation of the column space of $K$:
+\begin{equation}
+    \operatorname{span}(Q) \approx \operatorname{span}(K)
+\end{equation}
+\nomenclature[G]{$Y$}{Sample matrix}
+\nomenclature[G]{$\Psi$}{Random matrix}
+
+For the second stage, we project $K$ down to the subspace $\operatorname{span}(Q)$. This is typically done by computing $B = Q^T K$. However, since we do not know $K$ explicitly, we instead compute $B^* = K^* Q$, and then $B$ can be found by computing $B = (B^*)^*$.
+
+To do this in practice, we use the the definition of $K^*$ under the finite element space $V_h$,
+\begin{equation}\label{eq:K_star}
+    (K^* z)^T M_{dx} = z^T M_{ds} K.
+\end{equation}
+If we choose $z = M_{ds}^{-1} q_i$ and insert it into Eq.~\eqref{eq:K_star}, we see that
+\begin{equation}\label{eq:rsvd_relation}
+    (K^* z)^T M_{dx}
+    = (M_{ds}^{-1} q_i)^T M_{ds} K
+    = q_i^T K.
+\end{equation}
+Hence, if we let
+\begin{equation}\label{eq:rsvd_adjoint_problem}
+    b_i = (K^* (M_{ds}^{-1} q_i))^T M_{dx}
+\end{equation}
+for $i = 1, 2, \dots, k$, and define the $k \times N$ matrix
+\begin{equation}
+    B = \begin{bmatrix} b_1 \\ \vdots \\ b_k \end{bmatrix}
+\end{equation}
+it must be that, by Eq.~\eqref{eq:rsvd_relation},
+\begin{equation}
+    B = Q^T K,
+\end{equation}
+as desired.
+
+We have computed the projection $B = Q^T K$ by solving the adjoint problem in Eq.~\eqref{eq:rsvd_adjoint_problem} $k$ times. In the final part of the second stage, we take the SVD of $B$,
+\begin{equation}
+    B = \tilde U_k \Sigma_k V_k^T,
+\end{equation}
+and set $U_k = Q \tilde U_k$. This gives an approximate SVD decomposition of the form
+\begin{equation}\label{eq:rsvd_approx}
+    K \approx U_k \Sigma_k V_k^T.
+\end{equation}
+By noting that $U_k \Sigma_k V_k^T = Q \tilde U_k \Sigma_k V_k^T = Q B = Q Q^T K$, and that $\operatorname{rank}(Q) = k$, we know that the factorization in Eq.~\eqref{eq:rsvd_approx} is a rank-$k$ approximation of $K$. The procedure is summarized in Algorithm~\ref{alg:discrete_rsvd}.
+
+
+\begin{algorithm}[!thbp]
+\caption{Discrete Operator rSVD Approximation of $K$}
+\label{alg:discrete_rsvd}
+\begin{algorithmic}[1]
+    \Require Forward operator $K: \mathbb{R}^N \to \mathbb{R}^{N_b}$, adjoint operator $K^*: \mathbb{R}^{N_b} \to \mathbb{R}^N$, mass matrices $M_{dx}, M_{ds}$, target rank $k$
+    \Ensure Approximate rank-$k$ factorization $K \approx U \Sigma V^T$
+    
+    \State \textbf{Range sketch:}
+    \For{$i = 1, \dots, k$}
+        \State Draw a random vector $\psi_i \in \mathbb{R}^N$
+        \State Apply the forward operator: $y_i = K \psi_i \in \mathbb{R}^{N_b}$
+    \EndFor
+
+    \State Form the matrix $Y = [y_1, \dots, y_k] \in \mathbb{R}^{N_b \times k}$ \Comment{Equivalent to $Y = K \Psi$}
+    \State Compute an orthonormal basis: $Q = \text{orth}(Y)$
+
+    \State \textbf{Projection onto the basis:}
+    \For{$i = 1, \dots, p$}
+        \State Let $q_i$ be the $i$-th column of $Q$
+        \State Apply the adjoint operator: $\tilde b_i = K^* (M_{ds}^{-1} q_i)$
+        \State Set $b_i = \tilde b_i^T M_{dx}$ \Comment{$i$-th row of $B$}
+    \EndFor
+    \State Form the projected matrix $B = \begin{bmatrix} b_1 \\ \vdots \\ b_k \end{bmatrix} \in \mathbb{R}^{k \times N}$ \Comment{Equivalent to $B = Q^T Y$}
+
+    \State Compute the SVD: $B = \tilde U \Sigma V^T$
+    \State Set $U = Q \tilde U$
+    
+\end{algorithmic}
+\end{algorithm}
+
+
+\clearpage
+\subsection{Weighted Tikhonov using rSVD}
+Let $K_k = U_k \Sigma_k V_k^T$ be the rank-$k$ approximate SVD of $K$ obtained using Algorithm~\ref{alg:discrete_rsvd}. The weights $W = \operatorname{diag}(w_i)_{i=1}^N$ \textcolor{red}{(referer tilbake til metoden Elvetun \cite{elvetun_regularization_2020})}, i.e.,
+\begin{equation}
+    w_i = \frac
+    { \sqrt{y_i^T M_{dx} y_i} }
+    { \int_{\Omega} \phi_i \, dx }, \quad
+    y_i = K^+ K e_i,
+\end{equation}
+where $K^+$ denotes the pseudoinverse of $K$. We may now replace $K$ with its rank-$k$ approximate factorization $U_k \Sigma_k V_k^T$ to obtain
+\begin{equation}
+    y_i = V_k V_k^T e_i.
+\end{equation}
+
+
+
+\clearpage
+\subsection{Dynamic low-rank solver}
+Let $X = \operatorname{matrix}(x)$ and $X = U_x \Sigma_x V_x^T$ be the SVD of $X$ and let $\Phi(x)$ be some differentiable cost function of $x$, and $D = \operatorname{matrix}(\nabla \Phi(x))$ its matrix equivalent. We wish to update $X^{(k)}$ according to
+$$
+X^{(k+1)} = X^{(k)}-\alpha D
+$$
+Inserting the SVD of $X^{(k)}$ at step $k$, $X^{(k)} = U_x^{(k)} \Sigma_x^{(k)} (V_x^{(k)})^T$, we get that
+$$
+U_x^{(k+1)} \Sigma_x^{(k+1)} (V_x^{(k+1)})^T = U_x^{(k)} \Sigma_x^{(k)} (V_x^{(k)})^T - \alpha D. \quad (1)
+$$
+If we right-multiply by $V_x^{(k)}$ and let $W^{(k)} = U_x^{(k)} \Sigma_x^{(k)}$, we get
+$$
+W^{(k+1)}(V_x^{(k+1)})^T(V_x^{(k)}) = W^{(k)} - \alpha D V_x^{(k)}.
+$$
+The approximation $(V_x^{(k+1)})^T(V_x^{(k)}) \approx I$ suggests the following updating scheme:
+$$
+W^{(k+1)} = W^{(k)} - \alpha D V_x^{(k)}.
+$$
+If we transpose  Equation $(1)$, right-multiply by $U_x^{(k)}$ and denote $L^{(k)} = V_x^{(k)} (\Sigma_x^{(k)})^T$, we get a similar updating scheme for $L^{(k)}$,
+$$
+L^{(k+1)} = L^{(k)} - \alpha D^T U_x^{(k)}.
+$$
+We now have update schemes for $W^{(k)} = U_x^{(k)} \Sigma_x^{(k)}$ and $L^{(k)} = V_x^{(k)} (\Sigma_x^{(k)})^T$. Further, we expand and orthogonalize the basis' $U^{(k)}$ and $V^{(k)}$ with the updated weighted basis' $W^{(k+1)}$ and $L^{(k+1)}$, respectively, in the following way:
+$$
+\begin{aligned}
+\hat U &= \operatorname{orth}\begin{bmatrix} U_x^{(k)} & W^{(k+1)}\end{bmatrix}, \\
+\hat V &= \operatorname{orth}\begin{bmatrix} V_x^{(k)} & L^{(k+1)}\end{bmatrix}.
+\end{aligned}
+$$
+Currently, we have obtained an approximation $X \approx \hat U \Sigma_x \hat V^T$. In terms of $\Sigma_x$, we have
+$$
+\Sigma_x \approx \hat U^T X \hat V.
+$$
+Substituting $X = U_x \Sigma_x V_x^T$ gives the approximation $\hat \Sigma^{(k)}$ of $\Sigma_x$,
+$$
+\Sigma_x \approx \hat \Sigma^{(k)} =(\hat U^T U_x)\Sigma_x(V_x^T \hat V). \quad (2)
+$$
+Now, if we write the gradient descent scheme $X^{(k+1)} = X^{(k)} - \alpha D$ as
+$$
+\hat U^T X^{(k+1)} \hat V = \hat U^TX^{(k)}\hat V - \alpha \hat U^T D \hat V,
+$$
+and use Equation $(2)$, we get the following updating scheme for $\hat \Sigma^{(k)}$,
+$$
+\hat \Sigma^{(k+1)} = \hat \Sigma^{(k)} - \alpha \hat U^T D \hat V.
+$$
+The final step is then to truncate these updated matrices to obtain
+$$
+U_x^{(k+1)}, \Sigma_x^{(k+1)}, V_x^{(k+1)} = \operatorname{truncate}(\hat U, \hat \Sigma, \hat V)
+$$
+and finally, set $X^{(k+1)} = U_x^{(k+1)} \Sigma_x^{(k+1)} (V_x^{(k+1)})^T$.

@@ -133,7 +133,7 @@ class DynamicLowRankSolver:
         f.vector()[:] = self.matrix_to_vec(X)
         return f
     
-    def solve_cg(
+    def solve_cg_nonlinear(
             self,
             y,
             w,
@@ -149,7 +149,6 @@ class DynamicLowRankSolver:
         rng = np.random.default_rng(seed)
         X = rng.random((self.n, self.n)) * 1e-2
         X_old = X.copy()   # Track previous iteration
-        X_best = X.copy()  # Track best solution in terms of residual
 
         Ux, sx, VxT = np.linalg.svd(X, full_matrices=False)
         Vx = VxT.T
@@ -201,15 +200,13 @@ class DynamicLowRankSolver:
             # Compute "optimal" alpha
             p_vec = self.matrix_to_vec(P_search)
             Kp = self.U @ (self.S * (self.VT @ p_vec))
-            #denom = np.dot(Kp, Kp) + 1e-12
-            #alpha_optimal = np.dot(r, Kp) / denom
+            denom = np.dot(Kp, Kp) + 1e-12
+            alpha_optimal = np.dot(r, Kp) / denom
             #alpha_cg = max(0, alpha_optimal)
-            Lp = w * (self.M_dx @ (w * p_vec)) # The regularizer's action on the direction
-
-            num = np.dot(r, Kp) + lambda_ * np.dot(x, Lp)
-            den = np.dot(Kp, Kp) + lambda_ * np.dot(p_vec, Lp) + 1e-12
-
-            alpha_optimal = max(0, num / den)
+            #Lp = w * (self.M_dx @ (w * p_vec)) # The regularizer's action on the direction
+            #num = np.dot(r, Kp) + lambda_ * np.dot(x, Lp)
+            #den = np.dot(Kp, Kp) + lambda_ * np.dot(p_vec, Lp) + 1e-12
+            #alpha_optimal = max(0, num / den)
             self.alphas.append(alpha_cg)
             
 

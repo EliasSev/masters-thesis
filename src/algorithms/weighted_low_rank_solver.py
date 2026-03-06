@@ -279,6 +279,7 @@ class WeightedLowRankSolver:
             r_s: int,
             w: NDArray,
             alpha: float = 0.1,
+            beta: float = 0.0,
             initial_matrices: str = 'random',
             projection: bool = False,
             max_iter: int = 5000,
@@ -291,6 +292,9 @@ class WeightedLowRankSolver:
             raise ValueError(f"Unknown 'sol_criteria': {sol_criteria}")
         
         self._initialize_records()
+
+        # 1D difference operator
+        D = get_1d_diff_operator(self.n)
 
         # Initialize P and Q
         rng = np.random.default_rng(seed)
@@ -324,8 +328,10 @@ class WeightedLowRankSolver:
 
             # Factor gradients
             G = self.vec_to_matrix(grad_Phi)
-            grad_P_Phi = G @ Q
-            grad_Q_Phi = G.T @ P
+            grad_P_tv = compute_tv_grad(P, D)
+            grad_Q_tv = compute_tv_grad(Q, D)
+            grad_P_Phi = G @ Q + beta * grad_P_tv
+            grad_Q_Phi = G.T @ P + beta * grad_Q_tv
             
             self._update_records(grad_P_Phi, grad_Q_Phi, r, x)
             

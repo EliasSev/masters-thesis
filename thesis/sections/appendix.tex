@@ -1,4 +1,4 @@
-\section{Mathematical preliminaries}
+\section{Appendix}
 \subsection{Function spaces}\label{appendix:function_spaces}
 Let $\Omega \subset \mathbb{R}^d$ be an open set and $\mathbb{F}$ denote either $\mathbb{R}$ or $\mathbb{C}$. The space $L^2(\Omega)$, often referred to as the Lebesgue space of square integrable functions, is defined as 
 \begin{equation}
@@ -19,7 +19,7 @@ The space $H^1(\Omega)$, known as the first-order Sobolev space, is defined as
     H^1(\Omega) =
     \left\{
         f \in L^2(\Omega) \, \Bigg| \,
-        \frac{\partial f}{\partial x_i} \in L^2(\Omega),\, i = 1, \dots, d  
+        \frac{\partial f}{\partial x_i} \in L^2(\Omega), \, i = 1, \dots, d  
     \right\},
 \end{equation}
 with inner product
@@ -59,6 +59,8 @@ The boundary mass matrix $M_\partial \in \mathbb{R}^{N_b \times N_b}$ is given b
 \end{equation}
 where the indices $i, j$ tabulate over the boundary indices of the mesh. Similarly to the mass matrix $M$, the boundary mass matrix $M_\partial$ is symmetric and sparse.
 
+For the assembly of stiffness matrices and mass matrices in two dimensions, see Section~4 in Larson and Bengzon \cite{larson_finite_2013}.
+
 
 \subsection{Positive definiteness}\label{sec:positive_definiteness}
 Let $\sigma = \sigma(x)$ be a symmetric $N \times N$ matrix. We say that $\sigma(x)$ is positive definite if
@@ -66,3 +68,47 @@ Let $\sigma = \sigma(x)$ be a symmetric $N \times N$ matrix. We say that $\sigma
     y^T \sigma(x) y \ge 0
 \end{equation}
 for all $y \in \mathbb{R}^N$.
+
+
+\subsection{Performance metrics}
+Let $x \in \mathbb{R}^N$ denote the true source (it's coefficient vector) and $\hat x \in \mathbb{R}^N$ it's corresponding reconstruction.
+
+To evaluate reconstruction quality, we consider three performance metrics: centroid error, Earth mover’s distance (EMD), and intersection over union (IoU). These metrics emphasize the localization and spatial shape of the reconstructed source, rather than just the amplitude.
+
+
+\subsubsection{Centroid error}
+The centroid of $x$ represents it's center of mass/values. It is defined by
+\begin{equation}
+    c(x) = \frac{\sum_{i=1}^N p_i |x_i|}{\sum_{i=1}^N|x_i|},
+\end{equation}
+where $p_i$ denotes the spatial coordinate of $x_i$ (the location of the $x_i$ in its image/matrix representation). For more, see Section~16.10 in Protter and Charles \cite{protterCollegeCalculusAnalytic1970}.
+
+The centroid error is computed as
+\begin{equation}
+    e_{\text{centroid}} = \| c(x) - c(\hat x) \|.
+\end{equation}
+
+
+\subsubsection{Earth mover’s distance}
+The earth mover's distance measures the dissimilarity between two distributions, which in our case refers to $x$ and $\hat x$. Let $x_d$ and $\hat x_d$ be the normalized distributions of $x$ and $\hat x$, respectively, computed as
+\begin{equation}
+    (x_d)_i = \frac{|x_i|}{\sum_{j=1}^N |x_j|}, \quad
+    (\hat x_d)_i = \frac{|\hat x_i|}{\sum_{j=1}^N |\hat x_j|}.
+\end{equation}
+The EDM between them is
+\begin{equation}
+    e_{\text{EDM}} =
+    \inf_{\gamma_{ij} \in \Pi}
+    \gamma_{ij} \sum_{ij}^N d(p_i, p_j)
+\end{equation}
+where $\Pi$ is the set of all joint distributions with marginals $x_d$ and $\hat x_d$ \cite{rubnerMetricDistributionsApplications1998}.
+
+
+\subsubsection{Intersection over Union}
+The IoU, known as the Jaccard index in statistics, measures the similarity between two sets. It is defined as the size of intersection divided by the size of the union \cite{raschkaPythonMachineLearning}.
+
+Let the sets $A$ and $B$ denote the binary masks of $x$ and $\hat x$, respectively (e.g. obtained via segmentation). The IoU is then given by
+\begin{equation}
+    e_{IoU} = \frac{|A \cap B|}{|A \cup B|}.
+\end{equation}
+Here, $| \cdot |$ denotes the number of elements of a set (its cardinality).

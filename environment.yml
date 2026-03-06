@@ -5,6 +5,8 @@ dependencies:
   - python=3.9
   - numpy
   - scipy
+  - scikit-learn
+  - scikit-image
   - matplotlib
   - fenics
   - ipykernel

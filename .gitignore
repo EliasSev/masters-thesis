@@ -27,8 +27,9 @@ wheels/
 *.ilg
 *.nls
 *.bbl-SAVE-ERROR
-thesis/*pdf
+thesis/*.pdf
 
 .vscode
 *.npy
 *.npz
+results/*.csv

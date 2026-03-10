@@ -30,7 +30,6 @@ class ExactForwardOperator:
     
     def assemble_S(self, sigma: float=1.0, k: float=1.0) -> NDArray:
         """Get the exact discrete PDE operator S."""
-        print("Assembling S...")
         u = TrialFunction(self.V_h)
         v = TestFunction(self.V_h)
 
@@ -47,7 +46,6 @@ class ExactForwardOperator:
 
     def assemble_T(self) -> NDArray:
         """Get the exact discrete trace operator T."""
-        print("Assembling T...")
         T = np.zeros((self.N_b, self.N))
         for i, j in enumerate(self.bdofs):
             T[i, j] = 1.0

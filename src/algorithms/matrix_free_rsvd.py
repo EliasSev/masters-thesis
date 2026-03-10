@@ -239,7 +239,7 @@ def get_approximate_W(Vk: NDArray, M_dx: spmatrix) -> NDArray:
     return np.array(w)
 
 
-def tikhonov_solver(rsvd: MatrixFreeRSVD, W_diag: NDArray, y: NDArray, lambda_: float) -> NDArray:
+def tikhonov_solver(rsvd: MatrixFreeRSVD, W_diag: NDArray, y: NDArray, lambda_: float, rtol: float = 1e-8) -> NDArray:
     """
     Solves (K^T M_ds K + lambda^2 W M_dx W) f = K^T M_ds y
     using the rank-k SVD components: K = Uk @ diag(sk) @ Vk.T
@@ -277,7 +277,7 @@ def tikhonov_solver(rsvd: MatrixFreeRSVD, W_diag: NDArray, y: NDArray, lambda_: 
 
     # Solve using Conjugate Gradient
     # tol: stop when residual is small enough
-    f_hat, info = cg(A_op, rhs, rtol=1e-8)
+    f_hat, info = cg(A_op, rhs, rtol=rtol)
     
     if info > 0:
         print("Warning: CG did not converge")

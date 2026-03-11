@@ -1,3 +1,6 @@
+"""
+Implementation of the Matrix-Free Randomized SVD algorithm.
+"""
 import numpy as np
 from time import time
 from typing import Optional
@@ -70,6 +73,7 @@ class MatrixFreeRSVD:
     
     def mf_rsvd(self,
             k: int,
+            p: int = 5,
             distribution: str = 'standard',
             seed: Optional[int] = None,
             **kwargs
@@ -81,11 +85,15 @@ class MatrixFreeRSVD:
         # Random number generator
         rng = np.random.default_rng(seed=seed)
 
+        # Target rank k must be less than the null-space dim N_b
+        assert k <= self.N_b, f"Target rank k={k} must be less than or equal to N_b={self.N_b}"
+        l = min(k + p, self.N_b)
+
         self.times = []
         # Step 1
         t0 = time()
-        Y = np.zeros((self.N_b, k))
-        for i in range(k):
+        Y = np.zeros((self.N_b, l))
+        for i in range(l):
             psi_i = self.draw_random_vector(distribution, rng=rng, **kwargs)
             y_i = self.apply_K(psi_i)
             Y[:, i] = y_i
@@ -95,11 +103,11 @@ class MatrixFreeRSVD:
         t0 = time()
         Q, _ = np.linalg.qr(Y, mode='reduced')
         self.times.append(time() - t0)
-
+        
         # Step 3-4
         t0 = time()
-        B = np.zeros((k, self.N))
-        for i in range(k):
+        B = np.zeros((l, self.N))
+        for i in range(l):
             q_i = Q[:, i].copy()
 
             # Get the "un-weight" q_i to counteract the M_ds inside apply_K_adj
@@ -113,7 +121,9 @@ class MatrixFreeRSVD:
         U_tilde, S, Vt = np.linalg.svd(B, full_matrices=False)
         U = Q @ U_tilde
         self.times.append(time() - t0)
-        
+
+        # Truncate back to target rank
+        U, S, Vt = U[:, :k], S[:k], Vt[:k, :]
         self._Uk, self._Sk, self._VkT = U, S, Vt
         return U, S, Vt
     

@@ -2,16 +2,17 @@
 
 \subsection{Matrix-free randomized SVD}
 \input{figures/rsvd.tex}
+\textcolor{red}{Add oversampling parameter $p$.}
 Let $K$ be the $N_b \times N$ discrete forward operator given in Eq.~\eqref{eq:K}. We are interested in a rank-$k$ approximation $K_k$ of the matrix $K$. By the Eckart–Young–Mirsky theorem, the optimal rank-$k$ approximation of $K$ is the truncated SVD obtained by keeping the $k$ first singular values, and their corresponding singular values. The randomized SVD provides an efficient alternative, by computing an approximate rank-$k$ factorization $K \approx U_k \Sigma_k V_k$, which also approximates the optimal truncated rank-$k$ SVD decomposition. We will now present a matrix-free variation of the rSVD algorithm, suited for problems where the matrix $K$ is not explicitly known.
 \nomenclature[G]{$k$}{Target rank}
 
 Like the rSVD, this matrix-free formulation consists of two stages. In the first stage, an approximate basis $Q$ of $K$ is constructed through random sampling of the column space of $K$. In the second stage, the matrix $K$ is projected onto the subspace $\operatorname{span}(Q)$, and a SVD factorization is computed of the projected matrix.
 
-In the first stage, we apply $K$ on $k$ random vectors $\psi_1, \psi_2, \dots, \psi_l$ drawn from some distribution, typically the normal distribution. This yields the random samples $y_1, y_2, \dots, y_k$, where $y_i = K \psi_i$. If we gather the samples and random vectors into matrices $Y = [y_i]_{i=1}^k$ and $\Psi = [\psi_i]_{i}$, we can express $Y$ as
+In the first stage, we apply $K$ on $k$ random vectors $\psi_1, \psi_2, \dots, \psi_k$ drawn from some distribution, typically the normal distribution. This yields the random samples $y_1, y_2, \dots, y_k$, where $y_i = K \psi_i$. If we gather the samples and random vectors into matrices $Y = [y_i]_{i=1}^k$ and $\Psi = [\psi_i]_{i}$, we can express $Y$ as
 \begin{equation}
     Y = K \Psi.
 \end{equation}
-(something about how $y_i$ is most likely to line up with the first singular vector). Geometrically, we want the $i$'th sample $y_i$ to approximately point in the direction of the the $i$ right singular vector $v_i$. To remove contributions of the previous right singular vectors $v_{i-1}, v_{i-2}, \dots, v_{1}$ on $y_i$, we must orthogonalize the random samples. A QR-factorization
+\textcolor{red}{(something about how $y_i$ is most likely to line up with the first singular vector)}. Geometrically, we want the $i$'th sample $y_i$ to approximately point in the direction of the the $i$ right singular vector $v_i$. To remove contributions of the previous right singular vectors $v_{i-1}, v_{i-2}, \dots, v_{1}$ on $y_i$, we must orthogonalize the random samples. A QR-factorization
 \begin{equation}
     QR = Y
 \end{equation}
@@ -63,28 +64,31 @@ By noting that $U_k \Sigma_k V_k^T = Q \tilde U_k \Sigma_k V_k^T = Q B = Q Q^T K
 \caption{Discrete Operator rSVD Approximation of $K$}
 \label{alg:discrete_rsvd}
 \begin{algorithmic}[1]
-    \Require Forward operator $K: \mathbb{R}^N \to \mathbb{R}^{N_b}$, adjoint operator $K^*: \mathbb{R}^{N_b} \to \mathbb{R}^N$, mass matrices $M, M_\partial$, target rank $k$
+    \Require Forward operator $K: \mathbb{R}^N \to \mathbb{R}^{N_b}$, adjoint operator $K^*: \mathbb{R}^{N_b} \to \mathbb{R}^N$, mass matrices $M, M_\partial$, target rank $k$, oversampling parameter $p$
     \Ensure Approximate rank-$k$ factorization $K \approx U \Sigma V^T$
     
     \State \textbf{Range sketch:}
-    \For{$i = 1, \dots, k$}
+    \State Set $l = k + p$
+    \Comment Ensure that $l \le N_b$
+    \For{$i = 1, \dots, l$}
         \State Draw a random vector $\psi_i \in \mathbb{R}^N$
         \State Apply the forward operator: $y_i = K \psi_i \in \mathbb{R}^{N_b}$
     \EndFor
 
-    \State Form the matrix $Y = [y_1, \dots, y_k] \in \mathbb{R}^{N_b \times k}$ \Comment{Equivalent to $Y = K \Psi$}
+    \State Form the matrix $Y = [y_1, \dots, y_l] \in \mathbb{R}^{N_b \times l}$ \Comment{Equivalent to $Y = K \Psi$}
     \State Compute an orthonormal basis: $Q = \text{orth}(Y)$
 
     \State \textbf{Projection onto the basis:}
-    \For{$i = 1, \dots, k$}
+    \For{$i = 1, \dots, l$}
         \State Let $q_i$ be the $i$-th column of $Q$
         \State Apply the adjoint operator: $\tilde b_i = K^* (M_{\partial}^{-1} q_i)$
         \State Set $b_i = \tilde b_i^T M$ \Comment{$i$-th row of $B$}
     \EndFor
-    \State Form the projected matrix $B = \begin{bmatrix} b_1 \\ \vdots \\ b_k \end{bmatrix} \in \mathbb{R}^{k \times N}$ \Comment{Equivalent to $B = Q^T Y$}
+    \State Form the projected matrix $B = \begin{bmatrix} b_1 \\ \vdots \\ b_l \end{bmatrix} \in \mathbb{R}^{l \times N}$ \Comment{Equivalent to $B = Q^T Y$}
 
     \State Compute the SVD: $B = \tilde U \Sigma V^T$
     \State Set $U = Q \tilde U$
+    \State Truncate back to rank $k$: $U, \Sigma, V^T \leftarrow \operatorname{truncate}(U, \Sigma, V^T)$
     
 \end{algorithmic}
 \end{algorithm}

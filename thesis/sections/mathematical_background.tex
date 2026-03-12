@@ -46,7 +46,7 @@ Consider the PDE in Eq.~\eqref{eq:pde}. Multiplying the equation by a test funct
     \int_{\Omega} (\sigma \nabla u \cdot \nabla v + k u v) \, dx = \int_{\Omega} f v \space \, dx,
     \text{ for all } v \in H^1(\Omega).
 \end{equation}
-For details on the derivation, see Section~4 in Larson and Bengzon \cite{larson_finite_2013}.
+For details on the derivation, see Section~4 in Larson and Bengzon \cite{larsonFiniteElementMethod2013}.
 
 Let $\mathcal M$ be a triangulation of $\Omega$ made up of $N$ nodes, with $N_b$ boundary nodes, see Fig.~\ref{fig:triangulation} as an example. Introduce the finite element space $V_h \subset H^1(\Omega)$,
 \begin{equation}\label{eq:fem_space}
@@ -56,7 +56,7 @@ Let $\{\phi_1, \dots, \phi_N\}$ denote a basis for $V_h$, so that
 \begin{equation}
     V_h = \operatorname{span}\{ \phi_1, \dots, \phi_N \}.
 \end{equation}
-The basis functions $\phi_i$ are piecewise linear hat functions associated with the nodes of the mesh (see \cite[p.~51]{larson_finite_2013}).
+The basis functions $\phi_i$ are piecewise linear hat functions associated with the nodes of the mesh (see \cite[p.~51]{larsonFiniteElementMethod2013}).
 
 \nomenclature[A]{$\mathcal{M}$}{Triangulation (mesh)}
 \nomenclature[A]{$N$}{Number of mesh nodes}
@@ -159,13 +159,13 @@ where $\lambda \ge 0$ is the regularization parameter and $W \in \mathbb{R}^{n \
 
 
 \subsubsection{Weighted Tikhonov regularization for source identification}
-For the problem considered in this thesis, the operator $K$ has a large nullspace. Standard Tikhonov regularization with $W = I$ often leads to solutions which are concentrated  near the boundary of the domain, regardless of the position of the true source, see \cite{elvetun_regularization_2020}.
+For the problem considered in this thesis, the operator $K$ has a large nullspace. Standard Tikhonov regularization with $W = I$ often leads to solutions which are concentrated  near the boundary of the domain, regardless of the position of the true source, see \cite{elvetunRegularizationOperatorSource2020}.
 
 To address this issue, Elvetun and Nielsen propose regularization weights which penalizes solutions which are concentrated near the domain boundary. The weights are given by
 \begin{equation}
     w_i = \|K^+ K e_i\|,
 \end{equation}
-where $e_i$ is the $i$th standard basis vector of $\mathbb{R}^n$ \cite{elvetun_regularization_2020}. The regularization matrix is then chosen as the diagonal matrix
+where $e_i$ is the $i$th standard basis vector of $\mathbb{R}^n$ \cite{elvetunRegularizationOperatorSource2020}. The regularization matrix is then chosen as the diagonal matrix
 \begin{equation}
     W = \operatorname{diag}(w_1, \dots, w_n).
 \end{equation}
@@ -181,7 +181,7 @@ induced by the boundary mass matrix $M_\partial$, the weights can be computed as
 
 
 \subsection{Randomized SVD}
-The rSVD is a technique used to compute a rank-$k$ approximation of an $m\times n$ matrix without computing the SVD. The core idea is to use random sampling to find a low-rank matrix $Q$ which approximates the range of $A$, project $A$ onto $\operatorname{span}(Q)$, and compute the SVD of the projection. The projection $B=Q^TA$ will, with high probability, capture the dominant actions of $A$, and the SVD of $B$ will yield a good approximation \cite{halko_finding_2011}. This procedure is summarized in Algorithm \ref{alg:rsvd}. The construction of an orthonormal basis $Q$ of $Y$ is done through a QR factorization. Note that the approximation $A\approx QQ^T A$ and the approximate factorization $A\approx U\Sigma V^T$ produced by rSVD have the same error. This can be seen by observing that $QQ^TA = QB = Q\tilde U\Sigma V^T$, and setting $U=Q\tilde U$.
+The rSVD is a technique used to compute a rank-$k$ approximation of an $m\times n$ matrix without computing the SVD. The core idea is to use random sampling to find a low-rank matrix $Q$ which approximates the range of $A$, project $A$ onto $\operatorname{span}(Q)$, and compute the SVD of the projection. The projection $B=Q^TA$ will, with high probability, capture the dominant actions of $A$, and the SVD of $B$ will yield a good approximation \cite{halkoFindingStructureRandomness2011}. This procedure is summarized in Algorithm \ref{alg:rsvd}. The construction of an orthonormal basis $Q$ of $Y$ is done through a QR factorization. Note that the approximation $A\approx QQ^T A$ and the approximate factorization $A\approx U\Sigma V^T$ produced by rSVD have the same error. This can be seen by observing that $QQ^TA = QB = Q\tilde U\Sigma V^T$, and setting $U=Q\tilde U$.
 \begin{algorithm}[!htbp]
 \caption{rSVD}
 \label{alg:rsvd}

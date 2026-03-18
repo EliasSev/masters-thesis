@@ -45,7 +45,7 @@ Let $V_h \subset H^1(\Omega)$ be the finite element space defined in Eq.~\eqref{
 \begin{equation}
     A_{ij} = \int_\Omega 
     \left( \sigma \nabla \phi_j \cdot \nabla \phi_i 
-    + k \phi_j \phi_i \right) dx,
+    + c \phi_j \phi_i \right) dx,
     \quad
     M_{ij} = \int_\Omega \phi_j \phi_i \, dx.
 \end{equation}
@@ -73,20 +73,7 @@ for all $y \in \mathbb{R}^N$.
 \subsection{Performance metrics}
 Let $x \in \mathbb{R}^N$ denote the true source (it's coefficient vector) and $\hat x \in \mathbb{R}^N$ it's corresponding reconstruction.
 
-To evaluate reconstruction quality, we consider three performance metrics: centroid error, Earth mover’s distance (EMD), and intersection over union (IoU). These metrics emphasize the localization and spatial shape of the reconstructed source, rather than just the amplitude.
-
-
-\subsubsection{Centroid error}
-The centroid of $x$ represents it's center of mass/values. It is defined by
-\begin{equation}
-    c(x) = \frac{\sum_{i=1}^N p_i |x_i|}{\sum_{i=1}^N|x_i|},
-\end{equation}
-where $p_i$ denotes the spatial coordinate of $x_i$ (the location of the $x_i$ in its image/matrix representation). For more, see Section~16.10 in Protter and Charles \cite{protterCollegeCalculusAnalytic1970}.
-
-The centroid error is computed as
-\begin{equation}
-    e_{\text{centroid}} = \| c(x) - c(\hat x) \|.
-\end{equation}
+To evaluate reconstruction quality, we consider three performance metrics: Euclidean error, Earth mover’s distance (EMD), and the integrated (area under curve) intersection over union (AUC-IoU). These metrics emphasize the localization and spatial shape of the reconstructed source, rather than just the amplitude.
 
 
 \subsubsection{Earth mover’s distance}
@@ -97,23 +84,61 @@ The earth mover's distance measures the dissimilarity between two distributions,
 \end{equation}
 The EDM between them is
 \begin{equation}
-    e_{\text{EDM}} =
+    \operatorname{EDM} =
     \inf_{\gamma_{ij} \in \Pi}
     \gamma_{ij} \sum_{ij}^N d(p_i, p_j)
 \end{equation}
 where $\Pi$ is the set of all joint distributions with marginals $x_d$ and $\hat x_d$ \cite{rubnerMetricDistributionsApplications1998}.
 
 
-\subsubsection{Intersection over Union}
+\subsubsection{AUC-IoU}
 The IoU, known as the Jaccard index in statistics, measures the similarity between two sets. It is defined as the size of intersection divided by the size of the union \cite{raschkaPythonMachineLearning}.
 
-Let the sets $A$ and $B$ denote the binary masks of $x$ and $\hat x$, respectively (e.g. obtained via segmentation). The IoU is then given by
+We define the binary mask of $x$ at threshold $\tau \in (0, 1)$ as the set
 \begin{equation}
-    e_{IoU} = \frac{|A \cap B|}{|A \cup B|}.
+    S_{\tau}(x) = \{ i : x_i \ge \tau \operatorname{max}(x) \}.
+\end{equation}
+Then, the IoU of $x$ and $\hat x$ at threshold $\tau$ is then the IoU of their binary masks,
+\begin{equation}
+    \operatorname{IoU}(\tau) =
+    \frac{|S_\tau(x) \cap S_\tau(\hat x)|}{|S_\tau(x) \cup S_\tau(\hat x)|}.
 \end{equation}
 Here, $| \cdot |$ denotes the number of elements of a set (its cardinality).
 
+The AUC-IoU is then the integration of the $\operatorname{IoU}(\tau)$ curve,
+\begin{equation}
+    \operatorname{AUC-IoU} = \int_{0}^{1} \operatorname{IoU}(\tau) \, d\tau.
+\end{equation}
+This can be approximated using the Trapezoidal rule. The AUC-IoU lines in $[0, 1]$, with 1 being a perfect score.
 
-\subsection{Chan-Vese segmentation}
-\input{figures/cv_segmentation.tex}
 
+\subsection{Derivation of the Adjoint formulation}
+Consider the forward operator $\mathcal{K} = \mathcal{S} \circ \mathcal{T}$ given by Eq.~\eqref{eq:K}, and the variational formulation of $\mathcal{S}$ by Eq.~\eqref{eq:S_cont}. Define the bilinear form
+\begin{equation*}
+    a(u,\, v) =
+    \int_\Omega (\sigma \nabla u \cdot \nabla v + c u v) \, dx,
+\end{equation*}
+then, the variational formulation of $\mathcal{S}$ reads as follows: find $u \in H^1(\Omega)$ such that
+\begin{equation}\label{eq:bilinear_form}
+    a(u,\, v) = \int_\Omega f v \, dx.
+\end{equation}
+
+For some $g \in L^2(\partial\Omega)$, we seek $w = \mathcal{K}^* g$. By the definition of $K^*$,
+\begin{equation*}
+    \langle \mathcal{K} f,\, g \rangle_{L^2(\partial\Omega)} =
+    \langle f,\, \mathcal{K}^* g \rangle_{L^2(\Omega)}.
+\end{equation*}
+and since $\mathcal{K} f = u|_{\partial\Omega}$, we have that
+\begin{equation}\label{eq:adjoint_identity_1}
+    \langle \mathcal{K} f,\, g \rangle_{L^2(\partial\Omega)} =
+    \int_{\partial\Omega} u g \, ds.
+\end{equation}
+In Eq.~\eqref{eq:bilinear_form}, choose $v = w = K^* g$. We see that
+\begin{equation}\label{eq:adjoint_identity_2}
+    a(u, w) = \int_{\Omega} f w \, dx = \langle f,\, \mathcal{K}^* g \rangle_{L^2(\Omega)}.
+\end{equation}
+Insert Eq.~\eqref{eq:adjoint_identity_1} and \eqref{eq:adjoint_identity_2} into the definition of $\mathcal{K}^*$, and using the identity $a^*(v,\, u) = a(u,\, v)$ (by the definition of $a^*$, see \textcolor{red}{(ref)}),
+\begin{equation}\label{eq:adjoint_identity_3}
+    a^*(w,\, u) = \int_{\partial\Omega} g u \, ds.
+\end{equation}
+Since Equation~\eqref{eq:adjoint_identity_3} must hold for 

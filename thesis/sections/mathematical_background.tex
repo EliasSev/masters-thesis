@@ -10,7 +10,7 @@ Let $\Omega \subset \mathbb R^2$ be a bounded domain with boundary $\partial \Om
 \nomenclature[B]{$c,\, c(x)$}{Reaction coefficient}
 
 Equation~\eqref{eq:pde} is a linear diffusion-reaction problem with Neumann boundary conditions, and defines a mapping
-\begin{equation}
+\begin{equation}\label{eq:S_cont}
     \mathcal S: L^2(\Omega) \rightarrow H^1(\Omega), \quad \mathcal{S} f = u.
 \end{equation}
 Here, $L^2(\Omega)$ is the space of square integrable functions and $H^1(\Omega) \subset L^2(\Omega)$ the first-order Sobolev space, see Appendix~\ref{appendix:function_spaces}
@@ -43,7 +43,7 @@ In order to solve such a problem computationally, the problem must be discretize
 \input{figures/triangulation.tex}
 Consider the PDE in Eq.~\eqref{eq:pde}. Multiplying the equation by a test function $v \in H^1(\Omega)$, integrating over $\Omega$, and applying Green's identity yields the weak formulation: find $u \in H^1(\Omega)$ such that
 \begin{equation}\label{eq:variational_formulation}
-    \int_{\Omega} (\sigma \nabla u \cdot \nabla v + k u v) \, dx = \int_{\Omega} f v \space \, dx,
+    \int_{\Omega} (\sigma \nabla u \cdot \nabla v + c u v) \, dx = \int_{\Omega} f v \space \, dx,
     \text{ for all } v \in H^1(\Omega).
 \end{equation}
 For details on the derivation, see Section~4 in Larson and Bengzon \cite{larsonFiniteElementMethod2013}.
@@ -66,7 +66,7 @@ The basis functions $\phi_i$ are piecewise linear hat functions associated with 
 The finite element approximation of \eqref{eq:variational_formulation} then reads: 
 find $u_h \in V_h$ such that
  \begin{equation}\label{eq:fem_formulation}
-    \int_{\Omega} (\sigma \nabla u_h \cdot \nabla v + k u_h v) \, dx = \int_{\Omega} f v \space \, dx,
+    \int_{\Omega} (\sigma \nabla u_h \cdot \nabla v + c u_h v) \, dx = \int_{\Omega} f v \space \, dx,
     \text{ for all } v \in V_h.
 \end{equation}
 
@@ -118,7 +118,7 @@ Let $V_h$ be the finite element space introduced in Eq.~\eqref{eq:fem_space} and
 where $M$ is the mass matrix. 
 
 This induces a discrete inner product on $\mathbb{R}^N$, with associated norm, defined by
-\begin{equation}
+\begin{equation}\label{eq:fem_norm}
     \langle \v x, \v y \rangle_M = \v x^T M \v y,
     \quad
     \| \v x \|_M = \sqrt{\v x^T M \v x}.
@@ -127,7 +127,7 @@ This induces a discrete inner product on $\mathbb{R}^N$, with associated norm, d
 Similarly, let $\v u, \v v \in \mathbb{R}^{N_b}$ 
 denote coefficient vectors corresponding to the traces 
 $u_h|_{\partial\Omega}$ and $v_h|_{\partial\Omega}$. The $L^2(\partial\Omega)$ inner product induces a discrete inner product and norm on $\mathbb{R}^{N_b}$, given by
-\begin{equation}
+\begin{equation}\label{eq:fem_norm_ds}
     \langle \mathbf{u}, \mathbf{v} \rangle_{M_{\partial}}
     = \mathbf{u}^T M_{\partial} \mathbf{v},
     \quad
@@ -139,6 +139,36 @@ where $M_\partial$ denotes the boundary mass matrix, see Appendix~\ref{appendix
 \nomenclature[E]{$M_\partial$}{Boundary mass matrix}%
 
 %In practice, this system is often **ill-posed** due to the large null space of $K$ and the accumulation of numerical errors in $A^{-1}$. As a result, naive solutions of Eq.~\eqref{eq:inverse_problem} are highly sensitive to noise in $\v y$, motivating the need for regularization techniques. In the following section, we discuss classical Tikhonov regularization and introduce the weighted approach that will be explored in this thesis.
+
+
+\subsubsection{The adjoint operator}
+Let $\mathcal{K}: L^2(\Omega) \to L^2(\partial\Omega)$ be the bounded linear operator defined in Equation~\eqref{eq:K}. The adjoint operator $\mathcal{K}^*: L^2(\partial\Omega) \to L^2(\Omega)$ is the bounded linear operator satisfying
+\begin{equation}\label{eq:K_star_cont}
+    \langle \mathcal K f,\, g \rangle_{L^2(\partial\Omega)} =
+    \langle f,\, \mathcal K^* g \rangle_{L^2(\Omega)},
+\end{equation}
+for all $f \in L^2(\Omega)$ and all $g \in L^2(\partial\Omega)$. Such an operator always exists for a bounded linear operator $\mathcal K$ mapping between two Hilbert spaces, see Section~3.9 in Kreyszig for a proof \cite{kreyszigIntroductoryFunctionalAnalysis1989}.
+
+Using the definition in Equation~\eqref{eq:K_star_cont}, we get the weak formulation of $K^*$ (the adjoint problem): find $w \in H^1(\Omega)$ such that
+\begin{equation}
+    \int_\Omega (\sigma^T \nabla w \cdot \nabla v + c w v) \, dx =
+    \int_{\partial\Omega} g v \, ds,
+    \text{ for all } v \in H^1(\Omega).
+\end{equation}
+The solution $w$ then satisfies $\mathcal K^* g = w$. For details, see 
+
+In the discrete case, under the inner products and norms defined in Equation~\eqref{eq:fem_norm} and \eqref{eq:fem_norm_ds}, the adjoint operator $K^* \in \mathbb{R}^{N \times N_b}$ of $K \in \mathbb{R}^{N_b \times N}$ satisfies
+\begin{equation}
+    (K \v x)^T M_\partial \v y = \v x^T M K^* \v y,
+\end{equation}
+for all $\v x \in \mathbb R^N$ and all $\v y \in \mathbb R^{N_b}$. 
+
+Inserting the explicit representation of $K$ given in Equation~\eqref{eq:discrete_K} yields the matrix representation of $K^*$,
+\begin{equation}
+    K^* = A^{-T} T^T M_\partial,
+\end{equation}
+where $A$ is the stiffness matrix, $T$ the discrete trace operator, and $M_\partial$ the boundary mass matrix.
+
 
 \subsection{Tikhonov regularization}
 

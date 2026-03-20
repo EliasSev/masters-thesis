@@ -106,55 +106,18 @@ To see this, let $K = U \Sigma V^T$ be the SVD of $K$ and we recall that $K^+ = 
 
 \clearpage
 \subsection{Dynamical low-rank solver}
-Let $X = \operatorname{matrix}(x)$ and $X = U_x \Sigma_x V_x^T$ be the SVD of $X$ and let $\Phi(x)$ be some differentiable cost function of $x$, and $D = \operatorname{matrix}(\nabla \Phi(x))$ its matrix equivalent. We wish to update $X^{(k)}$ according to
-\begin{equation}
-    X^{(k+1)} = X^{(k)}-\alpha D
-\end{equation}
-Inserting the SVD of $X^{(k)}$ gives that
-\begin{equation}\label{eq:gd_svd}
-    U_x^{(k+1)} \Sigma_x^{(k+1)} (V_x^{(k+1)})^T = U_x^{(k)} \Sigma_x^{(k)} (V_x^{(k)})^T - \alpha D. 
-\end{equation}
-Right-multiplying by $V_x^{(k)}$ and denoting $W^{(k)} = U_x^{(k)} \Sigma_x^{(k)}$ yields
-\begin{equation}
-    W^{(k+1)}(V_x^{(k+1)})^T(V_x^{(k)}) = W^{(k)} - \alpha D V_x^{(k)}.
-\end{equation}
-The approximation $(V_x^{(k+1)})^T(V_x^{(k)}) \approx I$ suggests the following updating scheme for $W^{(k)}$:
-\begin{equation}
-    W^{(k+1)} = W^{(k)} - \alpha D V_x^{(k)}.
-\end{equation}
+\input{figures/low_rank_manifold.tex}
+Consider the problem of finding a rank-$r$ solution $X_r$ via the update scheme $X^{(k+1)} = X^{(k)} + \alpha_k D$, where $D$ is a search direction and $\alpha_k > 0$ a step size. Starting from a rank-$r$ matrix $X^{(0)}$, there is in general no guarantee that $D$ preserves low rank, so that $X^{(k)}$ may leave the space $\mathcal{M}_r$ of rank-$r$ matrices after a single step.
 
-To continue, transposing Equation~\eqref{eq:gd_svd}, right-multiply by $U_x^{(k)}$ and denoting $L^{(k)} = V_x^{(k)} (\Sigma_x^{(k)})^T$, we get a similar updating scheme for $L^{(k)}$:
-\begin{equation}
-    L^{(k+1)} = L^{(k)} - \alpha D^T U_x^{(k)}
-\end{equation}
+One can replace $D$ by its projection onto the tangent space $\mathcal{T}_{X^{(k)}}(\mathcal{M}_r)$. This is the idea behind the Dynamical Low-Rank Approximation (DLRA) of Koch and Lubich \cite{kochDynamicalLowrankApproximation2007}, who proposed, in the continuous-time setting, evolving an approximation on $\mathcal{M}_r$ by projecting the time derivative of the data matrix onto the tangent space at the current approximation. Using this concept in our discrete setting, we replace $D$ by its tangent-space projection $\mathcal{P}_{X^{(k)}}[D]$, yielding the update
+\begin{equation*}
+    X^{(k+1)} = X^{(k)} + \alpha_k \,\mathcal{P}_{X^{(k)}}[D].
+\end{equation*}
+This is illustrated in Figure~\ref{fig:low_rank_manifold}. Rather than updating $X^{(k)}$ directly, the DLRA algorithm operates on its SVD factorization $X^{(k)} = U S V^T$, updating the factors $U$, $S$, and $V$ at each iteration.
 
-We now have update schemes for $W^{(k)} = U_x^{(k)} \Sigma_x^{(k)}$ and $L^{(k)} = V_x^{(k)} (\Sigma_x^{(k)})^T$. Further, we expand and orthogonalize the basis' $U^{(k)}$ and $V^{(k)}$ with the updated weighted basis' $W^{(k+1)}$ and $L^{(k+1)}$, respectively, in the following way:
-\begin{equation}\label{eq:dynamic_orth}
-    \hat U = \operatorname{orth}\left([
-        U_x^{(k)} ,\, W^{(k+1)}
-    ]\right) ,\,
-    \hat V = \operatorname{orth}\left([
-        V_x^{(k)} ,\, L^{(k+1)}
-    ]\right).
-\end{equation}
+However, as pointed out by Koch and Lubich, when $S$ is ill-conditioned, which occurs when $r$ exceeds the effective rank of $X^{(k)}$, the projector $\mathcal{P}_{X^{(k)}}$ suffers from stiffness, leading to very small step sizes and issues with rounding errors.
 
-Currently, we have obtained an approximation $X \approx \hat U \Sigma_x \hat V^T$. In terms of $\Sigma_x$, we have $\Sigma_x \approx \hat U^T X \hat V$. Substituting $X = U_x \Sigma_x V_x^T$ gives a approximation $\hat \Sigma^{(k)}$ of $\Sigma_x$,
-\begin{equation}\label{eq:sigma_approx}
-    \Sigma_x \approx \hat \Sigma^{(k)} =(\hat U^T U_x)\Sigma_x(V_x^T \hat V)
-\end{equation}
-Now, if we write the gradient descent scheme $X^{(k+1)} = X^{(k)} - \alpha D$ as
-\begin{equation}
-    \hat U^T X^{(k+1)} \hat V = \hat U^TX^{(k)}\hat V - \alpha \hat U^T D \hat V,
-\end{equation}
-and use Equation~\eqref{eq:sigma_approx}, we get the following updating scheme for $\hat \Sigma^{(k)}$:
-\begin{eqnarray}
-    \hat \Sigma^{(k+1)} = \hat \Sigma^{(k)} - \alpha \hat U^T D \hat V.
-\end{eqnarray}
-
-As a consequence of Equation~\eqref{eq:dynamic_orth}, the rank of $\hat U$, $\hat S$, and $\hat V$ doubles. Therefore, the matrices need to be truncated back to a low-rank profile,
-\begin{equation}
-    (U_x^{(k+1)}, \Sigma_x^{(k+1)}, V_x^{(k+1)}) = \operatorname{truncate}(\hat U, \hat \Sigma, \hat V).
-\end{equation}
+To address this, Lubich and Oseledets proposed splitting the projector $\mathcal{P}_{X^{(k)}}$ into simpler sub-projections \cite{lubichProjectorsplittingIntegratorDynamical2013}. Crucially, each sub-projection can be evaluated without forming $S^{-1}$, thereby avoiding the stiffness problem present in the original formulation. In recent years, additional advancements have been made to DLRA, offering improved stability and parallelism \cite{cerutiUnconventionalRobustIntegrator2020, cerutiRankadaptiveRobustIntegrator2021}.
 
 
 \clearpage
@@ -177,7 +140,7 @@ Here, $K$ is the forward operator, $W$ is the weight matrix, $M$ is the mass mat
 
 \clearpage
 \subsection{Dynamical Low-Rank Preconditioned CG Scheme}
-Preconditioning is a standard technique for accelerating CG methods. The system $H x = y$ is replaced by the equivalent system $P^{-1} H x = P^{-1} b$, where $P \approx H$ is the preconditioner matrix. The convergence of CG depends on $\kappa(H)$ (see Sec.~6.11.3 in Saad) \cite{saadIterativeMethodsSparse2003}, so $P$ is chosen such that $\kappa(P^{-1} H) \ll \kappa(H)$. For elliptic PDE-based forward operators $K$, the Hessian $H = K^T M_\partial K + \lambda W^T M W$ typically has a large condition number, making preconditioning effective.
+Preconditioning is a standard technique for accelerating CG methods, referred to as preconditioned CG (PCG). The system $H x = y$ is replaced by the equivalent system $P^{-1} H x = P^{-1} b$, where $P \approx H$ is the preconditioner matrix. The convergence of CG depends on $\kappa(H)$ (see Sec.~6.11.3 in Saad) \cite{saadIterativeMethodsSparse2003}, so $P$ is chosen such that $\kappa(P^{-1} H) \ll \kappa(H)$. For elliptic PDE-based forward operators $K$, the Hessian $H = K^T M_\partial K + \lambda W^T M W$ typically has a large condition number, making preconditioning effective.
 
 In the dynamical low-rank CG scheme, the preconditioned system $P^{-1} H x = P^{-1} b$ leads to the following adjustments in Algorithm \ref{alg:dlr-cg}:
 \begin{equation*}
@@ -189,13 +152,13 @@ In the dynamical low-rank CG scheme, the preconditioned system $P^{-1} H x = P^{
     {\langle G_k, Z_k \rangle_F}, \qquad
     D_{k+1} = -Z_{k+1} + \beta_k D_k
 \end{equation*}
-These modifications are equivalent with standard preconditioned conjugate gradient (PCG), as originally described by Concus et al. \cite{concusGeneralizedConjugateGradient1976}. The resulting dynamical low-rank PCG scheme is summarized in Algorithm \ref{alg:dlr-pcg}.
+These modifications are equivalent with standard preconditioned conjugate gradient, as originally described by Concus et al. \cite{concusGeneralizedConjugateGradient1976}. The resulting dynamical low-rank PCG scheme is summarized in Algorithm \ref{alg:dlr-pcg}.
 
 \input{algorithms/dlr-pcg.tex}
 
 
 \subsubsection{Choice of Preconditioner}
-The effectiveness of PCG depends on the choice of $P$. A good preconditioner must approximate $H$ well, but must be cheap to apply at each iteration. We consider three common preconditioners: Jacobi scaling, incomplete Cholesky, and (sparse) Cholesky. We consider three standard preconditioners: Jacobi scaling, incomplete Cholesky (IC), and (sparse) Cholesky. Since $H =  K^T M_\partial K + \lambda W^T M W$ has a sparse plus low-rank structure, the Cholesky-based preconditioners are modified using the Woodbury formula to exploit this \cite{woodbury1950inverting}. We refer to Golub and Van Loan for a comprehensive treatment of preconditioning and iterative methods \cite{golubMatrixComputations4th2013}.
+The effectiveness of PCG depends on the choice of $P$. A good preconditioner must approximate $H$ well, but must be cheap to apply at each iteration. We consider three common preconditioners: Jacobi scaling, incomplete Cholesky (IC), and (sparse) Cholesky. Since $H =  K^T M_\partial K + \lambda W^T M W$ has a sparse plus low-rank structure, the Cholesky-based preconditioners are modified using the Woodbury formula to exploit this \cite{woodbury1950inverting}. We refer to Golub and Van Loan for a comprehensive treatment of preconditioning and iterative methods \cite{golubMatrixComputations4th2013}.
 
 \paragraph{Jacobi scaling.} A Jacobi preconditioner $P = \operatorname{diag}(H)$ approximates $H$ by its diagonal. The approximation is cheap to compute, as $P^{-1}$ is the inverse of a diagonal matrix. It is most effective when $H$ is diagonally dominant.
  

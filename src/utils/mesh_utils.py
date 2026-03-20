@@ -1,7 +1,7 @@
 """
 Mesh generation and function creation utils.
 """
-from fenics import Point, Expression, Function, interpolate
+from fenics import Point, Expression, Function, interpolate, UnitSquareMesh
 from mshr import Circle, Polygon, generate_mesh
 
 
@@ -11,6 +11,10 @@ def get_donut_mesh(n, r=0.3, R=1.0):
 
     domain = outer - inner
     return generate_mesh(domain, n)
+
+
+def get_square_mesh(n):
+    return UnitSquareMesh(n, n)
     
 
 def get_L_mesh(n):

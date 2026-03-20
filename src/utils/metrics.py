@@ -2,7 +2,7 @@
 A collection of functions to compute reconstruction error metrics
 """
 import numpy as np
-from fenics import FunctionSpace
+from fenics import FunctionSpace, Point
 from skimage.segmentation import chan_vese
 from scipy.stats import wasserstein_distance
 from skimage.metrics import structural_similarity as ssim
@@ -46,30 +46,60 @@ def error_movers(x, x_hat):
     return dist
 
 
-def compute_mask(X, mu=0.1, lambda1=1, lambda2=1):
+def rectangular_interpolation(mesh, f):
+    """Interpolate f onto a square grid Z"""
+    coords = mesh.coordinates()
+
+    # Calculate number of x and y nodes
+    xmin, ymin = coords.min(axis=0)
+    xmax, ymax = coords.max(axis=0)
+    num_nodes = mesh.num_vertices()
+    nx = ny = int(np.sqrt(num_nodes))
+    nx, ny = int(nx*1.2), int(ny*1.2)
+
+    # Construct mesh grid
+    xs = np.linspace(xmin, xmax, nx)
+    ys = np.linspace(ymin, ymax, ny)
+    X, Y = np.meshgrid(xs, ys)
+
+    # Interpolation
+    Z = np.zeros_like(X)
+    tree = mesh.bounding_box_tree()
+    for j in range(ny):
+        for i in range(nx):
+            p = Point(X[j, i], Y[j, i])
+            if tree.compute_first_entity_collision(p) < mesh.num_cells():
+                Z[j, i] = f(p)  # evaluate f
+            else:
+                Z[j, i] = np.nan  # outside domain
+
+    Z_norm = (Z - np.nanmin(Z)) / (np.nanmax(Z) - np.nanmin(Z))
+    return Z_norm
+
+
+def compute_cv_mask(X, mu=0.1, lambda1=1, lambda2=1):
+    if np.isnan(X).any():
+        X = np.nan_to_num(X, copy=True, nan=0.0)
+
     cv = chan_vese(X,
         mu=mu,        # contour length penalty (smoothness)
         lambda1=lambda1,      # weight for inside region
         lambda2=lambda2,      # weight for outside region
     )
-    segmentation = cv
-    return segmentation
+    return cv
 
 
-def error_iou(x, x_hat, space: SpaceIndexing):
-    X = vec_to_matrix(x, space=space)
-    X_hat = vec_to_matrix(x_hat, space=space)
-    mask = compute_mask(X)
-    mask_hat = compute_mask(X_hat)
-    iou = np.sum(mask & mask_hat) / np.sum(mask | mask_hat)
-    return iou
+def error_iou(X, X_hat):
+    iou = np.sum(X & X_hat) / np.sum(X | X_hat)
+    iou_inv = np.sum(X & ~(X_hat)) / np.sum(X | ~(X_hat))
+    return max(iou, iou_inv)
+    
 
+def error_ssim(X, X_hat):
+    X = X.astype(float)
+    X_hat = X_hat.astype(float)
 
-def error_ssim(x, x_hat, space: SpaceIndexing):
-    X = vec_to_matrix(x, space=space)
-    X_hat = vec_to_matrix(x_hat, space=space)
+    s1 = ssim(X, X_hat, data_range=1.0)
+    s2 = ssim(X, 1 - X_hat, data_range=1.0)
 
-    # Normalize
-    X = (X - X.min()) / (X.max() - X.min())
-    X_hat = (X_hat - X_hat.min()) / (X_hat.max() - X_hat.min())
-    return ssim(X, X_hat, data_range=1.0)
+    return max(s1, s2)

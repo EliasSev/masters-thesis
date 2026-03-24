@@ -1,0 +1,14 @@
+\begin{algorithm}[!htbp]
+\caption{rSVD}
+\label{alg:rsvd}
+\begin{algorithmic}[1]
+    \Require $A\in\mathbb R^{m\times n}$, target rank $k$, oversampling parameter $p$.
+    \Ensure Approximate rank-$k$ factorization $U\Sigma V^T$.
+    \State Generate a random $n\times(k+p)$ test matrix $\Omega$.
+    \State Compute $Y = A\Omega$.
+    \State Form an orthonormal basis $Q$ of $Y$.
+    \State Set $B = Q^TA$.
+    \State Compute the SVD $B = \tilde U\Sigma V^T$.
+    \State Set $U = Q\tilde U$. 
+\end{algorithmic}
+\end{algorithm}

@@ -30,7 +30,8 @@
   \ifstrequal{#1}{D}{Function spaces}{}%
   \ifstrequal{#1}{E}{Discrete operators \& matrices}{}%
   \ifstrequal{#1}{F}{Regularization parameters}{}%
-  \ifstrequal{#1}{G}{Randomized SVD}{}
+  \ifstrequal{#1}{G}{Randomized SVD}{}%
+  \ifstrequal{#1}{H}{Dynamical low-rank approximation}{}%
 }
 \renewcommand{\nomgroup}[1]{%
   \item[\bfseries \nomgroupname{#1}]
@@ -58,8 +59,7 @@
 \credits{30}
 \faculty{Faculty of Science and Technology}
 \studyprogramme{Data Science}
-\supervisor{Ole Løseth Elvetun, Jonas Kusch} % Include the name of the supervisor or supervisors (this is added to the metadata of the PDF)
-%\engtitle{} % Only if you write a thesis in a Scandinavian language
+\supervisor{Ole Løseth Elvetun, Jonas Kusch}
 
 % You should also use the "\abstract" and "\sammendrag" to produce those. If you are writing in a Scandinavian language, the sammendrag will appear first.
 \abstract{This thesis uses randomized linear algebra for estimation of a discrete PDE operator.}
@@ -70,29 +70,23 @@
 
 % If you need a List of Acronyms, place them before the \startthesis command. You will need "\usepackage[nohyperlinks]{acronym}", see line 4.
 
-%\section*{List of Symbols}
-% \begin{acronym}
-%   \acro{TSO}{Transmission System Operator}
-%   \acro{LSTM}{Long Short-Term Memory}
-%\end{acronym}
-
 \printnomenclature
 
-\startthesis % This command will separate the Roman-numbered pages above and the Arabic-numbered pages below as well as create the table of contents, list of figures, list of tables, and potentially list of acronyms
+\startthesis
 
-\input{sections/introduction.tex}
+\input{sections/1_introduction.tex}
 \clearpage
-\input{sections/mathematical_background.tex}
+\input{sections/2_mathematical_background.tex}
 \clearpage
-\input{sections/methods.tex}
+\input{sections/3_approximating_the_forward_operator.tex}
 \clearpage
-\input{sections/methodology.tex}
+\input{sections/4_dynamical_low_rank_solver.tex}
 \clearpage
-\input{sections/results.tex}
+\input{sections/5_results.tex}
 \clearpage
-\input{sections/discussion.tex}
+\input{sections/6_discussion.tex}
 \clearpage
-\input{sections/conclusion.tex}
+\input{sections/7_conclusion.tex}
 
 \clearpage
 \references

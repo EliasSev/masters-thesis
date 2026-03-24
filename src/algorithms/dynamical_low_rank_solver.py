@@ -1,5 +1,5 @@
 """
-Implementation of the DynamicLowRankSolver algorithm.
+Implementation of the DynamicalLowRankSolver algorithm.
 """
 import numpy as np
 
@@ -10,16 +10,16 @@ from algorithms.matrix_free_rsvd import MatrixFreeRSVD
 from utils.utils import progress_bar
 
 
-class DynamicLowRankSolver:
+class DynamicalLowRankSolver:
     def __init__(
             self,
             mfrsvd: MatrixFreeRSVD,
             x_true: Optional[NDArray] = None
         ) -> None:
         """
-        Initialize the ProjectedLowRankSolver.
+        Initialize the DynamicalLowRankSolver.
 
-        mfrsvd, MatrixFreeRSVD: A trained MatrixFreeRSVD objected.
+        mfrsvd, MatrixFreeRSVD: A trained MatrixFreeRSVD instance.
         x_true, optional: True x source, to track the error while training.
         """
         self.V_h = mfrsvd.V_h
@@ -119,112 +119,6 @@ class DynamicLowRankSolver:
             # S-step updates S at fixed (previously updated) U and V
             S_new = (U_hat.T @ Ux) @ Sx @ (Vx.T @ V_hat)
             S_new = S_new - alpha_adam * (U_hat.T @ D_adam @ V_hat)
-
-            # Truncate (adaptive)
-            Ux_next, Sx_next, Vx_next = self.truncate(U_hat, S_new, V_hat, 0.01, max_rank)
-            Ux, Sx, Vx = Ux_next, Sx_next, Vx_next
-            VxT = Vx.T
-
-        else:
-            print(f"Warning: X did not converge (max_iter={max_iter} reached)")
-        
-        X = Ux @ Sx @ VxT
-        f = Function(self.V_h)
-        f.vector()[:] = self.matrix_to_vec(X)
-        return f
-    
-    def solve_cg_nonlinear(
-            self,
-            y,
-            w,
-            lambda_=1e-4,
-            alpha_cg=0.1,
-            rho=1e-4,
-            max_iter=5000,
-            max_rank=5,
-            tol=1e-7,
-            seed=None
-        ) -> Function:
-        # Initialize X
-        rng = np.random.default_rng(seed)
-        X = rng.random((self.n, self.n)) * 1e-2
-        X_old = X.copy()   # Track previous iteration
-
-        Ux, sx, VxT = np.linalg.svd(X, full_matrices=False)
-        Vx = VxT.T
-        Sx = np.diag(sx)
-
-        D_prev = np.zeros((self.n, self.n))
-        P_search = np.zeros((self.n, self.n))
-        
-        self.alphas = []
-        for i in range(1, max_iter + 1):
-            X = Ux @ Sx @ VxT
-            x = self.matrix_to_vec(X)
-
-            # Check for convergence
-            if i % 25 == 0:
-                dX = np.linalg.norm(X - X_old) / (np.linalg.norm(X_old) + 1e-10)
-                self.X_rel.append(dX)
-                progress_bar(i, max_iter, end_text=f" (diff={dX:.1e})")
-                if dX < tol:
-                    print(f"\nStopping: X converged at iter {i}")
-                    break
-                X_old = X.copy()
-            
-            # 1. Compute current raw gradient D
-            D_curr, r = self.gradient(x, y, w, lambda_, rho)
-            self.residuals.append(np.linalg.norm(r))
-            self.errors.append(np.linalg.norm(self.x_true - x))
-            
-            # 2. Compute Beta (Polak-Ribière)
-            if i == 1:
-                P_search = D_curr.copy()
-            else:
-                diff_D = D_curr - D_prev
-                # Dot products of flattened matrices
-                numerator = np.sum(D_curr * diff_D)
-                denominator = np.sum(D_prev * D_prev) + 1e-12
-                beta = max(0, numerator / denominator)
-                
-                # Update Conjugate Search Direction
-                P_search = D_curr + beta * P_search
-                
-                # Restart CG if the direction is no longer a descent direction
-                if np.sum(P_search * D_curr) <= 0:
-                    P_search = D_curr.copy()
-
-            # Store for next iteration
-            D_prev = D_curr.copy()
-
-            # Compute "optimal" alpha
-            p_vec = self.matrix_to_vec(P_search)
-            Kp = self.U @ (self.S * (self.VT @ p_vec))
-            denom = np.dot(Kp, Kp) + 1e-12
-            alpha_optimal = np.dot(r, Kp) / denom
-            #alpha_cg = max(0, alpha_optimal)
-            #Lp = w * (self.M_dx @ (w * p_vec)) # The regularizer's action on the direction
-            #num = np.dot(r, Kp) + lambda_ * np.dot(x, Lp)
-            #den = np.dot(Kp, Kp) + lambda_ * np.dot(p_vec, Lp) + 1e-12
-            #alpha_optimal = max(0, num / den)
-            self.alphas.append(alpha_cg)
-            
-
-            # 3. Use P_search instead of D_adam in your K, L, S steps
-            # K-step (Subspace Expansion)
-            K_star = (Ux @ Sx) - alpha_cg * P_search @ Vx
-            U_hat, _ = np.linalg.qr(np.hstack([Ux, K_star]))
-
-            # L-step (Subspace Expansion)
-            L_star = (Vx @ Sx.T) - alpha_cg * P_search.T @ Ux
-            V_hat, _ = np.linalg.qr(np.hstack([Vx, L_star]))
-
-            # S-step (Projection & Update)
-            P_proj = U_hat.T @ P_search @ V_hat
-            S_new = (U_hat.T @ Ux) @ Sx @ (Vx.T @ V_hat)
-            S_new = S_new - alpha_cg * P_proj
-            #S_new = (U_hat.T @ Ux) @ Sx @ (Vx.T @ V_hat)
-            #S_new = S_new - alpha_cg * (U_hat.T @ P_search @ V_hat)
 
             # Truncate (adaptive)
             Ux_next, Sx_next, Vx_next = self.truncate(U_hat, S_new, V_hat, 0.01, max_rank)

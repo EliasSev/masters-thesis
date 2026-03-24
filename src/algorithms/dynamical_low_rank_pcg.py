@@ -4,8 +4,8 @@ Implementation of the Dynamical Low-Rank Preconditioned Conjugate Gradient schem
 import numpy as np
 import scipy as sp
 
-from typing import Union
 from numpy.typing import NDArray
+from typing import Optional, Union
 from utils.utils import progress_bar
 from algorithms.matrix_free_rsvd import MatrixFreeRSVD
 
@@ -53,37 +53,42 @@ class DynamicalLowRankPCG:
             y: NDArray,
             w: NDArray,
             lambda_: float = 1e-4,
-            max_iter: int = 100,
+            *,
+            max_iter: int = 250,
             max_rank: int = 5,
-            preconditioner: Union[str, None] = None,
+            preconditioner: str = 'ic',
             rtol: float = 1e-8,
-            seed: Union[int, None] = None,
-            verbose: bool = True
+            seed: Optional[int] = None,
+            verbose: bool = True,
+            truncate_tol: float = 0.01,
+            X0: str = 'svd'
         ) -> NDArray:
         """
         Solve min{Phi(X; y, w)} with given lambda_ and max_rank using the DLR-PCG scheme.
+        The preconditioner must be one of: 'none', 'jacobi', 'ic', 'cholesky'
 
-        y, NDArray              : The observed data (1D array).
-        w, NDArray              : Tikhonov regularization weights (1D array).
-        lambda_, float          : Tikhonov regularization parameter.
-        max_iter, int           : Maximum number of iterations. 
-        max_rank, int           : Max rank of the solution (dynamical step).
-        preconditioner, str|None: Preconditioner to be used (P^{-1}).
-        rtol, float             : Stopping criterion, relative residual (r0/rk).
-        seed, int|None          : Seed for random number generator (for initial X).
-        verbose, bool           : Print out the results and progress.
+        y, NDArray          : The observed data (1D array).
+        w, NDArray          : Tikhonov regularization weights (1D array).
+        lambda_, float      : Tikhonov regularization parameter.
+        max_iter, int       : Maximum number of iterations. 
+        max_rank, int       : Max rank of the solution (dynamical step).
+        preconditioner, str : Preconditioner to be used (P^{-1}).
+        rtol, float         : Stopping criterion, relative residual (r0/rk).
+        seed, int|None      : Seed for random number generator (for initial X).
+        verbose, bool       : Print out the results and progress.
+        truncate_tol, float : Truncation tolerance for the adaptive rank update.
+        X0, str             : How to initialize X.
 
         returns: Solution vector x = vec(X) (1D array).
         """
         # Initialize X (random)
-        X, Ux, Sx, Vx = self.initial_X(seed)
+        X, Ux, Sx, Vx = self.initial_X(seed, max_rank, X0)
 
         # Preconditioner (1d np.array or LinearOperator)        
         P_inv = self.get_preconditioner(w, lambda_, preconditioner)
 
         # Initialize gradient G and search direction D
-        x = self.matrix_to_vec(X)
-        G = self.gradient(x, y, w, lambda_)
+        G = self.gradient(X, y, w, lambda_)
         Z = self.apply_P_inv(G, P_inv)
         D = -Z.copy()
 
@@ -95,7 +100,7 @@ class DynamicalLowRankPCG:
             HD = self.apply_H(D, w, lambda_)
             denom = np.sum(D * HD)
             if denom < 1e-32:
-                if verbose: print(f"Can't compute alpha: np.sum(D * HD) = {denom}. Stopping at iter = {i}")
+                if verbose: print(f"alpha too small ({denom}). Stopping at iter = {i}")
                 break
             alpha = np.sum(G * Z) / denom
 
@@ -112,8 +117,7 @@ class DynamicalLowRankPCG:
             S_new = S_new + alpha * (U_hat.T @ D @ V_hat)
 
             # Truncate back to low-rank
-            Ux, Sx, Vx = self.truncate(U_hat, S_new, V_hat, 0.01, max_rank)
-            VxT = Vx.T
+            Ux, Sx, Vx = self.truncate(U_hat, S_new, V_hat, truncate_tol, max_rank)
             
             # Update the gradient and the search direction
             denom = np.sum(G * Z)
@@ -134,18 +138,19 @@ class DynamicalLowRankPCG:
             if verbose and ((i % 10 == 0) or (i == max_iter)):
                 progress_bar(i, max_iter)
 
-        return self.matrix_to_vec(Ux @ Sx @ VxT)
+        return self.matrix_to_vec(Ux @ Sx @ Vx.T)
 
     def get_preconditioner(
-            self, w: NDArray, lambda_: float, preconditioner: Union[str, None]
+            self, w: NDArray, lambda_: float, preconditioner: Optional[str]
         ) -> Union[NDArray, LinearOperator]:
-        if preconditioner is None:
+        preconditioner = preconditioner.lower()
+        if preconditioner == 'none':
             P_inv = np.ones(len(w))
         elif preconditioner == 'jacobi':
             P_inv = self.build_Jacobi_preconditioner(w, lambda_)
         elif preconditioner == 'cholesky':
             P_inv = self.build_cholesky_woodbury_preconditioner(w, lambda_)
-        elif preconditioner == 'ic-woodbury':
+        elif preconditioner == 'ic':
             P_inv = self.build_ic_woodbury_preconditioner(w, lambda_)
         else:
             raise ValueError(f"Unknown preconditioner: {preconditioner}")
@@ -228,14 +233,46 @@ class DynamicalLowRankPCG:
         N = self.V.shape[0]
         return LinearOperator((N, N), matvec=apply_P_inv)
     
-    def initial_X(self, seed: Union[int, None]) -> tuple[NDArray, NDArray, NDArray, NDArray]:
+    def initial_X(
+            self, seed: Optional[int], max_rank: int, X0: str = 'svd'
+        ) -> tuple[NDArray, NDArray, NDArray, NDArray]:
+        """
+        Generate an initial matrix X and its SVD of rank `max_rank`.
+        """
         rng = np.random.default_rng(seed)
-        X = rng.random((self.n, self.n)) * 1e-3
 
-        # Compute the SVD
-        Ux, sx, VxT = np.linalg.svd(X, full_matrices=False)
-        Vx = VxT.T
-        Sx = np.diag(sx)
+        if X0 == 'svd':
+            X = rng.random((self.n, self.n)) * 1e-3
+            Ux, sx, VxT = np.linalg.svd(X, full_matrices=False)
+            Sx = np.diag(sx)
+            Vx = VxT.T
+        
+        elif X0 == 'qr':
+            Ux = rng.random((self.n, self.n))
+            Vx = rng.random((self.n, self.n))
+            Ux, _ = np.linalg.qr(Ux)
+            Vx, _ = np.linalg.qr(Vx)
+
+            # Mimic the singular values of X ~ Uniform(0, 1):
+            # sigma_1 = 0.5 * n, sigma_2, ..., sigma_n = O(sqrt(n))
+            sx = np.sqrt(self.n) * rng.random(self.n)
+            sx[0] = 0.5 * self.n
+            sx = np.sort(sx)[::-1] * 1e-3
+            Sx = np.diag(sx)
+
+        elif X0 == 'low-rank-qr':
+            Ux = rng.random((self.n, self.n))
+            Vx = rng.random((self.n, self.n))
+            Ux, _ = np.linalg.qr(Ux)
+            Vx, _ = np.linalg.qr(Vx)
+
+            sx = np.sqrt(self.n) * rng.random(self.n)
+            sx[0] = 0.5 * self.n
+            sx = np.sort(sx)[::-1] * 1e-3
+            sx[max_rank:] = 0
+            Sx = np.diag(sx)
+
+        X = Ux @ Sx @ Vx.T
         return X, Ux, Sx, Vx
     
     def gradient(self, X: NDArray, y: NDArray, w: NDArray, lambda_: float) -> NDArray:

@@ -3,6 +3,7 @@ Construction of the exact forward operator K with corresponding weights W.
 """
 import numpy as np
 from numpy.typing import NDArray
+from scipy.linalg import solve
 from fenics import (
     FunctionSpace, DirichletBC, Constant, TrialFunction,
     TestFunction, dot, grad, dx, ds, assemble, Function
@@ -39,10 +40,7 @@ class ExactForwardOperator:
 
         # Assemble A, M and S
         A = assemble(a).array()
-        M = self.M_dx
-        S = np.linalg.solve(A, M)  # S = A^{-1} @ M
-
-        return S
+        return solve(A, self.M_dx, assume_a="pos")  # S = A^{-1} @ M
 
     def assemble_T(self) -> NDArray:
         """Get the exact discrete trace operator T."""

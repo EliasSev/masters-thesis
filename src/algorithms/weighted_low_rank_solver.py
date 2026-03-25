@@ -324,7 +324,7 @@ class WeightedLowRankSolver:
             
             # Compute the gradient
             r = U @ (S * (VT @ x)) - y
-            grad_Phi = w[:, np.newaxis] * V @ (S * (UT @ (M_ds @ r)))
+            grad_Phi = w[:, np.newaxis]**(-1) * V @ (S * (UT @ (M_ds @ r)))
 
             # Factor gradients
             G = self.vec_to_matrix(grad_Phi)

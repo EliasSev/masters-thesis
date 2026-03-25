@@ -34,7 +34,8 @@ class DynamicalLowRankPCG:
         self.UT = self.U.T
         self.V = self.VT.T
 
-        self.residual = []
+        self.residual = []  # Track residuals
+        self.niter = 0  # Number of iterations to converge
         
         # Set up vec to matrix and matrix to vec utils
         coords = self.V_h.tabulate_dof_coordinates()
@@ -54,14 +55,14 @@ class DynamicalLowRankPCG:
             w: NDArray,
             lambda_: float = 1e-4,
             *,
-            max_iter: int = 250,
             max_rank: int = 5,
             preconditioner: str = 'ic',
+            truncate_tol: float = 0.01,
+            X0: str = 'qr',
+            max_iter: int = 250,
             rtol: float = 1e-8,
             seed: Optional[int] = None,
-            verbose: bool = True,
-            truncate_tol: float = 0.01,
-            X0: str = 'svd'
+            verbose: bool = True
         ) -> NDArray:
         """
         Solve min{Phi(X; y, w)} with given lambda_ and max_rank using the DLR-PCG scheme.
@@ -138,6 +139,7 @@ class DynamicalLowRankPCG:
             if verbose and ((i % 10 == 0) or (i == max_iter)):
                 progress_bar(i, max_iter)
 
+        self.niter = i
         return self.matrix_to_vec(Ux @ Sx @ Vx.T)
 
     def get_preconditioner(

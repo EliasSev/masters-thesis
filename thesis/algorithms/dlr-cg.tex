@@ -3,40 +3,38 @@
 \label{alg:dlr-cg}
 \begin{algorithmic}[1]
 
-\Require Hessian $H$, initial matrix $X_0$ with SVD $X_0 = U_x \Sigma_x V_x^T$
+\Require Hessian $H$, initial matrix $X^{(0)}$ with SVD $X^{(0)} = U_x \Sigma_x V_x^T$
 
 \Ensure Low-rank solution $x = \operatorname{vec}(X)$
 
-\State Compute initial gradient $G_0 = \nabla \Phi(X_0)$
-\State Set initial search direction $D_0 = -G_0$
+\State Compute initial gradient $G^{(0)} = \nabla \Phi(X^{(0)})$
+\State Set initial search direction $D^{(0)} = -G^{(0)}$
 
 \For{$k = 0,1,2,\dots,\text{max\_iter}$}
 
     \State \textbf{Step size:}
-    \State $\displaystyle \alpha_k = \frac{\|G_k\|_F^2}{\langle D_k, H D_k \rangle_F}$
-    \Comment{$HD_k = \operatorname{mat}[H \operatorname{vec}(D_k)]$}
+    \State $\displaystyle \alpha_k = \frac{\|G^{(k)}\|_F^2}{\langle D^{(k)}, H D^{(k)} \rangle_F}$
+    \Comment{$HD^{(k)} = \operatorname{mat}[H \operatorname{vec}(D^{(k)})]$}
 
     \State \textbf{Dynamical low-rank update:}
-    \State $W' = U_x \Sigma_x + \alpha_k D_k V_x$
-    \State $L' = V_x \Sigma_x + \alpha_k D_k^T U_x$
-
+    \State $W' = U_x \Sigma_x + \alpha_k D^{(k)} V_x$
+    \State $L' = V_x \Sigma_x + \alpha_k (D^{(k)})^T U_x$
     \State $\hat U = \operatorname{orth}([U_x, W'])$
     \State $\hat V = \operatorname{orth}([V_x, L'])$
-
-    \State $\hat \Sigma = (\hat U^T U_x)\Sigma_x(V_x^T \hat V) + \alpha_k (\hat U^T D_k \hat V)$
-
+    \State $\hat \Sigma = (\hat U^T U_x)\Sigma_x(V_x^T \hat V) + \alpha_k (\hat U^T D^{(k)} \hat V)$
     \State $(U_x, \Sigma_x, V_x) = \operatorname{truncate}(\hat U, \hat \Sigma, \hat V)$
+    \Comment{$X^{(k)} = U_x \Sigma_x V_x^T$}
 
     \State \textbf{Search direction update:}
-    \State $G_{k+1} = G_k + \alpha_k H D_k$ 
-    \Comment{or $G_{k+1} = \nabla \Phi(X_k)$}
-
-
+    \State $G^{(k+1)} = G^{(k)} + \alpha_k H D^{(k)}$ 
+    \Comment{or $G^{(k+1)} = \nabla \Phi(X^{(k)})$}
     \State $\displaystyle \beta_k =
-    \frac{\| G_{k+1} \|^2_F}
-         {\| G_{k} \|^2_F}$
-    \Comment{or $\displaystyle \beta_k = \frac{\langle G_{k+1}, H G_{k} \rangle_F}{\langle G_k, H G_k \rangle_F}$}
-    \State $D_{k+1} = -G_{k+1} + \beta_k D_k$
+    \frac{\| G^{(k+1)} \|^2_F}
+         {\| G^{(k)} \|^2_F}$
+    \Comment{or $\displaystyle \beta_k =
+    \frac{\langle G^{(k+1)}, H G^{(k)} \rangle_F}
+         {\langle G^{(k)}, H G^{(k)} \rangle_F}$}
+    \State $D^{(k+1)} = -G^{(k+1)} + \beta_k D^{(k)}$
 
 \EndFor
 

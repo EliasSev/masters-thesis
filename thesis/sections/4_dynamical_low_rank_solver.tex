@@ -1,5 +1,4 @@
-\clearpage
-\section{Dynamical low-rank solver}
+\section{Dynamical low-rank approximation}
 \input{figures/low_rank_manifold.tex}
 Consider the problem of finding a rank-$r$ solution $X$ via the update scheme $X^{(k+1)} = X^{(k)} + \alpha_k D^{(k)}$, where $D^{(k)}$ is a search direction and $\alpha_k > 0$ a step size. Starting from a rank-$r$ matrix $X^{(0)}$, there is in general no guarantee that $D^{(k)}$ preserves low rank, so that $X^{(k)}$ may leave the space $\mathcal{M}_r$ of rank-$r$ matrices after a single step.
 
@@ -8,43 +7,53 @@ One can replace $D^{(k)}$ by its projection onto the tangent space $\mathcal{T}_
     X^{(k+1)} = X^{(k)} 
     + \alpha_k \mathcal{P}_{X^{(k)}}(D^{(k)}).
 \end{equation*}
-This is illustrated in Figure~\ref{fig:low_rank_manifold}. Rather than updating $X^{(k)}$ directly, the DLRA algorithm operates on its SVD factorization $X^{(k)} = U S V^T$, updating the factors $U$, $S$, and $V$ at each iteration.
+This is illustrated in Figure~\ref{fig:low_rank_manifold}. Rather than updating $X^{(k)}$ directly, the DLRA algorithm operates on its SVD factorization $X^{(k)} = U \Sigma V^T$, updating the factors $U$, $\Sigma$, and $V$ at each iteration.
 
-However, as pointed out by Koch and Lubich, when $S$ is ill-conditioned, which occurs when $r$ exceeds the effective rank of $X^{(k)}$, the projector $\mathcal{P}_{X^{(k)}}$ suffers from stiffness, leading to very small step sizes and issues with rounding errors.
+However, as pointed out by Koch and Lubich, when $\Sigma$ is ill-conditioned, which occurs when $r$ exceeds the effective rank of $X^{(k)}$, the projector $\mathcal{P}_{X^{(k)}}$ suffers from stiffness, leading to very small step sizes and issues with rounding errors.
 
-To address this, Lubich and Oseledets proposed splitting the projector $\mathcal{P}_{X^{(k)}}$ into simpler sub-projections \cite{lubichProjectorsplittingIntegratorDynamical2013}. Crucially, each sub-projection can be evaluated without forming $S^{-1}$, and avoiding the stiffness problem present in the original formulation. In recent years, additional advancements have been made to DLRA, offering improved stability, parallelism, and rank-adaptivity \cite{cerutiUnconventionalRobustIntegrator2020, cerutiRankadaptiveRobustIntegrator2021}.
+To address this, Lubich and Oseledets proposed splitting the projector $\mathcal{P}_{X^{(k)}}$ into simpler sub-projections \cite{lubichProjectorsplittingIntegratorDynamical2013}. Crucially, each sub-projection can be evaluated without forming $\Sigma^{-1}$, and avoids the stiffness problem present in the original formulation. In recent years, additional advancements have been made to DLRA, offering improved stability, parallelism, and rank-adaptivity \cite{cerutiUnconventionalRobustIntegrator2020, cerutiRankadaptiveRobustIntegrator2021}.
+
+Historically, DLRA was developed for time-continuous matrix differential equations. Schotthöfer et al. recently proposed a discrete rank-adaptive update scheme based on a robust projector-splitting integrator for training low-rank neural networks \cite{schotthoferLowrankLotteryTickets2022}. The discrete DLRA scheme used in this work follows their formulation.
 
 
 \subsection{Application to the inverse problem}
-In our setting, the Tikhonov problem
+In the source identification problem given in Eq.~\eqref{eq:problem}, the source $f \in L^2(\Omega)$ is often expected to be of low rank. If $x \in \mathbb{R}^{n^2}$ is some discretization of $f$, reordering $x$ into an $n \times n$ matrix $X = \operatorname{mat}(x)$, we expect that $r = \operatorname{rank}(X)$ is a small number, i.e., $r \ll n$. It is therefore natural to consider low-rank methods which can locate such solutions.
+
+In the following sections, we consider the problem of minimizing a quadratic cost function
 \begin{equation*}
-    \min_{x} \left\| Kx - y \right\|_{M_\partial}^2 
-    + \lambda^2 \left\| W x \right\|_{M}^2
+    \Phi(X): \mathbb{R}^{n \times n} \rightarrow \mathbb R.
 \end{equation*}
-admits a solution $x = \mathrm{vec}(X)$ where $X$ is expected to be of low 
-rank.
+In our discrete case, the minimization problem given in Eq.~\eqref{eq:problem} translates into minimizing
+\begin{equation*}
+    \Phi(X) = \frac 1 2 \|Kx - y\|_{M_\partial}^2
+    + \frac{\lambda^2}{2} \| W x \|_M^2.
+\end{equation*}
+Using the product rule, we get the gradient (with respect to $x$) $\nabla \Phi (X) = K^T M_\partial (K x - y) + \lambda^2 W^T M W x$, and the Hessian $H = K^T M_\partial K + \lambda^2 W^T M W$.
 
 
 \subsection{Dynamical low-rank CG scheme}
-Description of the dynamical low-rank CG method. I am using the cost function
+Since $\Phi$ is quadratic with a symmetric positive definite (SPD) Hessian $H$ ($K^T M_\partial K$ is positive semi-definite and $\lambda^2 W^T M W$ is SPD), the conjugate gradient (CG) method is a natural minimization strategy \cite{saadIterativeMethodsSparse2003}.
+
+CG generates a sequence of search directions $\{D^{(k)}\}$ that are $H$-conjugate, i.e.\ $\langle D^{(i)}, H D^{(j)}\rangle_F = 0$ for $i \neq j$. Starting from the initial search direction $D^{(0)} = -G^{(0)}$, each step computes an optimal step size
 \begin{equation*}
-    \Phi(x) = \frac 1 2 \|Kx - y\|_{M_\partial}^2 + \frac \lambda 2 \| W x \|_M^2,
+    \alpha_k = \frac{\|G^{(k)}\|_F^2}{\langle D^{(k)},\, H D^{(k)}\rangle_F},
 \end{equation*}
-with gradient
+and updates the search direction by the Fletcher-Reeves rule \cite{fletcherFunctionMinimizationConjugate1964},
 \begin{equation*}
-    \nabla \Phi (x) = K^T M_\partial (K x - y) + \lambda W^T M W x,
+    D^{(k+1)} = -G^{(k+1)} + \beta_k D^{(k)},
+    \qquad
+    \beta_k = \frac{\|G^{(k+1)}\|_F^2}{\|G^{(k)}\|_F^2}.
 \end{equation*}
-and Hessian
-\begin{equation*}
-    \nabla^2 \Phi = K^T M_\partial K + \lambda W^T M W.
-\end{equation*}
-Here, $K$ is the forward operator, $W$ is the weight matrix, $M$ is the mass matrix, and $M_\partial$ is the boundary mass matrix.
+
+In our low-rank setting, we propose replacing the descent directions used in the method of Schotthöfer et al. with $H$-conjugate search directions $\{D^{(k)}\}$ obtained via the CG method. The motivation is that $H$-conjugate directions exploit curvature information of $H$, leading to faster convergence. The full scheme is given in Algorithm~\ref{alg:dlr-cg}.
+
+We note that the ``Dynamical low-rank update'' part of Algorithm~\ref{alg:dlr-cg} is equivalent to Schotthöfer et al.'s method, with the search direction replaced. The $\operatorname{truncate}$-function is the rank-adaptive step of the algorithm, and takes in arguments \texttt{tol} and \texttt{max\_rank}.
 
 \input{algorithms/dlr-cg.tex}
 
-\clearpage
+
 \subsection{Dynamical Low-Rank Preconditioned CG Scheme}
-Preconditioning is a standard technique for accelerating CG methods, referred to as preconditioned CG (PCG). The system $H x = y$ is replaced by the equivalent system $P^{-1} H x = P^{-1} y$, where $P \approx H$ is the preconditioner matrix. The convergence of CG depends on $\kappa(H)$ (see Sec.~6.11.3 in Saad) \cite{saadIterativeMethodsSparse2003}, so $P$ is chosen such that $\kappa(P^{-1} H) \ll \kappa(H)$. For elliptic PDE-based forward operators $K$, the Hessian $H = K^T M_\partial K + \lambda W^T M W$ typically has a large condition number, making preconditioning effective.
+Preconditioning is a standard technique for accelerating CG methods, referred to as preconditioned CG (PCG). The system $H x = y$ is replaced by the equivalent system $P^{-1} H x = P^{-1} y$, where $P \approx H$ is the preconditioner matrix. The convergence of CG depends on $\kappa(H)$ (see Sec.~6.11.3 in Saad) \cite{saadIterativeMethodsSparse2003}, so $P$ is chosen such that $\kappa(P^{-1} H) \ll \kappa(H)$. For elliptic PDE-based forward operators $K$, the Hessian $H = K^T M_\partial K + \lambda^2 W^T M W$ typically has a large condition number, making preconditioning effective.
 
 In the dynamical low-rank CG scheme, the preconditioned system $P^{-1} H x = P^{-1} y$ leads to the following adjustments in Algorithm \ref{alg:dlr-cg}:
 \begin{equation*}
@@ -56,20 +65,19 @@ In the dynamical low-rank CG scheme, the preconditioned system $P^{-1} H x = P^{
     {\langle G_k, Z_k \rangle_F}, \qquad
     D_{k+1} = -Z_{k+1} + \beta_k D_k
 \end{equation*}
-These modifications are equivalent with standard preconditioned conjugate gradient, as originally described by Concus et al. \cite{concusGeneralizedConjugateGradient1976}. The resulting dynamical low-rank PCG scheme is summarized in Algorithm \ref{alg:dlr-pcg}.
+These modifications are equivalent to standard preconditioned conjugate gradient, as originally described by Concus et al. \cite{concusGeneralizedConjugateGradient1976}. The resulting dynamical low-rank PCG scheme is summarized in Algorithm \ref{alg:dlr-pcg}.
 \nomenclature[H]{$\Phi(X)$}{Cost function}
 \nomenclature[H]{$H$}{Hessian of $\Phi(X)$}
 \nomenclature[H]{$P$}{Preconditioner matrix}
-
 \input{algorithms/dlr-pcg.tex}
 
 
 \subsection{Choice of Preconditioner}
-The effectiveness of PCG depends on the choice of $P$. A good preconditioner must approximate $H$ well, but must be cheap to apply at each iteration. We consider three common preconditioners: Jacobi scaling, incomplete Cholesky (IC), and (sparse) Cholesky. Since $H =  K^T M_\partial K + \lambda W^T M W$ has a sparse plus low-rank structure, the Cholesky-based preconditioners are modified using the Woodbury formula to exploit this \cite{woodbury1950inverting}. We refer to Golub and Van Loan for a comprehensive treatment of preconditioning and iterative methods \cite{golubMatrixComputations4th2013}.
+The effectiveness of PCG depends on the choice of $P$. A good preconditioner must approximate $H$ well, but must be cheap to apply at each iteration. We consider three common preconditioners: Jacobi scaling, incomplete Cholesky (IC), and (sparse) Cholesky. Since $H =  K^T M_\partial K + \lambda^2 W^T M W$ has a sparse plus low-rank structure, the Cholesky-based preconditioners are modified using the Woodbury formula to exploit this \cite{woodbury1950inverting}. We refer to Golub and Van Loan for a comprehensive treatment of preconditioning and iterative methods \cite{golubMatrixComputations4th2013}.
 
 \paragraph{Jacobi scaling.} A Jacobi preconditioner $P = \operatorname{diag}(H)$ approximates $H$ by its diagonal. The approximation is cheap to compute, as $P^{-1}$ is the inverse of a diagonal matrix. It is most effective when $H$ is diagonally dominant.
  
-\paragraph{Incomplete Cholesky.} For a symmetric positive definite (SPD) matrix $S$, the incomplete Cholesky factorization computes an approximation $S \approx  L L^T$, where $L$ is lower triangular. The Hessian $H = K^T M_\partial K + \lambda W^T M W$ consists of a low-rank part plus a sparse part. We only apply the IC factorization to the sparse part $S = \lambda W^T M W$, yielding $S \approx L L^T$. To account for the low-rank part, we let $K = U \Sigma V^T$ be the SVD of $K$ (which is assumed to be of rank $k$), and define $F = V \Sigma L_U$, where $L_U$ is the Cholesky factor of the $k \times k$ matrix $U^T M_\partial U$ (which is SPD since $M_\partial$ is SPD and $U$ has linearly independent columns). Then, the low-rank part can be written as $F F^T = V \Sigma L_U L_U^T \Sigma V^T = K^T M_\partial K$. By the Woodbury formula,
+\paragraph{Incomplete Cholesky.} For a symmetric positive definite (SPD) matrix $S$, the incomplete Cholesky factorization computes an approximation $S \approx  L L^T$, where $L$ is lower triangular. The Hessian $H = K^T M_\partial K + \lambda^2 W^T M W$ consists of a low-rank part plus a sparse part. We only apply the IC factorization to the sparse part $S = \lambda^2 W^T M W$, yielding $S \approx L L^T$. To account for the low-rank part, we let $K = U \Sigma V^T$ be the SVD of $K$ (which is assumed to be of rank $k$), and define $F = V \Sigma L_U$, where $L_U$ is the Cholesky factor of the $k \times k$ matrix $U^T M_\partial U$ (which is SPD since $M_\partial$ is SPD and $U$ has linearly independent columns). Then, the low-rank part can be written as $F F^T = V \Sigma L_U L_U^T \Sigma V^T = K^T M_\partial K$. By the Woodbury formula,
 \begin{equation*}
     (S + FF^T)^{-1} = S^{-1} - 
     S^{-1} F (I_k + F^T S^{-1} F)^{-1} F^T S^{-1}.

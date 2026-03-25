@@ -12,7 +12,7 @@ from algorithms.matrix_free_rsvd import MatrixFreeRSVD
 from pymatting import ichol  # incomplete Cholesky
 from sksparse.cholmod import cholesky  # sparse Cholesky
 from scipy.sparse.linalg import LinearOperator
-from scipy.linalg import cho_factor, cho_solve
+from scipy.linalg import cho_factor, cho_solve, hadamard
 
 
 class DynamicalLowRankPCG:
@@ -274,8 +274,24 @@ class DynamicalLowRankPCG:
             sx[max_rank:] = 0
             Sx = np.diag(sx)
 
+        elif X0 == 'householder':
+            Ux = self.fast_orthogonal(rng, max_rank)
+            Vx = self.fast_orthogonal(rng, max_rank)
+
+            sx = np.sqrt(self.n) * rng.random(self.n)
+            sx[0] = 0.5 * self.n
+            Sx = np.diag(np.sort(sx)[::-1] * 1e-3)
+
         X = Ux @ Sx @ Vx.T
         return X, Ux, Sx, Vx
+    
+    def fast_orthogonal(self, rng, k):
+        Q = np.eye(self.n)
+        for _ in range(k):
+            v = rng.standard_normal(self.n)
+            v /= np.linalg.norm(v)
+            Q -= 2 * np.outer(v, v)
+        return Q
     
     def gradient(self, X: NDArray, y: NDArray, w: NDArray, lambda_: float) -> NDArray:
             """

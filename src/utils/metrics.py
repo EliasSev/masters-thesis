@@ -8,6 +8,40 @@ from scipy.stats import wasserstein_distance
 from skimage.metrics import structural_similarity as ssim
 
 
+def relative_segmentation(x: np.ndarray, tau: float) -> np.ndarray:
+    """Compute the relative threshold (fraction of max) segmentation."""
+    return x >= tau * np.max(x)
+
+
+def error_iou(mask_a: np.ndarray, mask_b: np.ndarray) -> float:
+    """Intersection over Union between two binary masks."""
+    intersection = np.logical_and(mask_a, mask_b).sum()
+    union = np.logical_or(mask_a, mask_b).sum()
+    if union == 0:
+        return 1.0
+    return intersection / union
+
+
+def error_auc_iou(
+        x: np.ndarray, x_hat: np.ndarray, tau_range: np.ndarray = np.linspace(0.1, 1, 100)
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """
+    x, np.array         : ground truth
+    x_hat, np.array     : tikhonov solution
+    tau_range, np.array : thresholds as fraction of max
+
+    returns: (auc_iou, tau_max, ious)
+    """
+    ious = np.zeros(len(tau_range))
+
+    for i, tau in enumerate(tau_range):
+        mask = relative_segmentation(x, tau)
+        mask_hat = relative_segmentation(x_hat, tau)
+        ious[i] = error_iou(mask, mask_hat)
+
+    return np.trapz(ious, tau_range), tau_range[np.argmax(ious)], ious
+
+
 class SpaceIndexing:
     """Simple class which contains indexing and dimension info about the function space V_h."""
     def __init__(self, V_h: FunctionSpace):
@@ -87,12 +121,6 @@ def compute_cv_mask(X, mu=0.1, lambda1=1, lambda2=1):
         lambda2=lambda2,      # weight for outside region
     )
     return cv
-
-
-def error_iou(X, X_hat):
-    iou = np.sum(X & X_hat) / np.sum(X | X_hat)
-    iou_inv = np.sum(X & ~(X_hat)) / np.sum(X | ~(X_hat))
-    return max(iou, iou_inv)
     
 
 def error_ssim(X, X_hat):

@@ -47,26 +47,32 @@ class TestProblemsSetup:
             }
         }
 
-    def get_test_problems(self, verbose: bool = False, k: int = 50) -> dict[str, dict]:
+    def get_test_problems(
+            self, verbose: bool = False, compute_weights: bool = False, k: int = 50
+        ) -> dict[str, dict]:
         """Set up all three problems (I, II, II)"""
         problems =  {}
         for key, params in self.problem_params.items():
             if verbose: print(f"Setting up problem {key}: ", end='')
-            pb = self.problem_setup(params, k=k)
+            pb = self.problem_setup(
+                params=params,
+                compute_weights=compute_weights,
+                k=k
+            )
 
             if verbose: print(f" N_b={pb['rsvd'].N_b}, N={pb['rsvd'].N} (done)")
             problems[key] = pb
 
         return problems
     
-    def problem_setup(self, params: dict[str, Any], k: int = 50) -> dict[str, Any]:
+    def problem_setup(
+            self, params: dict[str, Any], compute_weights: bool, k: int
+        ) -> dict[str, Any]:
         """Set up a single test problem."""
         # Function space setup
         mesh = params['mesh'](params['n'])
         V_h = FunctionSpace(mesh, 'CG', 1)
         rsvd = MatrixFreeRSVD(V_h)
-        rsvd.mf_rsvd(k=k)
-        w = get_approximate_W(Vk=rsvd.VkT.T, M_dx=rsvd.M_dx)
 
         # Source setup
         f, x = self.get_source(
@@ -77,7 +83,13 @@ class TestProblemsSetup:
             height = params['height']
         )
         y = rsvd.apply_K(x)
-        return {'V_h': V_h, 'rsvd': rsvd, 'w': w, 'f': f, 'x': x, 'y': y}
+        problem = {'V_h': V_h, 'rsvd': rsvd, 'f': f, 'x': x, 'y': y}
+
+        if compute_weights:
+            rsvd.mf_rsvd(k=k)
+            problem['w'] = get_approximate_W(Vk=rsvd.VkT.T, M_dx=rsvd.M_dx)
+
+        return problem
     
     def get_source(
             self, V_h: FunctionSpace, x0_list: list, y0_list: list, width: float, height: float

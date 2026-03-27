@@ -19,5 +19,12 @@ C2 = [
     "#648FFF",
     "#DC267F"
 ]
+
 # Color map
 CMAP = 'plasma'
+
+# Markers
+M = ['o', '*', '^', 's']
+
+# Marker sizes
+MS = [6, 8, 6, 6]

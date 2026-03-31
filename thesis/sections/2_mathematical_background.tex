@@ -36,7 +36,16 @@ The associated inverse problem can now be formulated as follows: given boundary 
 \begin{equation}
     \mathcal{K} f = u|_{\partial\Omega}.
 \end{equation}
-In order to solve such a problem computationally, the problem must be discretized. In this thesis, the discretization is done using the finite element method (FEM), described in the following sections.
+Solving this problem computationally requires discretizing $\mathcal{K}$, understanding the ill-posedness of the resulting system, and regularizing it to obtain stable solutions, which we address in the following sections.
+
+
+\subsubsection{Ill-posedness}
+A problem is said to be well-posed if its solution exists, is unique, and is stable in the sense that it depends continuously on the data, as formulated by Hadamard \cite{hansen2010discrete}. The inverse problem $\mathcal{K}f = y$ is ill-posed.
+
+The null space of $\mathcal{K}$ is non-trivial: any $f_0$ satisfying $\mathcal{K}f_0 = 0$ can be added to a solution without changing the boundary data $y$. The solution is therefore not unique.
+
+The instability of the solution $f$ is more severe in practice. The compactness of $\mathcal{K}$, and the ellipticity of the PDE in Equation~\eqref{eq:pde}, results in a rapid decay of its singular values towards zero \cite{evansPartialDifferentialEquations2010,engl1996regularization}. Solution components corresponding to small singular values are strongly suppressed by the forward operator and cannot be recovered from noisy data: a small perturbation in $y$ produces a large error in the reconstructed source. This motivates the regularized formulation stated in Equation~\eqref{eq:problem}.
+
 
 \subsection{Finite element discretization}
 \subsubsection{The finite element method}
@@ -138,8 +147,6 @@ $u_h|_{\partial\Omega}$ and $v_h|_{\partial\Omega}$. The $L^2(\partial\Omega)$ i
 where $M_\partial$ denotes the boundary mass matrix, see Appendix~\ref{appendix:stiffness}.
 \nomenclature[E]{$M_\partial$}{Boundary mass matrix}%
 
-%In practice, this system is often **ill-posed** due to the large null space of $K$ and the accumulation of numerical errors in $A^{-1}$. As a result, naive solutions of Eq.~\eqref{eq:inverse_problem} are highly sensitive to noise in $\v y$, motivating the need for regularization techniques. In the following section, we discuss classical Tikhonov regularization and introduce the weighted approach that will be explored in this thesis.
-
 
 \subsubsection{The adjoint operator}
 Let $\mathcal{K}: L^2(\Omega) \to L^2(\partial\Omega)$ be the bounded linear operator defined in Equation~\eqref{eq:K}. The adjoint operator $\mathcal{K}^*: L^2(\partial\Omega) \to L^2(\Omega)$ is the bounded linear operator satisfying
@@ -155,7 +162,7 @@ Using the definition in Equation~\eqref{eq:K_star_cont}, we get the weak formula
     \int_{\partial\Omega} g v \, ds,
     \text{ for all } v \in H^1(\Omega).
 \end{equation}
-The solution $w$ then satisfies $\mathcal K^* g = w$. For details, see 
+The solution $w$ then satisfies $\mathcal K^* g = w$. For details, see \textcolor{red}{(???)}.
 
 In the discrete case, under the inner products and norms defined in Equation~\eqref{eq:fem_norm} and \eqref{eq:fem_norm_ds}, the adjoint operator $K^* \in \mathbb{R}^{N \times N_b}$ of $K \in \mathbb{R}^{N_b \times N}$ satisfies
 \begin{equation}
@@ -169,54 +176,35 @@ Inserting the explicit representation of $K$ given in Equation~\eqref{eq:discret
 \end{equation}
 where $A$ is the stiffness matrix, $T$ the discrete trace operator, and $M_\partial$ the boundary mass matrix.
 
+\subsection{Tikhonov regularization}
+
+Let $A \in \mathbb{R}^{m \times n}$ and consider the inverse problem $Ax = y$. When the problem is ill-posed or $A$ is ill-conditioned, small perturbations in $y$ cause large changes in the solution. Tikhonov regularization stabilizes the problem by solving
+\begin{equation}\label{eq:tikhonov}
+    \min_{x \in \mathbb{R}^n}
+    \|Ax - y\|^2 + \lambda^2 \|Wx\|^2,
+\end{equation}
+where $\lambda \ge 0$ is the regularization parameter and $W \in \mathbb{R}^{n \times n}$ is the weight matrix. $W$ can include prior knowledge about the solution to punish specific types of unwanted solutions \cite{hansen2010discrete}. With $W = I$, this is standard Tikhonov regularization.
+
+
 \subsection{The discrete inverse problem}
-Replacing the continuous operator $\mathcal{K}$ by its discretization $K \in \mathbb{R}^{N_b \times N}$ and the $L^2$ norms by the FEM inner products defined in Equations~\eqref{eq:fem_norm} and \eqref{eq:fem_norm_ds}, the inverse problem \eqref{eq:problem} takes the discrete form
+Replacing $\mathcal{K}$ by $K \in \mathbb{R}^{N_b \times N}$ and the $L^2$ norms by the FEM inner products in Equations~\eqref{eq:fem_norm} and~\eqref{eq:fem_norm_ds}, the Tikhonov problem takes the discrete form
 \begin{equation}\label{eq:discrete_inverse_problem}
     \min_{\mathbf{x} \in \mathbb{R}^N}
     \| K\mathbf{x} - \mathbf{y} \|_{M_\partial}^2
     + \lambda^2 \| W\mathbf{x} \|_M^2,
 \end{equation}
-where $\mathbf{x} \in \mathbb{R}^N$ is the coefficient vector of the source
-$f_h \in V_h$, $\mathbf{y} \in \mathbb{R}^{N_b}$ is the vector of observed boundary data, $\lambda \geq 0$ is the regularization parameter, and $W \in \mathbb{R}^{N \times N}$ is a regularization weight matrix to be specified.
+where $\mathbf{x} \in \mathbb{R}^N$ is the coefficient vector of $f_h \in V_h$, $\mathbf{y} \in \mathbb{R}^{N_b}$ is the observed boundary data, and $\lambda \geq 0$ is the regularization parameter.
 
-
-\subsection{Tikhonov regularization}
-
-\subsubsection{Standard Tikhonov regularization}
-
-Let $A \in \mathbb{R}^{m \times n}$ and consider the inverse problem
-\begin{equation}
-    Ax = y.
-\end{equation}
-If the problem is ill-posed or the matrix $A$ is ill-conditioned, small perturbations in the data $y$ may lead to large variations in the solution. Tikhonov regularization is a common technique to handle ill-posed problems.
-
-The Tikhonov solution is defined as the minimizer of
-\begin{equation}\label{eq:tikhonov}
-    \min_{x \in \mathbb{R}^n}
-    \|Ax - y\|^2 + \lambda^2 \|Wx\|^2,
-\end{equation}
-where $\lambda \ge 0$ is the regularization parameter and $W \in \mathbb{R}^{n \times n}$ is a matrix of regularization weights. The term $\|Wx\|^2$ penalizes large solutions, which stabilizes the problem. If $W = I$, the solution is known as the standard Tikhonov solution.
-
-
-\subsubsection{Weighted Tikhonov regularization for source identification}
-For the problem considered in this thesis, the operator $K$ has a large nullspace. Standard Tikhonov regularization with $W = I$ often leads to solutions which are concentrated  near the boundary of the domain, regardless of the position of the true source, see \cite{elvetunRegularizationOperatorSource2020}.
-
-To address this issue, Elvetun and Nielsen propose regularization weights which penalizes solutions which are concentrated near the domain boundary. The weights are given by
+Standard Tikhonov ($W = I$) does not work here. Because $K$ has a large nullspace, the solutions it produces concentrate near the domain boundary regardless of where the true source is located \cite{elvetunRegularizationOperatorSource2020}. Elvetun and Nielsen address this by choosing weights that penalize boundary-concentrated solutions,
 \begin{equation*}
     w_i = \|K^+ K e_i\|,
 \end{equation*}
-where $e_i$ is the $i$th standard basis vector of $\mathbb{R}^n$ \cite{elvetunRegularizationOperatorSource2020}. The regularization matrix is then chosen as the diagonal matrix
-\begin{equation*}
-    W = \operatorname{diag}(w_1, \dots, w_n).
-\end{equation*}
-
-In the finite element space $V_h$ with basis $\{\phi_1, \dots, \phi_N\}$ (see Eq.~\eqref{eq:fem_space}), equipped with the inner product
-induced by the boundary mass matrix $M_\partial$, the weights can be computed as
+where $e_i$ is the $i$th standard basis vector of $\mathbb{R}^N$ \cite{elvetunRegularizationOperatorSource2020}, and $W = \operatorname{diag}(w_1, \dots, w_N)$. In $V_h$ with the inner product induced by $M_\partial$, the weights take the form
 \begin{equation}\label{eq:weights_fem}
     w_i =
-    \frac{\sqrt{y_i^T M_\partial y_i}}{\int_\Omega \phi_i \, dx},
+    \frac{\sqrt{\mathbf{y}_i^T M_\partial \mathbf{y}_i}}{\int_\Omega \phi_i \, dx},
     \quad
-    y_i = K^+ K e_i.
+    \mathbf{y}_i = K^+ K e_i.
 \end{equation}
 
 

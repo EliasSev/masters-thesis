@@ -4,8 +4,8 @@
 \begin{algorithmic}[1]
     \Require $A\in\mathbb R^{m\times n}$, target rank $k$, oversampling parameter $p$.
     \Ensure Approximate rank-$k$ factorization $U\Sigma V^T$.
-    \State Generate a random $n\times(k+p)$ test matrix $\Omega$.
-    \State Compute $Y = A\Omega$.
+    \State Generate a random $n\times(k+p)$ test matrix $\Psi$.
+    \State Compute $Y = A\Psi$.
     \State Form an orthonormal basis $Q$ of $Y$.
     \State Set $B = Q^TA$.
     \State Compute the SVD $B = \tilde U\Sigma V^T$.

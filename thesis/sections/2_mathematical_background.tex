@@ -176,8 +176,8 @@ Inserting the explicit representation of $K$ given in Equation~\eqref{eq:discret
 \end{equation}
 where $A$ is the stiffness matrix, $T$ the discrete trace operator, and $M_\partial$ the boundary mass matrix.
 
-\subsection{Tikhonov regularization}
 
+\subsection{Tikhonov regularization}
 Let $A \in \mathbb{R}^{m \times n}$ and consider the inverse problem $Ax = y$. When the problem is ill-posed or $A$ is ill-conditioned, small perturbations in $y$ cause large changes in the solution. Tikhonov regularization stabilizes the problem by solving
 \begin{equation}\label{eq:tikhonov}
     \min_{x \in \mathbb{R}^n}
@@ -186,7 +186,50 @@ Let $A \in \mathbb{R}^{m \times n}$ and consider the inverse problem $Ax = y$. W
 where $\lambda \ge 0$ is the regularization parameter and $W \in \mathbb{R}^{n \times n}$ is the weight matrix. $W$ can include prior knowledge about the solution to punish specific types of unwanted solutions \cite{hansen2010discrete}. With $W = I$, this is standard Tikhonov regularization.
 
 
-\subsection{The discrete inverse problem}
+\subsection{SVD and low-rank approximations}
+The SVD of $K$ underlies the methods developed in this thesis. Since $K$ has a rapid decay of singular values, $K$ can be approximated well by a low-rank matrix. Additionally, the SVD is needed to construct the pseudo-inverse of $K$, which is used for the regularization weights in Section~\ref{sec:the_discrete_inverse_problem}.
+
+Consider the goal of finding a rank-$k$ approximation to an $m \times n$ matrix $A$. We seek a matrix $A_k$ with $\operatorname{rank}(A_k) \le k$ which approximates $A$. The problem formulation is
+\begin{equation}\label{eq:low_rank_problem}
+    \min_{\operatorname{rank}(A_k)\le k} \|A - A_k \|_2,
+\end{equation}
+where $\| \cdot \|_2$ is the $\ell_2$ operator norm, also known as the spectral norm.
+
+
+\subsubsection{Singular value decomposition}
+The singular value decomposition of a matrix $A\in\mathbb R^{m\times n}$ is a factorization of the form
+\begin{equation*}
+    A = U\Sigma V^T,
+\end{equation*}
+where $U$ is an $m \times m$ orthogonal matrix, $\Sigma$ is an $m\times n$ diagonal matrix with non-negative entries, called the singular values of $A$, and $V$ is an $n \times n$ orthogonal matrix. The singular values are ordered such that $\sigma_1\ge\sigma_2\ge\dots\ge\sigma_n$. Every matrix has such a factorization, where $\Sigma$ is uniquely determined, but $U$ and $V$ are not \cite{layLinearAlgebraIts2022}. The columns of $U$ and $V$ are called the left and right singular vectors of $A$, respectively.
+
+In 1936, C. Eckart and G. Young showed that the solution to Equation~\eqref{eq:low_rank_problem} is $X = U_k\Sigma_k V_k^T$, where $U_k$ and $V_k$ consist of the first $k$ left and right singular vectors of $A$, respectively, and $\Sigma_k$ contains the first $k$ singular values of $A$ \cite{eckartApproximationOneMatrix1936}. This is known as the Eckart–Young–Mirsky theorem. This implies that
+\begin{equation}\label{eq:svd_error}
+    \min_{\operatorname{rank}(X)\le k} \|A - X \|_2 = \sigma_{k+1},
+\end{equation}
+where $\sigma_{k+1}$ is the $(k+1)$th singular value of $A$. Equation \eqref{eq:svd_error} says that no rank-$k$ approximation of $A$ can have an error smaller than $\sigma_{k+1}$.
+
+
+\subsection{The pseudoinverse}
+For a matrix $A \in \mathbb{R}^{m \times n}$, the Moore-Penrose inverse $A^+$, often referred to as the pseudoinverse, is a generalization of the inverse of a matrix. If $A = U \Sigma V^T$ is the SVD of $A$, then the pseudoinverse is
+\begin{equation*}
+    A^+ = V \Sigma^+ U^T,
+\end{equation*}
+where $\Sigma^+$ is the pseudoinverse of $\Sigma$. The pseudoinverse of $\Sigma$ can be computed by transposing the matrix and replacing each non-zero diagonal entry with its reciprocal \cite{golubMatrixComputations4th2013}. The pseudoinverse $A^+$ is unique and always exists, and for invertible $A$, $A^+ = A^{-1}$.
+
+For the least-squares problem $\min \|Ax - y \|$, the pseudo-inverse provides the least-squares solution $x = A^+ y$. If the least-squares solution is not unique, then $A^+ y$ is the solution with the smallest Euclidean norm. For details, see Section~5.5 in Golub and Van Loan \cite{golubMatrixComputations4th2013}.
+
+
+\subsubsection{Randomized SVD}
+The rSVD is a technique used to compute a rank-$k$ approximation of an $m\times n$ matrix without computing the SVD. The core idea is to use random sampling to find a low-rank matrix $Q$ which approximates the range of $A$, project $A$ onto $\operatorname{span}(Q)$, and compute the SVD of the projection. The projection $B=Q^TA$ will, with high probability, capture the dominant actions of $A$, and the SVD of $B$ will yield a good approximation \cite{halkoFindingStructureRandomness2011}. This procedure is summarized in Algorithm \ref{alg:rsvd}. The construction of an orthonormal basis $Q$ of $Y$ is done through a QR factorization.
+
+Let $A_k$ denote a rank-$k$ approximation of $A$ obtained using rSVD with a random test matrix $\Psi$. Error analysis of rSVD is active area of research. Halko et al. derived initial reference error analysis in terms of expectation \cite{halkoFindingStructureRandomness2011}, which was later improved upon by Gu \cite{guSubspaceIterationRandomization2015}. Diouane et al have recently derived further improvements \cite{diouaneGeneralErrorAnalysis2022}.
+
+Although theoretical upper bounds are useful in many applications, it is well known that randomized algorithm for low-rank approximations, like Algorithm~\ref{alg:rsvd} and alike, far outperform their error bounds in numerical experiments \cite{halkoFindingStructureRandomness2011,guSubspaceIterationRandomization2015,rokhlinFastRandomizedAlgorithm2008}.
+\input{algorithms/rsvd.tex}
+
+
+\subsection{The discrete inverse problem}\label{sec:the_discrete_inverse_problem}
 Replacing $\mathcal{K}$ by $K \in \mathbb{R}^{N_b \times N}$ and the $L^2$ norms by the FEM inner products in Equations~\eqref{eq:fem_norm} and~\eqref{eq:fem_norm_ds}, the Tikhonov problem takes the discrete form
 \begin{equation}\label{eq:discrete_inverse_problem}
     \min_{\mathbf{x} \in \mathbb{R}^N}
@@ -195,7 +238,7 @@ Replacing $\mathcal{K}$ by $K \in \mathbb{R}^{N_b \times N}$ and the $L^2$ norms
 \end{equation}
 where $\mathbf{x} \in \mathbb{R}^N$ is the coefficient vector of $f_h \in V_h$, $\mathbf{y} \in \mathbb{R}^{N_b}$ is the observed boundary data, and $\lambda \geq 0$ is the regularization parameter.
 
-Standard Tikhonov ($W = I$) does not work here. Because $K$ has a large nullspace, the solutions it produces concentrate near the domain boundary regardless of where the true source is located \cite{elvetunRegularizationOperatorSource2020}. Elvetun and Nielsen address this by choosing weights that penalize boundary-concentrated solutions,
+Standard Tikhonov ($W = I$) does not work here. Because $K$ has a large null space, the solutions it produces concentrate near the domain boundary regardless of where the true source is located \cite{elvetunRegularizationOperatorSource2020}. Elvetun and Nielsen address this by choosing weights that penalize boundary-concentrated solutions,
 \begin{equation*}
     w_i = \|K^+ K e_i\|,
 \end{equation*}
@@ -206,8 +249,3 @@ where $e_i$ is the $i$th standard basis vector of $\mathbb{R}^N$ \cite{elvetunRe
     \quad
     \mathbf{y}_i = K^+ K e_i.
 \end{equation}
-
-
-\subsection{Randomized SVD}
-The rSVD is a technique used to compute a rank-$k$ approximation of an $m\times n$ matrix without computing the SVD. The core idea is to use random sampling to find a low-rank matrix $Q$ which approximates the range of $A$, project $A$ onto $\operatorname{span}(Q)$, and compute the SVD of the projection. The projection $B=Q^TA$ will, with high probability, capture the dominant actions of $A$, and the SVD of $B$ will yield a good approximation \cite{halkoFindingStructureRandomness2011}. This procedure is summarized in Algorithm \ref{alg:rsvd}. The construction of an orthonormal basis $Q$ of $Y$ is done through a QR factorization. Note that the approximation $A\approx QQ^T A$ and the approximate factorization $A\approx U\Sigma V^T$ produced by rSVD have the same error. This can be seen by observing that $QQ^TA = QB = Q\tilde U\Sigma V^T$, and setting $U=Q\tilde U$.
-\input{algorithms/rsvd.tex}

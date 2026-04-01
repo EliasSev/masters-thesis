@@ -121,3 +121,25 @@ def solve_explicit(operator: ExactForwardOperator, w, y, lambda_):
     f = Function(operator.V_h)
     f.vector()[:] = x_hat
     return f
+
+
+def fast_get_weights(S: NDArray, Vt: NDArray, M: NDArray, tol: float = 1e-12):
+        """
+        Get the regularization weights as a 1D array: w = diag(W).
+
+        S:  (N,) Singular values.
+        Vt: (N, N) Right singular vectors.
+        M:  (N, N) Mass matrix.
+        """
+        r = np.sum(S > (S[0] * tol))  # rank k of K
+        Vr = Vt[:r, :].T 
+        
+        # Compute y_i^T * M_dx * y_i for all i
+        # Mathematically: diag(R^T * M_dx * R)
+        # Since R = Vr * Vr^T: diag(Vr * Vr^T * M_dx * Vr * Vr^T)
+        # Let C = Vr^T * M_dx * Vr  (an r x r matrix)
+        # Then w_sq = diag(Vr * C * Vr^T)
+        C = Vr.T @ M @ Vr
+        w_sq = np.sum(Vr * (Vr @ C), axis=1)
+        volumes = np.array(M.sum(axis=1)).flatten()
+        return np.sqrt(np.maximum(w_sq, 0)) / volumes

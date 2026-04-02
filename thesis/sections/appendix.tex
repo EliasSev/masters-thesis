@@ -1,13 +1,16 @@
 \section{Appendix}
-\subsection{Function spaces}\label{appendix:function_spaces}
+
+
+\subsection{Functional analysis and the FEM}
+\subsubsection{Function spaces}\label{appendix:function_spaces}
 Let $\Omega \subset \mathbb{R}^d$ be an open set and $\mathbb{F}$ denote either $\mathbb{R}$ or $\mathbb{C}$. The space $L^2(\Omega)$, often referred to as the Lebesgue space of square integrable functions, is defined as 
-\begin{equation}
+\begin{equation*}
     L^2(\Omega) =
     \left\{
         f : \Omega \to \mathbb{F} \, \Bigg| \,
         \int_{\Omega} |f(x)|^2 \, dx < \infty
     \right\},
-\end{equation}
+\end{equation*}
 with inner product
 \begin{equation}\label{eq:L2_inner_product}
     \langle f,\, g \rangle_{L^2(\Omega)} = \int_\Omega f(x) \overline{g(x)} \, dx.
@@ -31,7 +34,7 @@ with inner product
 The space $H^1(\Omega)$ is a Hilbert space and a subspace of $L^2(\Omega)$. See Section~2 in Quarteroni for further details \cite{quarteroniNumericalModelsDifferential2014}.
 
 
-\subsection{Weak derivative}
+\subsubsection{Weak derivative}
 Let $\Omega \subset \mathbb{R}^d$ be an open set and $u \in L^2(\Omega)$. A function $v$ is said to be the weak derivative of $u$ if
 \begin{equation}
     \int_\Omega u(x) \frac{\partial \phi}{\partial x_i} \, dx =
@@ -40,7 +43,7 @@ Let $\Omega \subset \mathbb{R}^d$ be an open set and $u \in L^2(\Omega)$. A func
 for all infinitely differentiable $\phi$ with compact support on $\Omega$. For details, see Section~2 in Quarteroni \cite{quarteroniNumericalModelsDifferential2014}.
 
 
-\subsection{The stiffness and the mass matrix}\label{appendix:stiffness}
+\subsubsection{The stiffness and the mass matrix}\label{appendix:stiffness}
 Let $V_h \subset H^1(\Omega)$ be the finite element space defined in Eq.~\eqref{eq:fem_space}. Under the basis $\{\phi_i\}_{i=1}^N$, the stiffness matrix $A \in \mathbb{R}^{N \times N}$ and mass matrix $M \in \mathbb{R}^{N \times N}$ are defined as
 \begin{equation}
     A_{ij} = \int_\Omega 
@@ -62,12 +65,38 @@ where the indices $i, j$ tabulate over the boundary indices of the mesh. Similar
 For the assembly of stiffness matrices and mass matrices in two dimensions, see Section~4 in Larson and Bengzon \cite{larsonFiniteElementMethod2013}.
 
 
-\subsection{Positive definiteness}\label{sec:positive_definiteness}
-Let $\sigma = \sigma(x)$ be a symmetric $N \times N$ matrix. We say that $\sigma(x)$ is positive definite if
-\begin{equation}
-    y^T \sigma(x) y \ge 0
-\end{equation}
-for all $y \in \mathbb{R}^N$.
+\subsection{Linear algebra and matrix decompositions}
+
+\paragraph{Symmetric positive definiteness}\label{sec:positive_definiteness}
+Let $A \in \mathbb{R}^{n \times n}$. $A$ is said to be symmetric if $A = A^T$. If $A$ is symmetric and if 
+\begin{equation*}
+    x^T A x > 0
+\end{equation*}
+for all $x \in \mathbb{R}^n$, then $A$ is said to be symmetric positive definite (SPD). For details, see Section~4.2 in \cite{golubMatrixComputations4th2013}.
+
+
+\paragraph{QR factorization}
+The QR factorization of $A\in\mathbb R^{m\times n}$ is a decomposition
+\begin{equation*}
+    A = QR,
+\end{equation*}
+where $Q\in\mathbb R^{m\times n}$ has orthonormal columns and $R\in\mathbb R^{n\times n}$ is upper triangular. The matrix $Q$ forms an orthonormal basis for $\operatorname{range}(A)$, as described in Section 6 of Golub and Van Loan \cite{golubMatrixComputations4th2013}.
+
+
+\paragraph{Cholesky factorization}
+Assume that $A\in\mathbb R^{n\times n}$ is SPD. Then $A$ has a unique Cholesky factorization
+\begin{equation*}
+    A = L L^T,
+\end{equation*}
+where $L$ is a lower triangular matrix with positive diagonal elements. This factorization is commonly used to efficiently solve linear systems with SPD matrices via forward and backward substitution. For details, see Section~4.2 in Golub and Van Loan \cite{golubMatrixComputations4th2013}.
+
+
+\paragraph{Incomplete Cholesky factorization}
+If $A \in \mathbb{R}^{n\times n}$ is SPD with Cholesky factorization $A = L L^T$, then the incomplete Cholesky factorization is an approximation
+\begin{equation*}
+    A \approx \tilde L \tilde L^T,
+\end{equation*}
+where $\tilde L$ is a lower triangular matrix which is sparser than $L$. There are many strategies for computing the incomplete Cholesky, see Lin and Moré \cite{linIncompleteCholeskyFactorizations1999}. The main advantage over the full Cholesky factorization is reduced storage and computational cost, making it particularly effective for large sparse SPD matrices.
 
 
 \subsection{Performance metrics}

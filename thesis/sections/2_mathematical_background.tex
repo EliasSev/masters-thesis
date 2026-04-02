@@ -162,7 +162,7 @@ Using the definition in Equation~\eqref{eq:K_star_cont}, we get the weak formula
     \int_{\partial\Omega} g v \, ds,
     \text{ for all } v \in H^1(\Omega).
 \end{equation*}
-The solution $w$ then satisfies $\mathcal K^* g = w$. For details, see \textcolor{red}{(???)}.
+The solution $w$ then satisfies $\mathcal K^* g = w$. For details, see Appendix~\ref{appendix:adjoint_derivation}.
 
 In the discrete case, under the inner products and norms defined in Equation~\eqref{eq:fem_norm} and \eqref{eq:fem_norm_ds}, the adjoint operator $K^* \in \mathbb{R}^{N \times N_b}$ of $K \in \mathbb{R}^{N_b \times N}$ satisfies
 \begin{equation*}
@@ -223,7 +223,7 @@ For the least-squares problem $\min \|Ax - y \|$, the pseudo-inverse provides th
 \subsubsection{Randomized SVD}
 The rSVD is a technique used to compute a rank-$k$ approximation of an $m\times n$ matrix without computing the SVD. The core idea is to use random sampling to find a low-rank matrix $Q$ which approximates the range of $A$, project $A$ onto $\operatorname{span}(Q)$, and compute the SVD of the projection. The projection $B=Q^TA$ will, with high probability, capture the dominant actions of $A$, and the SVD of $B$ will yield a good approximation \cite{halkoFindingStructureRandomness2011}. This procedure is summarized in Algorithm \ref{alg:rsvd}. The construction of an orthonormal basis $Q$ of $Y$ is done through a QR factorization.
 
-Let $A_k$ denote a rank-$k$ approximation of $A$ obtained using rSVD with a random test matrix $\Psi$. Error analysis of rSVD is active area of research. Halko et al. derived initial reference error analysis in terms of expectation \cite{halkoFindingStructureRandomness2011}, which was later improved upon by Gu \cite{guSubspaceIterationRandomization2015}. Diouane et al have recently derived further improvements \cite{diouaneGeneralErrorAnalysis2022}.
+Let $A_k$ denote a rank-$k$ approximation of $A$ obtained using rSVD with a random test matrix $\Psi$. Error analysis of rSVD is an active area of research. Halko et al. derived initial reference error analysis in terms of expectation \cite{halkoFindingStructureRandomness2011}, which was later improved upon by Gu \cite{guSubspaceIterationRandomization2015}. Diouane et al have recently derived further improvements \cite{diouaneGeneralErrorAnalysis2022}.
 
 Although theoretical upper bounds are useful in many applications, it is well known that randomized algorithm for low-rank approximations, like Algorithm~\ref{alg:rsvd} and alike, far outperform their error bounds in numerical experiments \cite{halkoFindingStructureRandomness2011,guSubspaceIterationRandomization2015,rokhlinFastRandomizedAlgorithm2008}.
 \input{algorithms/rsvd.tex}

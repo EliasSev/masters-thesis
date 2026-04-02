@@ -225,7 +225,7 @@ The rSVD is a technique used to compute a rank-$k$ approximation of an $m\times 
 
 Let $A_k$ denote a rank-$k$ approximation of $A$ obtained using rSVD with a random test matrix $\Psi$. Error analysis of rSVD is an active area of research. Halko et al. derived initial reference error analysis in terms of expectation \cite{halkoFindingStructureRandomness2011}, which was later improved upon by Gu \cite{guSubspaceIterationRandomization2015}. Diouane et al have recently derived further improvements \cite{diouaneGeneralErrorAnalysis2022}.
 
-Although theoretical upper bounds are useful in many applications, it is well known that randomized algorithm for low-rank approximations, like Algorithm~\ref{alg:rsvd} and alike, far outperform their error bounds in numerical experiments \cite{halkoFindingStructureRandomness2011,guSubspaceIterationRandomization2015,rokhlinFastRandomizedAlgorithm2008}.
+Although theoretical upper bounds are useful in many applications, it is well known that randomized algorithms for low-rank approximations, like Algorithm~\ref{alg:rsvd} and alike, far outperform their error bounds in numerical experiments \cite{halkoFindingStructureRandomness2011,guSubspaceIterationRandomization2015,rokhlinFastRandomizedAlgorithm2008}.
 \input{algorithms/rsvd.tex}
 
 
@@ -239,7 +239,7 @@ Replacing $\mathcal{K}$ by its discretization $K \in \mathbb{R}^{N_b \times N}$ 
 \end{equation}
 where $x \in \mathbb{R}^N$ is the coefficient vector of $f_h \in V_h$, $y \in \mathbb{R}^{N_b}$ is the observed boundary data, and $\lambda \ge 0$ is the regularization parameter.
 
-Standard Tikhonov ($W = I$) does not work here. Because $K$ has a large null space, the solutions it produces concentrate near the domain boundary regardless of where the true source is located \cite{elvetunRegularizationOperatorSource2020}. This illustrated in Figure~\ref{fig:standard_tikhonov_solution}.
+Standard Tikhonov ($W = I$) does not work here. Because $K$ has a large null space, the solutions it produces concentrate near the domain boundary regardless of where the true source is located \cite{elvetunRegularizationOperatorSource2020}. This is illustrated in Figure~\ref{fig:standard_tikhonov_solution}.
 
 
 \subsection{Regularization weights}
@@ -247,11 +247,11 @@ Assume that $\{ \phi_i \}$ is an orthonormal basis of $V_h$, let $\operatorname{
 \begin{equation*}
 f^* = \sum_{i} \langle \hat P f, \phi_i \rangle \phi_i,    
 \end{equation*}
-where $\hat P: V_h \to \operatorname{Nul}(K)^\perp$ is the orthogonal projection onto $\operatorname{Nul}(K)^\perp$. If $\| \hat P \phi_i \|$ is small, then $\langle \hat Pf, \phi_i \rangle$ is small, and the corresponding component of $f^*$ is small. This means that for any $\phi_i$ far away from $\partial \Omega$, the corresponding component of $f^*$ gets small, introducing bias to the solution. This issue transfers to the standard Tikhonov solution $f_\lambda$ since $f_\lambda \to f^*$ as $\lambda \to 0$.
+where $\hat P: V_h \to \operatorname{Nul}(K)^\perp$ is the orthogonal projection onto $\operatorname{Nul}(K)^\perp$. Since $\hat{P}\phi_i = \phi_{i}^\perp$, basis functions deep in the interior have small $\|\hat{P}\phi_i \|$. By the Cauchy-Schwarz inequality, if $\| \hat P \phi_i \|$ is small, then $\langle \hat Pf, \phi_i \rangle$ is small, and the corresponding component of $f^*$ is small. This means that for any $\phi_i$ far away from $\partial \Omega$, the corresponding component of $f^*$ is forced to be small, introducing bias to the solution. This issue transfers to the standard Tikhonov solution $f_\lambda$ since $f_\lambda \to f^*$ as $\lambda \to 0$ \cite{engl1996regularization}.
 
-Elvetun and Nielsen counteracts this by re-scaling the norm of $\hat P \phi_i$ such that $\| \hat P \phi_i \| = 1$. This is achieved by setting $w_i = \| \hat P \phi_i \|$ with $W = \operatorname{diag}(w_i)$ in the Tikhonov formulation, equalizing the contribution of all components. In the discrete formulation, $\hat P = K^+ K$ is the orthogonal projection onto the complement of the null space, and the weights are computed as $w_i = \|K^+ K e_i\|$.
+Elvetun and Nielsen counteract this by re-scaling the norm of $\hat P \phi_i$ such that $\| \hat P \phi_i \| = 1$. This is achieved by setting $w_i = \| \hat P \phi_i \|$ with $W = \operatorname{diag}(w_i)$ in the Tikhonov formulation, equalizing the contribution of all components. In the discrete formulation, $\hat P = K^+ K$ is the orthogonal projection onto the complement of the null space, and the weights are computed as $w_i = \|K^+ K e_i\|$.
 
-In our setting, the basis of the element space $V_h$ given in Equation~\eqref{eq:fem_space} needs to be normalized. If $K = U\Sigma V^T$ is the SVD of $K$ and $M_{ii}$ is the $i$'th diagonal element of the mass matrix $M$, then the weights are computed as 
+In our setting, the basis of the element space $V_h$ given in Equation~\eqref{eq:fem_space} needs to be normalized to match the orthonormality assumption made above. If $K = U\Sigma V^T$ is the SVD of $K$ and $M_{ii}$ is the $i$'th diagonal element of the mass matrix $M$, then the weights are computed as 
 \begin{equation}\label{eq:weights}
     w_i =
     \frac{\| K^+ K e_i \|_M}

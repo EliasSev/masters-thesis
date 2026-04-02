@@ -1,27 +1,11 @@
 \section{Approximating the Forward Operator}
 \input{figures/singular_values.tex}
 % Opening: motivation and feasibility
-The goal of this sections if to compute the regularization weights given in Eq.~\eqref{eq:weights_fem}. For fine meshes, the $N_b \times N$ forward matrix in Eq.~\eqref{eq:discrete_K} is not known explicitly, as storing it in memory would be infeasible. In order to compute $w_i$, one first needs one PDE solve to form $v_i = K e_i$. Forming $y_i = K^+ v_i$ requires solving the least-squares problem $\min_x \| K x - v_i \|$, which would involve further PDE solves and adjoint solves (as part of an iterative solver applying $K^T$ and $K$ to solve the normal equations). In total, it would cost $O(N)$ forward and adjoint PDE solves. For fine meshes where $N$ is large, this approach is infeasible.
+The goal of this sections if to compute the regularization weights given in Equation \eqref{eq:weights}, which requires the SVD $K = U\Sigma V^T$. Forming $K = TA^{-1}M$ requires solving $N$ linear systems $A v = M e_i$, and computing the SVD of the resulting dense $N_b \times N$ matrix costs $\mathcal{O}(N_b^2 N)$ \cite{dongarraSingularValueDecomposition2018}. In two spatial dimensions $N$ grows quadratically with mesh resolution, and in three dimensions cubically, making the construction of $K$ and finding its SVD infeasible.
 
-This motivates the use of the rSVD. If we let $K = U \Sigma V^T$ be the SVD of $K$, we observe that $K^+ K = VV^T$, so
-\begin{equation*}
-    w_i = V V^T e_i.
-\end{equation*}
-An approximate rank-$k$ truncated SVD $K \approx U_k \Sigma_k V_k^T$ can efficiently be computed via the rSVD. The forward operator $\mathcal{K}$ is compact, since the PDE solution operator $\mathcal{S}$ smooths the source $f$, as discussed in Sec.~6.3 in in Evans, \cite{evansPartialDifferentialEquations2010}, and the singular values of $\mathcal{K}$ must therefore decay to zero \cite{engl1996regularization}. For elliptic operators, the decay of singular values is rapid, as illustrated in Fig.~\ref{fig:singular_values}
+This motivates the use of the randomized SVD given in Algorithm~\ref{alg:rsvd}. With target rank $k$ and oversampling parameter $p$ (typically $p \in [5, 10]$ \cite{halkoFindingStructureRandomness2011}), setting $l = k + p$, the rSVD yields a rank-$k$ approximate truncated SVD $K \approx U_k \Sigma_k V_k^T$ at a computational cost of  $\mathcal{O}(N_b N l)$ \cite{halkoFindingStructureRandomness2011}. Since $K$ has a large nullspace and rapidly decaying singular values, as illustrated in Figure~\ref{fig:singular_values}, the target rank $k$ can be chosen much smaller than $N$. 
 
-Since the forward operator $K$ has a large null-space, and rapidly decaying singular values \textcolor{red}{(why?)}, $k$ can be selected particularly small. After a rank-$k$ approximation is obtained, and the weights can be approximated as $w_i \approx V_k V_k e_i$.
-
-\begin{itemize}
-\item The computational bottleneck
-\begin{itemize}
-    \item Forming $K$ requires $N$ PDE solves
-    \item Requires knowing $K^+$
-\end{itemize}
-\item  The spectral structure of K: K is compact, singular values decay rapidly due to the smoothing nature of the elliptic PDE.
-\item Therefore a rank $k < N$ approximation captures the main action of K.
-\item We do not know $K$ explicitly, standard rSVD needs to be modified
-\item Show a singular value decay plot here.
-\end{itemize}
+The rSVD implementation of Algorithm~\ref{alg:rsvd} requires forming $B = Q^T K$, which requires $K$ to be stored as a dense $N_b \times N$ matrix. We instead propose a matrix-free variant without assembling $K$, a cost of $l$ forward PDE solves and $l$ adjoint PDE solves.
 
 
 \subsection{A matrix-free rSVD scheme}
@@ -86,10 +70,3 @@ By noting that $U_k \Sigma_k V_k^T = Q \tilde U_k \Sigma_k V_k^T = Q B = Q Q^T K
 
 \input{algorithms/matrix-free-rsvd.tex}
 
-
-\subsection{Approximation of the regularization weights}
-Let $K_k = U_k \Sigma_k V_k^T$ be the rank-$k$ approximate SVD of $K$ obtained using Algorithm~\ref{alg:discrete_rsvd}. The Tikhonov weights $W = \operatorname{diag}(w_1, \dots, N)$, given in Equation~\eqref{eq:weights_fem}, can then be approximated by setting
-\begin{equation}\label{eq:rsvd_weights}
-    y_i = V_k V_k^T e_i.
-\end{equation}
-To see this, let $K = U \Sigma V^T$ be the SVD of $K$ and we recall that $K^+ = V \Sigma^+ U^T$ (see Appendix~\textcolor{red}{(ref)}). Since $U_k$ is orthogonal, and since $\Sigma_k^+ \Sigma_k = I_k$ (\textcolor{red}{(need details)}), we have that $y = K_k^+ K_k e_i$ simplifies to Equation~\eqref{eq:rsvd_weights}.

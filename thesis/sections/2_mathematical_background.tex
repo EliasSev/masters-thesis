@@ -62,9 +62,9 @@ Let $\mathcal M$ be a triangulation of $\Omega$ made up of $N$ nodes, with $N_b$
     V_h = \{v \in C^0(\Omega) : v|_M \text{ is linear for all } M \in \mathcal M \}.
 \end{equation}
 Let $\{\phi_1, \dots, \phi_N\}$ denote a basis for $V_h$, so that
-\begin{equation}
+\begin{equation*}
     V_h = \operatorname{span}\{ \phi_1, \dots, \phi_N \}.
-\end{equation}
+\end{equation*}
 The basis functions $\phi_i$ are piecewise linear hat functions associated with the nodes of the mesh (see \cite[p.~51]{larsonFiniteElementMethod2013}).
 
 \nomenclature[A]{$\mathcal{M}$}{Triangulation (mesh)}
@@ -230,22 +230,34 @@ Although theoretical upper bounds are useful in many applications, it is well kn
 
 
 \subsection{The discrete inverse problem}\label{sec:the_discrete_inverse_problem}
-Replacing $\mathcal{K}$ by $K \in \mathbb{R}^{N_b \times N}$ and the $L^2$ norms by the FEM inner products in Equations~\eqref{eq:fem_norm} and~\eqref{eq:fem_norm_ds}, the Tikhonov problem takes the discrete form
+\input{figures/standard_tikhonov_solution.tex}
+Replacing $\mathcal{K}$ by its discretization $K \in \mathbb{R}^{N_b \times N}$ and the $L^2(\Omega)$ norms by the FEM inner products in Equations~\eqref{eq:fem_norm} and~\eqref{eq:fem_norm_ds}, the Tikhonov problem in Equation~\eqref{eq:problem} takes the discrete form
 \begin{equation}\label{eq:discrete_inverse_problem}
-    \min_{\mathbf{x} \in \mathbb{R}^N}
-    \| K\mathbf{x} - \mathbf{y} \|_{M_\partial}^2
-    + \lambda^2 \| W\mathbf{x} \|_M^2,
+    \min_{x \in \mathbb{R}^N}
+    \| K x - y \|_{M_\partial}^2
+    + \lambda^2 \| W x \|_M^2,
 \end{equation}
-where $\mathbf{x} \in \mathbb{R}^N$ is the coefficient vector of $f_h \in V_h$, $\mathbf{y} \in \mathbb{R}^{N_b}$ is the observed boundary data, and $\lambda \geq 0$ is the regularization parameter.
+where $x \in \mathbb{R}^N$ is the coefficient vector of $f_h \in V_h$, $y \in \mathbb{R}^{N_b}$ is the observed boundary data, and $\lambda \ge 0$ is the regularization parameter.
 
-Standard Tikhonov ($W = I$) does not work here. Because $K$ has a large null space, the solutions it produces concentrate near the domain boundary regardless of where the true source is located \cite{elvetunRegularizationOperatorSource2020}. Elvetun and Nielsen address this by choosing weights that penalize boundary-concentrated solutions,
+Standard Tikhonov ($W = I$) does not work here. Because $K$ has a large null space, the solutions it produces concentrate near the domain boundary regardless of where the true source is located \cite{elvetunRegularizationOperatorSource2020}. This illustrated in Figure~\ref{fig:standard_tikhonov_solution}.
+
+
+\subsection{Regularization weights}
+Assume that $\{ \phi_i \}$ is an orthonormal basis of $V_h$, let $\operatorname{Nul}(\mathcal{K})$ denote the null space of $\mathcal{K}$ and $\operatorname{Nul}(\mathcal{K})^\perp$ its orthogonal complement. Any source $f \in V_h$ can be written as $f = f_\perp + f_0$, where $f_\perp \in \operatorname{Nul}(\mathcal{K})^\perp$ and $f_0 \in \operatorname{Nul}(\mathcal{K})$. As Elvetun and Nielsen points out, sources $f$ located near the domain boundary have a larger $f_\perp$ component, and sources deep within the domain have a larger $f_0$ component. If $f^* = \mathcal{K}^+ y$ denotes the least-squares minimum-norm solution, they show that for the case when $f = \phi_j$, we have that
 \begin{equation*}
-    w_i = \|K^+ K e_i\|,
+f^* = \sum_{i} \langle \hat P f, \phi_i \rangle \phi_i,    
 \end{equation*}
-where $e_i$ is the $i$th standard basis vector of $\mathbb{R}^N$ \cite{elvetunRegularizationOperatorSource2020}, and $W = \operatorname{diag}(w_1, \dots, w_N)$. In $V_h$ with the inner product induced by $M_\partial$, the weights take the form
-\begin{equation}\label{eq:weights_fem}
+where $\hat P: V_h \to \operatorname{Nul}(K)^\perp$ is the orthogonal projection onto $\operatorname{Nul}(K)^\perp$. If $\| \hat P \phi_i \|$ is small, then $\langle \hat Pf, \phi_i \rangle$ is small, and the corresponding component of $f^*$ is small. This means that for any $\phi_i$ far away from $\partial \Omega$, the corresponding component of $f^*$ gets small, introducing bias to the solution. This issue transfers to the standard Tikhonov solution $f_\lambda$ since $f_\lambda \to f^*$ as $\lambda \to 0$.
+
+Elvetun and Nielsen counteracts this by re-scaling the norm of $\hat P \phi_i$ such that $\| \hat P \phi_i \| = 1$. This is achieved by setting $w_i = \| \hat P \phi_i \|$ with $W = \operatorname{diag}(w_i)$ in the Tikhonov formulation, equalizing the contribution of all components. In the discrete formulation, $\hat P = K^+ K$ is the orthogonal projection onto the complement of the null space, and the weights are computed as $w_i = \|K^+ K e_i\|$.
+
+In our setting, the basis of the element space $V_h$ given in Equation~\eqref{eq:fem_space} needs to be normalized. If $K = U\Sigma V^T$ is the SVD of $K$ and $M_{ii}$ is the $i$'th diagonal element of the mass matrix $M$, then the weights are computed as 
+\begin{equation}\label{eq:weights}
     w_i =
-    \frac{\sqrt{\mathbf{y}_i^T M_\partial \mathbf{y}_i}}{\int_\Omega \phi_i \, dx},
-    \quad
-    \mathbf{y}_i = K^+ K e_i.
+    \frac{\| K^+ K e_i \|_M}
+         {\| \phi_i \|_M} =
+    \frac{\| V V^T e_i \|_M}
+         {\sqrt{M_{ii}}},
+    \quad i = 1, \dots, N,
 \end{equation}
+and $W = \operatorname{diag}(w_1, \dots, w_N)$.

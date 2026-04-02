@@ -13,7 +13,7 @@ Equation~\eqref{eq:pde} is a linear diffusion-reaction problem with Neumann boun
 \begin{equation}\label{eq:S_cont}
     \mathcal S: L^2(\Omega) \rightarrow H^1(\Omega), \quad \mathcal{S} f = u.
 \end{equation}
-Here, $L^2(\Omega)$ is the space of square integrable functions and $H^1(\Omega) \subset L^2(\Omega)$ the first-order Sobolev space, see Appendix~\ref{appendix:function_spaces}
+Here, $L^2(\Omega)$ is the space of square integrable functions and $H^1(\Omega) \subset L^2(\Omega)$ the first-order Sobolev space, see Appendix~\ref{appendix:functional_analysis_and_the_fem}
 \nomenclature[C]{$\mathcal{S}$}{PDE operator}
 \nomenclature[D]{$L^2(\Omega)$}{Space of square integrable functions}
 \nomenclature[D]{$H^1(\Omega)$}{First-order Sobolev space}
@@ -33,9 +33,9 @@ The forward operator is then defined as the composition
 which is a mapping from the source function $f$ to the observed output $u|_{\partial\Omega} = \mathcal K f$ on the boundary $\partial \Omega$. See Figure~\ref{fig:forward_operator}.
 
 The associated inverse problem can now be formulated as follows: given boundary data $u|_{\partial\Omega}$, determine a source function $f$ such that
-\begin{equation}
+\begin{equation*}
     \mathcal{K} f = u|_{\partial\Omega}.
-\end{equation}
+\end{equation*}
 Solving this problem computationally requires discretizing $\mathcal{K}$, understanding the ill-posedness of the resulting system, and regularizing it to obtain stable solutions, which we address in the following sections.
 
 
@@ -101,16 +101,16 @@ $\{\phi_i\}_{i=1}^N$ yields the linear system
 where $A \in \mathbb{R}^{N \times N}$ is the stiffness matrix and $M \in \mathbb{R}^{N \times N}$ the mass matrix, see Appendix~\ref{appendix:stiffness}.
 \nomenclature[E]{$M$}{Volume mass matrix}%
 Equation~\eqref{eq:matrix_system} implies the discrete PDE operator $S$ takes the form
-\begin{equation}
+\begin{equation*}
     S = A^{-1} M \in \mathbb{R}^{N \times N}
-\end{equation}
+\end{equation*}
 Note that $S$ is a mapping of coefficients vectors: mapping $\v x$ to $\v u$.
 
 The trace operator is discretized by a matrix 
 $T \in \mathbb{R}^{N_b \times N}$ that extracts the boundary coefficients. If $\mathbf{y}$ denotes the vector of boundary coefficients, then
-\begin{equation}
+\begin{equation*}
     \v y = T \v u.
-\end{equation}
+\end{equation*}
 
 Combining the discrete PDE and trace operators yields the matrix representation of the forward operator,
 \begin{equation}\label{eq:discrete_K}
@@ -120,10 +120,10 @@ Combining the discrete PDE and trace operators yields the matrix representation 
 
 
 \subsubsection{Discrete inner product and norm}
-Let $V_h$ be the finite element space introduced in Eq.~\eqref{eq:fem_space} and let $f_h, g_h \in V_h$, with coefficient vectors $\v x, \v y \in \mathbb{R}^N$, respectively. The $L^2(\Omega)$ inner product (see Eq.~\eqref{eq:L2_inner_product}) of $f_h$ and $g_h$, can be written as
-\begin{equation}
+Let $V_h$ be the finite element space introduced in Eq.~\eqref{eq:fem_space} and let $f_h, g_h \in V_h$, with coefficient vectors $\v x, \v y \in \mathbb{R}^N$, respectively. The $L^2(\Omega)$ inner product (see Appendix~\ref{appendix:functional_analysis_and_the_fem}) of $f_h$ and $g_h$, can be written as
+\begin{equation*}
     \langle f_h, g_h \rangle_{L^2(\Omega)} = \v x^T M \v y,
-\end{equation}
+\end{equation*}
 where $M$ is the mass matrix. 
 
 This induces a discrete inner product on $\mathbb{R}^N$, with associated norm, defined by
@@ -157,23 +157,23 @@ Let $\mathcal{K}: L^2(\Omega) \to L^2(\partial\Omega)$ be the bounded linear ope
 for all $f \in L^2(\Omega)$ and all $g \in L^2(\partial\Omega)$. Such an operator always exists for a bounded linear operator $\mathcal K$ mapping between two Hilbert spaces, see Section~3.9 in Kreyszig for a proof \cite{kreyszigIntroductoryFunctionalAnalysis1989}.
 
 Using the definition in Equation~\eqref{eq:K_star_cont}, we get the weak formulation of $K^*$ (the adjoint problem): find $w \in H^1(\Omega)$ such that
-\begin{equation}
+\begin{equation*}
     \int_\Omega (\sigma^T \nabla w \cdot \nabla v + c w v) \, dx =
     \int_{\partial\Omega} g v \, ds,
     \text{ for all } v \in H^1(\Omega).
-\end{equation}
+\end{equation*}
 The solution $w$ then satisfies $\mathcal K^* g = w$. For details, see \textcolor{red}{(???)}.
 
 In the discrete case, under the inner products and norms defined in Equation~\eqref{eq:fem_norm} and \eqref{eq:fem_norm_ds}, the adjoint operator $K^* \in \mathbb{R}^{N \times N_b}$ of $K \in \mathbb{R}^{N_b \times N}$ satisfies
-\begin{equation}
+\begin{equation*}
     (K \v x)^T M_\partial \v y = \v x^T M K^* \v y,
-\end{equation}
+\end{equation*}
 for all $\v x \in \mathbb R^N$ and all $\v y \in \mathbb R^{N_b}$. 
 
 Inserting the explicit representation of $K$ given in Equation~\eqref{eq:discrete_K} yields the matrix representation of $K^*$,
-\begin{equation}
+\begin{equation*}
     K^* = A^{-T} T^T M_\partial,
-\end{equation}
+\end{equation*}
 where $A$ is the stiffness matrix, $T$ the discrete trace operator, and $M_\partial$ the boundary mass matrix.
 
 
@@ -210,7 +210,7 @@ In 1936, C. Eckart and G. Young showed that the solution to Equation~\eqref{eq:l
 where $\sigma_{k+1}$ is the $(k+1)$th singular value of $A$. Equation \eqref{eq:svd_error} says that no rank-$k$ approximation of $A$ can have an error smaller than $\sigma_{k+1}$.
 
 
-\subsection{The pseudoinverse}
+\subsubsection{The pseudoinverse}
 For a matrix $A \in \mathbb{R}^{m \times n}$, the Moore-Penrose inverse $A^+$, often referred to as the pseudoinverse, is a generalization of the inverse of a matrix. If $A = U \Sigma V^T$ is the SVD of $A$, then the pseudoinverse is
 \begin{equation*}
     A^+ = V \Sigma^+ U^T,

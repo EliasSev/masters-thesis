@@ -1,26 +1,34 @@
 \section{Results}
-\subsection{Problem setup}
+\subsection{Test problems}
 \input{figures/problem_illustration.tex}
 Figure~\ref{fig:problem_illustration} shows the three meshes and sources used for the error analysis, referred to as Test problem I, II and III. Test problem I and II consists of square meshes with $N_b=256$ boundary nodes and $N=4225$ nodes, while problem III uses an ``L''-shaped mesh with $N_b=288$ boundary nodes and $N=6127$ nodes.
 
 
-\subsection{Target rank effect on error}
+\subsection{Computational setup}
+All numerical experiments were performed on a laptop running Fedora Linux 43 with Linux kernel version 6.19. The system was running on an Intel(R) Core(TM) i7-10510U (4 cores, 8 threads) with 16GB of memory.
+
+Python 3.9 was used for all computations, together with NumPy and SciPy for linear algebra routines \cite{harrisArrayProgrammingNumPy2020,virtanenSciPy10Fundamental2020}. The legacy FEniCS software was used for solving PDEs using the finite element method \cite{alnaesFEniCSProjectVersion2015,loggAutomatedSolutionDifferential2012}. All library specifications, algorithm implementations, and notebooks used to generate the results in this thesis are openly available at: \href{https://github.com/EliasSev/masters-thesis}{github.com/EliasSev/masters-thesis}.
+
+
+\subsection{Matrix-free rSVD}
+\subsubsection{Target rank effect on error}
 \input{figures/test_problems_selected.tex}
 
 \input{figures/rsvd_over_k.tex}
 
+\subsection{Approximation of singular values}
+\input{figures/singular_values_comp.tex}
+
+\subsubsection{Accuracy on noisy data}
+\input{figures/projected_noisy_error.tex}
 
 
-\subsection{Target rank and mesh resolution}
-\input{figures/solutions_different_Nb_and_k.tex}
-
-
-\subsection{Forward operator computational time}
+\subsubsection{Computational time}
 \input{figures/exact_vs_rsvd_comp_time.tex}
 
-
-\subsection{Weights computational time}
-
-\clearpage
 \subsection{Dynamical Low-Rank PCG}
+
+\subsubsection{Error comparisons}
+
+\subsubsection{Effect of different preconditioners}
 \input{figures/precondition_times.tex}

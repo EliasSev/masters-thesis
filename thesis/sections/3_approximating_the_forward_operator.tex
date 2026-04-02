@@ -1,6 +1,6 @@
 \section{Approximating the Forward Operator}
 \input{figures/singular_values.tex}
-% Opening: motivation and feasibility (2-3 paragraphs)
+% Opening: motivation and feasibility
 The goal of this sections if to compute the regularization weights given in Eq.~\eqref{eq:weights_fem}. For fine meshes, the $N_b \times N$ forward matrix in Eq.~\eqref{eq:discrete_K} is not known explicitly, as storing it in memory would be infeasible. In order to compute $w_i$, one first needs one PDE solve to form $v_i = K e_i$. Forming $y_i = K^+ v_i$ requires solving the least-squares problem $\min_x \| K x - v_i \|$, which would involve further PDE solves and adjoint solves (as part of an iterative solver applying $K^T$ and $K$ to solve the normal equations). In total, it would cost $O(N)$ forward and adjoint PDE solves. For fine meshes where $N$ is large, this approach is infeasible.
 
 This motivates the use of the rSVD. If we let $K = U \Sigma V^T$ be the SVD of $K$, we observe that $K^+ K = VV^T$, so
@@ -34,17 +34,17 @@ Let $K$ be the $N_b \times N$ discrete forward operator given in Eq.~\eqref{eq:K
 Like the rSVD, this matrix-free formulation consists of two stages. In the first stage, an approximate basis $Q$ of $K$ is constructed through random sampling of the column space of $K$. In the second stage, the matrix $K$ is projected onto the subspace $\operatorname{span}(Q)$, and a SVD factorization is computed of the projected matrix.
 
 In the first stage, we apply $K$ on $k$ random vectors $\psi_1, \psi_2, \dots, \psi_k$ drawn from some distribution, typically the normal distribution. This yields the random samples $y_1, y_2, \dots, y_k$, where $y_i = K \psi_i$. If we gather the samples and random vectors into matrices $Y = [y_i]_{i=1}^k$ and $\Psi = [\psi_i]_{i}$, we can express $Y$ as
-\begin{equation}
+\begin{equation*}
     Y = K \Psi.
-\end{equation}
+\end{equation*}
 \textcolor{red}{(something about how $y_i$ is most likely to line up with the first singular vector)}. Geometrically, we want the $i$'th sample $y_i$ to approximately point in the direction of the the $i$ right singular vector $v_i$. To remove contributions of the previous right singular vectors $v_{i-1}, v_{i-2}, \dots, v_{1}$ on $y_i$, we must orthogonalize the random samples. A QR-factorization
-\begin{equation}
+\begin{equation*}
     QR = Y
-\end{equation}
+\end{equation*}
 achieves such an orthogonalization, obtaining the matrix $Q$ which contains the orthogonalized column-vectors $q_1, q_2, \dots, q_k$. This concludes the first step, where we have obtained an approximation of the column space of $K$:
-\begin{equation}
+\begin{equation*}
     \operatorname{span}(Q) \approx \operatorname{span}(K)
-\end{equation}
+\end{equation*}
 \nomenclature[G]{$Y$}{Sample matrix}
 \nomenclature[G]{$\Psi$}{Random matrix}
 
@@ -65,19 +65,19 @@ Hence, if we let
     b_i = (K^* (M_{\partial}^{-1} q_i))^T M
 \end{equation}
 for $i = 1, 2, \dots, k$, and define the $k \times N$ matrix
-\begin{equation}
+\begin{equation*}
     B = \begin{bmatrix} b_1 \\ \vdots \\ b_k \end{bmatrix}
-\end{equation}
+\end{equation*}
 it must be that, by Eq.~\eqref{eq:rsvd_relation},
-\begin{equation}
+\begin{equation*}
     B = Q^T K,
-\end{equation}
+\end{equation*}
 as desired.
 
 We have computed the projection $B = Q^T K$ by solving the adjoint problem in Eq.~\eqref{eq:rsvd_adjoint_problem} $k$ times. In the final part of the second stage, we take the SVD of $B$,
-\begin{equation}
+\begin{equation*}
     B = \tilde U_k \Sigma_k V_k^T,
-\end{equation}
+\end{equation*}
 and set $U_k = Q \tilde U_k$. This gives an approximate SVD decomposition of the form
 \begin{equation}\label{eq:rsvd_approx}
     K \approx U_k \Sigma_k V_k^T.

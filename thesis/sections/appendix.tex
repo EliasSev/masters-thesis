@@ -1,8 +1,8 @@
 \section{Appendix}
 
 
-\subsection{Functional analysis and the FEM}
-\subsubsection{Function spaces}\label{appendix:function_spaces}
+\subsection{Functional analysis and the FEM}\label{appendix:functional_analysis_and_the_fem}
+\paragraph{Lebesgue space $L^2$}
 Let $\Omega \subset \mathbb{R}^d$ be an open set and $\mathbb{F}$ denote either $\mathbb{R}$ or $\mathbb{C}$. The space $L^2(\Omega)$, often referred to as the Lebesgue space of square integrable functions, is defined as 
 \begin{equation*}
     L^2(\Omega) =
@@ -12,54 +12,55 @@ Let $\Omega \subset \mathbb{R}^d$ be an open set and $\mathbb{F}$ denote either 
     \right\},
 \end{equation*}
 with inner product
-\begin{equation}\label{eq:L2_inner_product}
+\begin{equation*}
     \langle f,\, g \rangle_{L^2(\Omega)} = \int_\Omega f(x) \overline{g(x)} \, dx.
-\end{equation}
+\end{equation*}
 The space $L^2(\Omega)$ is a Hilbert space, i.e., a complete inner product space. For details, see Section~3 in Kreyszig \cite{kreyszigIntroductoryFunctionalAnalysis1989}.
 
+\paragraph{Sobolev space $H^1$}
 The space $H^1(\Omega)$, known as the first-order Sobolev space, is defined as
-\begin{equation}
+\begin{equation*}
     H^1(\Omega) =
     \left\{
         f \in L^2(\Omega) \, \Bigg| \,
         \frac{\partial f}{\partial x_i} \in L^2(\Omega), \, i = 1, \dots, d  
     \right\},
-\end{equation}
+\end{equation*}
 with inner product
-\begin{equation}
+\begin{equation*}
     \langle f,\, g \rangle_{H^1(\Omega)} = 
     \langle f,\, g \rangle_{L^2(\Omega)} +
     \langle \nabla f,\, \nabla g \rangle_{L^2(\Omega)}.
-\end{equation}
+\end{equation*}
 The space $H^1(\Omega)$ is a Hilbert space and a subspace of $L^2(\Omega)$. See Section~2 in Quarteroni for further details \cite{quarteroniNumericalModelsDifferential2014}.
 
 
-\subsubsection{Weak derivative}
+\paragraph{Weak derivative}
 Let $\Omega \subset \mathbb{R}^d$ be an open set and $u \in L^2(\Omega)$. A function $v$ is said to be the weak derivative of $u$ if
-\begin{equation}
+\begin{equation*}
     \int_\Omega u(x) \frac{\partial \phi}{\partial x_i} \, dx =
     - \int_\Omega v \phi \, dx
-\end{equation}
+\end{equation*}
 for all infinitely differentiable $\phi$ with compact support on $\Omega$. For details, see Section~2 in Quarteroni \cite{quarteroniNumericalModelsDifferential2014}.
 
 
-\subsubsection{The stiffness and the mass matrix}\label{appendix:stiffness}
+\paragraph{The stiffness and the mass matrix}\label{appendix:stiffness}
 Let $V_h \subset H^1(\Omega)$ be the finite element space defined in Eq.~\eqref{eq:fem_space}. Under the basis $\{\phi_i\}_{i=1}^N$, the stiffness matrix $A \in \mathbb{R}^{N \times N}$ and mass matrix $M \in \mathbb{R}^{N \times N}$ are defined as
-\begin{equation}
+\begin{equation*}
     A_{ij} = \int_\Omega 
     \left( \sigma \nabla \phi_j \cdot \nabla \phi_i 
     + c \phi_j \phi_i \right) dx,
     \quad
     M_{ij} = \int_\Omega \phi_j \phi_i \, dx.
-\end{equation}
+\end{equation*}
 Both matrices are symmetric. Under the standing assumptions that $\sigma$ is positive definite and $c \ge 0$, the stiffness matrix $A$ is positive definite and therefore invertible. 
 
 In addition, both $A$ and $M$ are sparse matrices, since $A_{ij}$ and $M_{ij}$ are non-zero only if $\phi_i$ and $\phi_j$ share a element in the mesh.
 
 The boundary mass matrix $M_\partial \in \mathbb{R}^{N_b \times N_b}$ is given by
-\begin{equation}
+\begin{equation*}
     (M_\partial)_{ij} = \int_{\partial\Omega} \phi_i \phi_j \, dx,
-\end{equation}
+\end{equation*}
 where the indices $i, j$ tabulate over the boundary indices of the mesh. Similarly to the mass matrix $M$, the boundary mass matrix $M_\partial$ is symmetric and sparse.
 
 For the assembly of stiffness matrices and mass matrices in two dimensions, see Section~4 in Larson and Bengzon \cite{larsonFiniteElementMethod2013}.
@@ -105,39 +106,39 @@ Let $x \in \mathbb{R}^N$ denote the true source (it's coefficient vector) and $\
 To evaluate reconstruction quality, we consider three performance metrics: Euclidean error, Earth mover’s distance (EMD), and the integrated (area under curve) intersection over union (AUC-IoU). These metrics emphasize the localization and spatial shape of the reconstructed source, rather than just the amplitude.
 
 
-\subsubsection{Earth mover’s distance}
+\paragraph{Earth mover’s distance}
 The earth mover's distance measures the dissimilarity between two distributions, which in our case refers to $x$ and $\hat x$. Let $x_d$ and $\hat x_d$ be the normalized distributions of $x$ and $\hat x$, respectively, computed as
-\begin{equation}
+\begin{equation*}
     (x_d)_i = \frac{|x_i|}{\sum_{j=1}^N |x_j|}, \quad
     (\hat x_d)_i = \frac{|\hat x_i|}{\sum_{j=1}^N |\hat x_j|}.
-\end{equation}
+\end{equation*}
 The EDM between them is
-\begin{equation}
+\begin{equation*}
     \operatorname{EDM} =
     \inf_{\gamma_{ij} \in \Pi}
     \gamma_{ij} \sum_{ij}^N d(p_i, p_j)
-\end{equation}
+\end{equation*}
 where $\Pi$ is the set of all joint distributions with marginals $x_d$ and $\hat x_d$ \cite{rubnerMetricDistributionsApplications1998}.
 
 
-\subsubsection{AUC-IoU}
+\paragraph{AUC-IoU}
 The IoU, known as the Jaccard index in statistics, measures the similarity between two sets. It is defined as the size of intersection divided by the size of the union \cite{raschkaPythonMachineLearning}.
 
 We define the binary mask of $x$ at threshold $\tau \in (0, 1)$ as the set
-\begin{equation}
+\begin{equation*}
     S_{\tau}(x) = \{ i : x_i \ge \tau \operatorname{max}(x) \}.
-\end{equation}
+\end{equation*}
 Then, the IoU of $x$ and $\hat x$ at threshold $\tau$ is then the IoU of their binary masks,
-\begin{equation}
+\begin{equation*}
     \operatorname{IoU}(\tau) =
     \frac{|S_\tau(x) \cap S_\tau(\hat x)|}{|S_\tau(x) \cup S_\tau(\hat x)|}.
-\end{equation}
+\end{equation*}
 Here, $| \cdot |$ denotes the number of elements of a set (its cardinality).
 
 The AUC-IoU is then the integration of the $\operatorname{IoU}(\tau)$ curve,
-\begin{equation}
+\begin{equation*}
     \operatorname{AUC-IoU} = \int_{0}^{1} \operatorname{IoU}(\tau) \, d\tau.
-\end{equation}
+\end{equation*}
 This can be approximated using the Trapezoidal rule. The AUC-IoU lines in $[0, 1]$, with 1 being a perfect score.
 
 

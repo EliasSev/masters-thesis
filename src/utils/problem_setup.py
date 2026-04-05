@@ -3,7 +3,7 @@ A class to set up the three different test problems (I, II, III) used in the the
 """
 import numpy as np
 
-from typing import Any
+from typing import Any, Optional
 from numpy.typing import NDArray
 from fenics import Function, FunctionSpace
 
@@ -66,7 +66,7 @@ class TestProblemsSetup:
         return problems
     
     def problem_setup(
-            self, params: dict[str, Any], compute_weights: bool, k: int
+            self, params: dict[str, Any], compute_weights: bool, k: Optional[int] = None
         ) -> dict[str, Any]:
         """Set up a single test problem."""
         # Function space setup

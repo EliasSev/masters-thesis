@@ -11,7 +11,7 @@ from fenics import (
 
 
 class ExactForwardOperator:
-    def __init__(self, V_h: FunctionSpace):
+    def __init__(self, V_h: FunctionSpace, assemble_on_init: bool = True):
         self.V_h = V_h
         self.bdofs = self._get_boundary_dofs()
         self.N = V_h.dim()
@@ -19,7 +19,11 @@ class ExactForwardOperator:
         
         self.M_dx = self.assemble_M_dx()
         self.M_ds = self.assemble_M_ds()
-        self.K = self.assemble_K()
+
+        if assemble_on_init:
+            self.K = self.assemble_K()
+        else:
+            self.K = None
     
     def _get_boundary_dofs(self) -> NDArray:
         def boundary(x, on_boundary):

@@ -24,7 +24,7 @@ C2 = [
 CMAP = 'plasma'
 
 # Markers
-M = ['o', '*', '^', 's']
+M = ['o', '*', '^', 's', 'd']  # circle, star, triangle, square, diamond
 
 # Marker sizes
-MS = [6, 8, 6, 6]
+MS = [6, 8, 6, 6, 6]

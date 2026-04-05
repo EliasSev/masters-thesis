@@ -26,6 +26,7 @@ class MatrixFreeRSVD:
         self.times = None
 
         # Setup constants and constant matrices
+        t0 = time()
         self.boundary_dofs = self.get_boundary_dofs()
         self.N = V_h.dim()
         self.N_b = len(self.boundary_dofs)
@@ -45,6 +46,9 @@ class MatrixFreeRSVD:
         self.A_star = assemble((dot(Constant(sigma) * grad(v), grad(w)) + Constant(k) * v * w) * dx)
         self.K_star_solver = LUSolver()  # or PETScKrylovSolver
         self.K_star_solver.set_operator(self.A_star)
+
+        # Measure assembly and solver setup time
+        self.setup_time = time() - t0
 
         # Set up vec to matrix and matrix to vec utils
         coords = V_h.tabulate_dof_coordinates()
@@ -89,7 +93,7 @@ class MatrixFreeRSVD:
         assert k <= self.N_b, f"Target rank k={k} must be less than or equal to N_b={self.N_b}"
         l = min(k + p, self.N_b)
 
-        self.times = []
+        self.times = [self.setup_time]
         # Step 1
         t0 = time()
         Y = np.zeros((self.N_b, l))

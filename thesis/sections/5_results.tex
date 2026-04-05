@@ -1,30 +1,42 @@
 \section{Results}
 \subsection{Test problems}
 \input{figures/problem_illustration.tex}
-Figure~\ref{fig:problem_illustration} shows the three meshes and sources used for the error analysis, referred to as Test problem I, II and III. Test problem I and II consists of square meshes with $N_b=256$ boundary nodes and $N=4225$ nodes, while problem III uses an ``L''-shaped mesh with $N_b=288$ boundary nodes and $N=6127$ nodes.
+Figure~\ref{fig:problem_illustration} shows the three meshes and source functions used throughout the results. Problem I is a square mesh with a single source, used as a baseline. Problem II uses the same geometry with three sources to assess reconstruction under multiple sources. Problem III replaces the square domain with an ``L''-shaped mesh and two sources, introducing a non-convex geometry.
+
 
 
 \subsection{Computational setup}
-All numerical experiments were performed on a laptop running Fedora Linux 43 with Linux kernel version 6.19. The system was running on an Intel(R) Core(TM) i7-10510U (4 cores, 8 threads) with 16GB of memory.
+All numerical experiments were performed on a laptop running Fedora Linux 43 with Linux kernel version 6.19. The system was running with an Intel(R) Core(TM) i7-10510U (4 cores, 8 threads) with 16GB of memory.
 
-Python 3.9 was used for all computations, together with NumPy and SciPy for linear algebra routines \cite{harrisArrayProgrammingNumPy2020,virtanenSciPy10Fundamental2020}. The legacy FEniCS software was used for solving PDEs using the finite element method \cite{alnaesFEniCSProjectVersion2015,loggAutomatedSolutionDifferential2012}. All library specifications, algorithm implementations, and notebooks used to generate the results in this thesis are openly available at: \href{https://github.com/EliasSev/masters-thesis}{github.com/EliasSev/masters-thesis}.
+Python 3.9 was used for all computations, together with NumPy and SciPy for linear algebra routines \cite{harrisArrayProgrammingNumPy2020,virtanenSciPy10Fundamental2020}. The FEniCS software was used for solving PDEs using the finite element method \cite{alnaesFEniCSProjectVersion2015,loggAutomatedSolutionDifferential2012}. All library specifications, algorithm implementations, and notebooks used to generate the results in this thesis are openly available at: \href{https://github.com/EliasSev/masters-thesis}{github.com/EliasSev/masters-thesis}.
 
 
 \subsection{Matrix-free rSVD}
+\subsubsection{Computational time}
+\input{figures/rsvd_computational_time_comp.tex}
+\input{tables/rsvd_computational_time_comp.tex}
+The left plot of Figure~\ref{fig:rsvd_computational_time_comp} shows the computational time $t_{\text{rSVD}}$ of Algorithm~\ref{alg:discrete_rsvd} for target rank $k=10, 25, 50$, with oversampling parameter $p=5$, compared to the time $t_K$ to form $K = T A^{-1} M$ explicitly (Section~\ref{sec:approximating}) over increasingly fine meshes. 
+The right plot omits $t_K$: at $N = 20{,}000$, the reference time is already $t_K = 339$ seconds (Table~\ref{tab:rsvd_computational_time_comp}), making explicit formation infeasible at larger scales. The median is taken over 30 runs. 
+Table~\ref{tab:rsvd_computational_time_comp} shows the ratio $t_K / t_{\text{rSVD}}$, which is the speedup from using Algorithm~\ref{alg:discrete_rsvd} compared to forming $K$ explicitly (time reported for a single run).
+
+The time $t_K$ surpasses $t_{\text{rSVD}}$ for $N=1184$, $1868$, and $2210$ for $k=10$, $25$, and $50$, respectively, with the time $t_K$ increasing quadratically and $t_{\text{rSVD}}$ increasing linearly with $N$. This is consistent with the theoretical costs of $\mathcal{O}(N^2)$ for forming $K$ and $\mathcal{O}(Nl)$ for Algorithm~\ref{alg:discrete_rsvd}, established in Section~\ref{sec:approximating} \textcolor{red}{[TODO: mention this in Section~\ref{sec:approximating}]}.
+When the mesh has $20{,}000$ nodes, the use of Algorithm~\ref{alg:discrete_rsvd} is between 185 and 436 times as fast, as reported in Table~\ref{tab:rsvd_computational_time_comp}.
+
+The computational times $t_{\text{rSVD}}$ for target ranks $10$, $25$ and $50$ scale linearly, as seen in the right plot of Figure~\ref{fig:rsvd_computational_time_comp}. The slope of the linear increase depends on the target rank, with a higher target rank resulting in a steeper slope. For $N=500$, increasing $k$ from 10 to 50 results in an increase of $t_{\text{rSVD}}$ with a factor of 1.5, and for $N=300{,}000$, this factor grows to 2.3.
+
+For the mesh sizes used in the remaining experiments \textcolor{red}{[TODO: which sections?]}, $N$ is approximately chosen between 1000 and 4000, making Algorithm~\ref{alg:discrete_rsvd} approximately $3$ to $30$ times faster than forming $K$ explicitly.
+
+
 \subsubsection{Target rank effect on error}
 \input{figures/test_problems_selected.tex}
 
 \input{figures/rsvd_over_k.tex}
 
-\subsection{Approximation of singular values}
+\subsubsection{Approximation of singular values}
 \input{figures/singular_values_comp.tex}
 
 \subsubsection{Accuracy on noisy data}
 \input{figures/projected_noisy_error.tex}
-
-
-\subsubsection{Computational time}
-\input{figures/exact_vs_rsvd_comp_time.tex}
 
 \subsection{Dynamical Low-Rank PCG}
 

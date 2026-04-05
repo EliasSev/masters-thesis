@@ -1,5 +1,5 @@
 \begin{algorithm}[!thbp]
-\caption{Discrete Operator rSVD Approximation of $K$}
+\caption{Matrix-free rSVD approximation of $K$}
 \label{alg:discrete_rsvd}
 \begin{algorithmic}[1]
     \Require Forward operator $K: \mathbb{R}^N \to \mathbb{R}^{N_b}$, adjoint operator $K^*: \mathbb{R}^{N_b} \to \mathbb{R}^N$, mass matrices $M, M_\partial$, target rank $k$, oversampling parameter $p$
@@ -22,7 +22,8 @@
         \State Apply the adjoint operator: $\tilde b_i = K^* (M_{\partial}^{-1} q_i)$
         \State Set $b_i = \tilde b_i^T M$ \Comment{$i$-th row of $B$}
     \EndFor
-    \State Form the projected matrix $B = \begin{bmatrix} b_1 \\ \vdots \\ b_l \end{bmatrix} \in \mathbb{R}^{l \times N}$ \Comment{Equivalent to $B = Q^T Y$}
+    \State Form the projected matrix $B = \begin{bmatrix} b_1 \\ \vdots \\ b_l \end{bmatrix} \in \mathbb{R}^{l \times N}$
+    \Comment{Equivalent to $B = Q^T K$}
 
     \State Compute the SVD: $B = \tilde U \Sigma V^T$
     \State Set $U = Q \tilde U$

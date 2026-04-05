@@ -1,4 +1,4 @@
-\section{Approximating the Forward Operator}
+\section{Approximating the Forward Operator}\label{sec:approximating}
 \input{figures/singular_values.tex}
 % Opening: motivation and feasibility
 The goal of this sections if to compute the regularization weights given in Equation \eqref{eq:weights}, which requires the SVD $K = U\Sigma V^T$. Forming $K = TA^{-1}M$ requires solving $N$ linear systems $A v = M e_i$, and computing the SVD of the resulting dense $N_b \times N$ matrix costs $\mathcal{O}(N_b^2 N)$ \cite{dongarraSingularValueDecomposition2018}. In two spatial dimensions $N$ grows quadratically with mesh resolution, and in three dimensions cubically, making the construction of $K$ and finding its SVD infeasible.
@@ -6,6 +6,7 @@ The goal of this sections if to compute the regularization weights given in Equa
 This motivates the use of the randomized SVD given in Algorithm~\ref{alg:rsvd}. With target rank $k$ and oversampling parameter $p$ (typically $p \in [5, 10]$ \cite{halkoFindingStructureRandomness2011}), setting $l = k + p$, the rSVD yields a rank-$k$ approximate truncated SVD $K \approx U_k \Sigma_k V_k^T$ at a computational cost of  $\mathcal{O}(N_b N l)$ \cite{halkoFindingStructureRandomness2011}. Since $K$ has a large nullspace and rapidly decaying singular values, as illustrated in Figure~\ref{fig:singular_values}, the target rank $k$ can be chosen much smaller than $N$. 
 
 The rSVD implementation of Algorithm~\ref{alg:rsvd} requires forming $B = Q^T K$, which requires $K$ to be stored as a dense $N_b \times N$ matrix. We instead propose a matrix-free variant without assembling $K$, a cost of $l$ forward PDE solves and $l$ adjoint PDE solves.
+% Something about how it's adapted specifically to the FEM formulation.
 
 
 \subsection{A matrix-free rSVD scheme}
@@ -21,7 +22,7 @@ In the first stage, we apply $K$ on $k$ random vectors $\psi_1, \psi_2, \dots, \
 \begin{equation*}
     Y = K \Psi.
 \end{equation*}
-\textcolor{red}{(something about how $y_i$ is most likely to line up with the first singular vector)}. Geometrically, we want the $i$'th sample $y_i$ to approximately point in the direction of the the $i$ right singular vector $v_i$. To remove contributions of the previous right singular vectors $v_{i-1}, v_{i-2}, \dots, v_{1}$ on $y_i$, we must orthogonalize the random samples. A QR-factorization
+\textcolor{red}{(something about how $y_i$ is most likely to line up with the first singular vector)}. Geometrically, we want the $i$-th sample $y_i$ to approximately point in the direction of the the $i$ right singular vector $v_i$. To remove contributions of the previous right singular vectors $v_{i-1}, v_{i-2}, \dots, v_{1}$ on $y_i$, we must orthogonalize the random samples. A QR-factorization
 \begin{equation*}
     QR = Y
 \end{equation*}

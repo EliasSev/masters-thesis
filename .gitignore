@@ -32,4 +32,6 @@ thesis/*.pdf
 .vscode
 *.npy
 *.npz
+*.pkl
+CLAUDE.md
 results/*.csv

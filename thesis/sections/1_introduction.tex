@@ -13,7 +13,7 @@ subject to
 \begin{eqnarray}\label{eq:pde}
     \begin{aligned}
     -\nabla \cdot \sigma\nabla u + c u &= f \quad \text{in } \Omega, \\
-    \frac{\partial u}{\partial \v n} &= 0 \quad \text{on } \partial\Omega.
+    \frac{\partial u}{\partial n} &= 0 \quad \text{on } \partial\Omega.
     \end{aligned}
 \end{eqnarray}
 Here, $\mathcal{K}$ is the forward operator which maps the source $f$ to the boundary values $\mathcal{K}f = u|_{\partial\Omega}$, $\sigma$ is the diffusion coefficient, $c$ is the reaction coefficient, and $y$ is the observed boundary data. This problem has numerous applications, such as inverse imaging, crack determination, and electromagnetic brain mapping \cite{nielsenComputingIschemicRegions2013,elulGenesisEEG1971,PDFRecoveryCracks}. This problem is a source identification task: we are given observed data $y$, and seek to find the original source term $f$ such that $\mathcal K f = y$.

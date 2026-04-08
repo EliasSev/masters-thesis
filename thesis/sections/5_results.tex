@@ -27,6 +27,17 @@ The computational times $t_{\text{rSVD}}$ for target ranks $10$, $25$ and $50$ s
 For the mesh sizes used in the remaining experiments \textcolor{red}{[TODO: which sections?]}, $N$ is approximately chosen between 1000 and 4000, making Algorithm~\ref{alg:discrete_rsvd} approximately $3$ to $30$ times faster than forming $K$ explicitly.
 
 
+\subsubsection{Computational breakdown}
+\input{figures/rsvd_computational_breakdown.tex}
+\input{tables/rsvd_computational_breakdown.tex}
+Figure~\ref{fig:rsvd_computational_breakdown} shows the median computational time of different stages of Algorithm~\ref{alg:discrete_rsvd} for selected $N$ and increasing $k$, with the relative computational cost shown in the bottom row. The median is taken over 30 runs for $N \le 40{,}000$ and 10 runs for $N = 400{,}000$. The `Setup' stage includes the assembly of the mass matrices $M$ and $M_\partial$, and the setup of the $K$ and $K^*$ solvers (Section~\ref{sec:approximating}) \textcolor{red}{[TODO: add this to Section~\ref{sec:approximating}]}. The other stages of Algorithm~\ref{alg:discrete_rsvd} are `2. $Y = K\Psi$' (lines 1--6), `3. $QR = Y$' (lines 7--8), `4. $B = Q^T K$' (lines 9--14), and `5. $(Q\tilde U)\Sigma V^T$' (lines 15--18). Table~\ref{tab:rsvd_computational_breakdown} shows relative computational time for selected target ranks and mesh sizes.
+
+The main costs of Algorithm~\ref{alg:discrete_rsvd} are the forward solves using $K$ (stage 2) and the adjoint solves using $K^*$ (stage 4), both of which scale linearly with $k$.. The third largest cost is stage 5, which includes computing the SVD of $B \in \mathbb{R}^{l \times N}$, and computing $U = Q \tilde U \in \mathbb{R}^{N_b \times l}$, where $l = k + p$. The cost of the setup in stage 1 and the orthogonalization in stage 3 remain low compared to the other stages for all mesh sizes. The setup stage does not depend on $k$; its relative cost therefore decreases as $k$ increases. The QR factorization of the $N_b \times l$ matrix $Y$ accounts for less than 0.1\% of the total time.
+
+The relative computational costs stabilize around $k = 100$ (all ranges below are for $N = 4{,}000$ to $N = 400{,}000$): setup accounts for 6\% to 3\%, stage 2 takes approximately 50\%, stage 4 takes 35\% to 26\%, and stage 5 takes 9\% to 22\%. The remaining fraction is the orthogonalization. At $k = 25$, stage 2 and stage 4 remain the dominant costs, but setup accounts for a larger share (14\% to 8\%), since its absolute time is unaffected by $k$, while stage 5 accounts for 3\% to 5\%.
+
+
+
 \subsubsection{Target rank effect on error}
 \input{figures/test_problems_selected.tex}
 

@@ -1,18 +1,18 @@
 """
-Implementation of the Dynamical Low-Rank Conjugate Gradient scheme.
+Implementation of a matrix version of the Conjugate Gradient scheme.
 """
 import numpy as np
 
+from typing import Optional
 from numpy.typing import NDArray
-from typing import Optional, Union
 from utils.utils import progress_bar
 from algorithms.matrix_free_rsvd import MatrixFreeRSVD
 
 
-class DynamicalLowRankCG:
+class ConjugateGradient:
     def __init__(self, mfrsvd: MatrixFreeRSVD) -> None:
         """
-        Initialize the DynamicalLowRankCG.
+        Initialize the ConjugateGradient.
 
         mfrsvd, MatrixFreeRSVD: A trained MatrixFreeRSVD objected.
         """
@@ -25,8 +25,8 @@ class DynamicalLowRankCG:
         self.UT = self.U.T
         self.V = self.VT.T
 
-        self.niter = 0
         self.residual = []
+        self.niter = 0 
 
         # Set up vec to matrix and matrix to vec utils
         coords = self.V_h.tabulate_dof_coordinates()
@@ -46,31 +46,29 @@ class DynamicalLowRankCG:
             w: NDArray,
             lambda_: float = 1e-4,
             X0: str = 'qr',
-            *,
-            max_rank: int = 5,
+            X0_rank: int = 3,
             max_iter: int = 250,
             rtol: float = 1e-8,
             seed: Optional[int] = None,
             verbose: bool = True,
-            truncate_tol: float = 0.01
         ):
         """
-        Solve min{Phi(X; y, w)} with given lambda_ and max_rank using the DLR-CG scheme.
+        Solve min{Phi(X; y, w)} with given lambda_ and max_rank using a standard CG scheme.
 
         y, NDArray              : The observed data (1D array).
         w, NDArray              : Tikhonov regularization weights (1D array).
         lambda_, float          : Tikhonov regularization parameter.
         max_iter, int           : Maximum number of iterations. 
-        max_rank, int           : Max rank of the solution (dynamical step).
+        X0, str                 : How to initialize X.
+        X0_rank, int            : The rank of X0 (only used if X0 = 'qr-low-rank' or 'householder')
         rtol, float             : Stopping criterion, relative residual (r0/rk).
         seed, int|None          : Seed for random number generator (for initial X).
         verbose, bool           : Print out the results and progress.
-        truncate_tol, float     : Truncation tolerance for the adaptive rank update.
 
         returns: Solution vector x = vec(X) (1D array).
         """
         # Initialize X (random)
-        X, Ux, Sx, Vx = self.initial_X(seed, max_rank=max_rank, X0=X0)
+        X = self.initial_X(seed, max_rank=X0_rank, X0=X0)[0]
 
         # Initialize gradient G and search direction D
         G = self.gradient(X, y, w, lambda_)
@@ -84,20 +82,8 @@ class DynamicalLowRankCG:
             HD = self.apply_H(D, w, lambda_)
             alpha = np.sum(G * G) / np.sum(D * HD)
 
-            # W-step
-            W_star = (Ux @ Sx) + alpha * (D @ Vx)
-            U_hat, _ = np.linalg.qr(np.hstack([Ux, W_star]))
-
-            # L-ste
-            L_star = (Vx @ Sx.T) + alpha * (D.T @ Ux)
-            V_hat, _ = np.linalg.qr(np.hstack([Vx, L_star]))
-
-            # S-step
-            S_new = (U_hat.T @ Ux) @ Sx @ (Vx.T @ V_hat)
-            S_new = S_new + alpha * (U_hat.T @ D @ V_hat)
-
-            # Truncate back to low-rank
-            Ux, Sx, Vx = self.truncate(U_hat, S_new, V_hat, truncate_tol, max_rank)
+            # Update X
+            X = X + alpha * D
             
             # Update the gradient and the search direction
             denom = np.sum(G * G)
@@ -118,7 +104,7 @@ class DynamicalLowRankCG:
                 progress_bar(i, max_iter)
         
         self.niter = i
-        return self.matrix_to_vec(Ux @ Sx @ Vx.T)
+        return self.matrix_to_vec(X)
     
     def initial_X(
             self, seed: Optional[int], max_rank: int, X0: str
@@ -196,39 +182,3 @@ class DynamicalLowRankCG:
             grad_reg = lambda_ * (w * (self.M_dx @ (w * x)))
 
             return self.vec_to_matrix(grad_data + grad_reg)
-    
-    def truncate(self, U1, S, V1, tol, max_rank=1):
-        """
-        Truncates according to tolerance
-        U1: (m x k) left factor
-        S:  (k x k) matrix to re-SVD (can be diagonal or full)
-        V1: (n x k) right factor
-        tol: scalar tolerance (same semantics as original: relative factor multiplied by norm(S))
-        Returns: (U1_trunc, S_trunc, V1_trunc)
-        """
-
-        U_s, s_vals, Vh = np.linalg.svd(S, full_matrices=False)
-        # convert singular values to a 1D array (s_vals already is)
-        tol = tol * np.linalg.norm(S)
-
-        # cumulative tail-sum test (Julia used sqrt(sum(...)^2) which equals abs(sum(...)))
-        rmax = s_vals.size
-        retained = rmax  # default keep all
-        for j in range(rmax):  # 0-based index
-            tail_sum = np.sum(s_vals[j:rmax])
-            if abs(tail_sum) < tol:
-                retained = j
-                break
-
-        if max_rank is not None:
-            retained = min(retained, int(max_rank))
-
-        # Truncation / rotate factors
-        U1 = U1 @ U_s
-        V1 = V1 @ Vh.T
-
-        S_trunc = np.diag(s_vals[:retained])
-        U1_trunc = U1[:, :retained]
-        V1_trunc = V1[:, :retained]
-
-        return U1_trunc, S_trunc, V1_trunc

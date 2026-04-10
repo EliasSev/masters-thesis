@@ -6,6 +6,7 @@ and DynamicalLowRankPCG.
 import numpy as np
 import scipy as sp
 
+from time import time
 from numpy.typing import NDArray
 from typing import Optional, Union
 from abc import ABC, abstractmethod
@@ -16,6 +17,17 @@ from pymatting import ichol  # incomplete Cholesky
 from sksparse.cholmod import cholesky  # sparse Cholesky
 from scipy.sparse.linalg import LinearOperator
 from scipy.linalg import cho_factor, cho_solve
+
+
+def frobenius2(A):
+    """Compute the squared Frobenius norm of A."""
+    a = A.ravel()
+    return np.dot(a, a)
+
+
+def inner_F(A, B):
+    """Compute the Frobenius inner product between A and B."""
+    return np.dot(A.ravel(), B.ravel())
 
 
 class CGSolver(ABC):
@@ -229,26 +241,26 @@ class ConjugateGradient(CGSolver):
         # Initialize gradient G and search direction D
         G = self.gradient(X, y, w, lambda_)
         D = -G.copy()
-
+        
         # Initial residual
-        res0 = np.linalg.norm(G, 'fro')
+        res0 = np.sqrt(frobenius2(G))
         
         for i in range(1, max_iter + 1):
             # Step size
             HD = self.apply_H(D, w, lambda_)
-            alpha = np.sum(G * G) / np.sum(D * HD)
+            alpha = frobenius2(G) / inner_F(D, HD)
 
             # Update X
             X = X + alpha * D
             
             # Update the gradient and the search direction
-            denom = np.sum(G * G)
+            denom = frobenius2(G)
             G = G + alpha * HD
-            beta = np.sum(G * G) / denom
+            beta = frobenius2(G) / denom
             D = -G + beta * D
 
             # Relative residual
-            res = np.linalg.norm(G, 'fro')
+            res = np.sqrt(frobenius2(G))
             rel_res = res / res0
             self.residual.append(rel_res)
 
@@ -271,6 +283,10 @@ class DynamicalLowRankCG(CGSolver):
         mfrsvd, MatrixFreeRSVD: A trained MatrixFreeRSVD objected.
         """
         super().__init__(mfrsvd)
+        self.setup_time = 0
+        self.CG_time = 0
+        self.WLS_time = 0
+        self.truncate_time = 0
 
     def solve(
             self,
@@ -302,43 +318,54 @@ class DynamicalLowRankCG(CGSolver):
         returns: Solution vector x = vec(X) (1D array).
         """
         # Initialize X (random)
+        self.setup_time = self.CG_time = self.WLS_time = 0
+        t0 = time()
         X, Ux, Sx, Vx = self.initial_X(seed, max_rank=max_rank, X0=X0)
 
         # Initialize gradient G and search direction D
         G = self.gradient(X, y, w, lambda_)
         D = -G.copy()
+        self.setup_time = time() - t0
 
         # Initial residual
-        res0 = np.linalg.norm(G, 'fro')
-        
+        res0 = np.sqrt(frobenius2(G))
+
         for i in range(1, max_iter + 1):
             # Step size
+            t0 = time()
             HD = self.apply_H(D, w, lambda_)
-            alpha = np.sum(G * G) / np.sum(D * HD)
-
+            alpha = frobenius2(G) / inner_F(D, HD)
+            self.CG_time += 0
+            
             # W-step
+            t0 = time()
             W_star = (Ux @ Sx) + alpha * (D @ Vx)
             U_hat, _ = np.linalg.qr(np.hstack([Ux, W_star]))
 
-            # L-ste
+            # L-step
             L_star = (Vx @ Sx.T) + alpha * (D.T @ Ux)
             V_hat, _ = np.linalg.qr(np.hstack([Vx, L_star]))
 
             # S-step
             S_new = (U_hat.T @ Ux) @ Sx @ (Vx.T @ V_hat)
             S_new = S_new + alpha * (U_hat.T @ D @ V_hat)
+            self.WLS_time += time() - t0
 
             # Truncate back to low-rank
+            t0 = time()
             Ux, Sx, Vx = self.truncate(U_hat, S_new, V_hat, truncate_tol, max_rank)
-            
+            self.truncate_time += time() - t0
+
             # Update the gradient and the search direction
-            denom = np.sum(G * G)
+            t0 = time()
+            denom = frobenius2(G)
             G = G + alpha * HD
-            beta = np.sum(G * G) / denom
+            beta = frobenius2(G) / denom
             D = -G + beta * D
+            self.CG_time += time() - t0
 
             # Relative residual
-            res = np.linalg.norm(G, 'fro')
+            res = np.sqrt(frobenius2(G))
             rel_res = res / res0
             self.residual.append(rel_res)
 
@@ -410,16 +437,16 @@ class DynamicalLowRankPCG(CGSolver):
         D = -Z.copy()
 
         # Initial residual
-        res0 = np.linalg.norm(G, 'fro')
+        res0 = np.sqrt(frobenius2(G))
         
         for i in range(1, max_iter + 1):
             # Step size
             HD = self.apply_H(D, w, lambda_)
-            denom = np.sum(D * HD)
+            denom = inner_F(D, HD)
             if denom < 1e-32:
                 if verbose: print(f"alpha too small ({denom}). Stopping at iter = {i}")
                 break
-            alpha = np.sum(G * Z) / denom
+            alpha = inner_F(G, Z) / denom
 
             # W-step
             W_star = (Ux @ Sx) + alpha * (D @ Vx)
@@ -437,14 +464,14 @@ class DynamicalLowRankPCG(CGSolver):
             Ux, Sx, Vx = self.truncate(U_hat, S_new, V_hat, truncate_tol, max_rank)
             
             # Update the gradient and the search direction
-            denom = np.sum(G * Z)
+            denom = inner_F(G, Z)
             G = G + alpha * HD
             Z = self.apply_P_inv(G, P_inv)
-            beta = np.sum(G * Z) / denom
+            beta = inner_F(G, Z) / denom
             D = -Z + beta * D
 
             # Relative residual
-            res = np.linalg.norm(G, 'fro')
+            res = np.sqrt(frobenius2(G))
             rel_res = res / res0
             self.residual.append(rel_res)
 
@@ -459,7 +486,7 @@ class DynamicalLowRankPCG(CGSolver):
         return self.matrix_to_vec(Ux @ Sx @ Vx.T)
 
     def get_preconditioner(
-            self, w: NDArray, lambda_: float, preconditioner: Optional[str]
+            self, w: NDArray, lambda_: float, preconditioner: str
         ) -> Union[NDArray, LinearOperator]:
         preconditioner = preconditioner.lower()
         if preconditioner == 'none':
@@ -554,8 +581,10 @@ class DynamicalLowRankPCG(CGSolver):
     def apply_P_inv(self, A: NDArray, P_inv: Union[NDArray, LinearOperator]) -> NDArray:
         """Compute mat[ P^{-1} vec(A) ]."""
         a = self.matrix_to_vec(A)
-        if type(P_inv).__name__ == "_CustomLinearOperator":  # temporary hack
-            P_inv_a = P_inv @ a
-        else:  # assuming P_inv is a 1D array!
-            P_inv_a = P_inv * a
-        return self.vec_to_matrix(P_inv_a)
+
+        # Assuming that P_inv is SciPy LinearOperator
+        if isinstance(P_inv, LinearOperator):
+            return self.vec_to_matrix(P_inv @ a)                          
+        # Assuming that P_inv is a 1D array
+        else:
+            return self.vec_to_matrix(P_inv * a)

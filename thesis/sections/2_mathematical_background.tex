@@ -171,9 +171,9 @@ In the discrete case, under the inner products and norms defined in Equation~\eq
 for all $x \in \mathbb R^N$ and all $y \in \mathbb R^{N_b}$. 
 
 Inserting the explicit representation of $K$ given in Equation~\eqref{eq:discrete_K} yields the matrix representation of $K^*$,
-\begin{equation*}
+\begin{equation}\label{eq:discrete_K_star}
     K^* = A^{-T} T^T M_\partial,
-\end{equation*}
+\end{equation}
 where $A$ is the stiffness matrix, $T$ the discrete trace operator, and $M_\partial$ the boundary mass matrix.
 
 
@@ -227,6 +227,8 @@ Let $A_k$ denote a rank-$k$ approximation of $A$ obtained using rSVD with a rand
 
 Although theoretical upper bounds are useful in many applications, it is well known that randomized algorithms for low-rank approximations, like Algorithm~\ref{alg:rsvd} and alike, far outperform their error bounds in numerical experiments \cite{halkoFindingStructureRandomness2011,guSubspaceIterationRandomization2015,rokhlinFastRandomizedAlgorithm2008}.
 \input{algorithms/rsvd.tex}
+\nomenclature[G]{$k$}{Target rank}
+\nomenclature[G]{$p$}{Oversampling parameter}
 
 
 \subsection{The discrete inverse problem}\label{sec:the_discrete_inverse_problem}
@@ -266,7 +268,7 @@ and $W = \operatorname{diag}(w_1, \dots, w_N)$.
 \subsection{A weighted formulation}
 Assume that $x^*$ solves the linear system $A x = y$ where $A \in \mathbb{R}^{m \times n}$. Then, clearly, $x^*$ solves $B A x = B y$ for a matrix $B \in \mathbb{R}^{q \times m}$. This motivates modifying the Tikhonov formulation in Equation~\eqref{eq:tikhonov},
 \begin{equation*}
-    \min_{x \in \mathbb{R}^n} \| B A x - A y \|^2 + \lambda^2 \| W x \|^2.
+    \min_{x \in \mathbb{R}^n} \| B A x - B y \|^2 + \lambda^2 \| W x \|^2.
 \end{equation*}
 
 We are interested in finding a $B$ which improves reconstructions of the Tikhonov problem. This is what Elvetun and Nielsen analyzed in a series of paper, in particular, if the choice $B = A^+$ improves inverse solutions. In the setting of the discrete inverse problem in Equation~\eqref{eq:discrete_inverse_problem}, they analyze the problem

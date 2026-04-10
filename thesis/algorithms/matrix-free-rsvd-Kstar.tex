@@ -1,0 +1,34 @@
+\begin{algorithm}[!thbp]
+\caption{Matrix-free rSVD approximation of $K^*$}
+\label{alg:discrete_rsvd_Kstar}
+\begin{algorithmic}[1]
+    \Require Forward operator $K: \mathbb{R}^N \to \mathbb{R}^{N_b}$, adjoint operator $K^*: \mathbb{R}^{N_b} \to \mathbb{R}^N$, mass matrices $M, M_\partial$, target rank $k$, oversampling parameter $p$
+    \Ensure Approximate rank-$k$ factorization $K^* \approx U \Sigma V^T$
+
+    \State \textbf{Range sketch:}
+    \State Set $l = k + p$
+    \Comment{Ensure that $l \le N_b$}
+    \For{$i = 1, \dots, l$}
+        \State Draw a random vector $\psi_i \in \mathbb{R}^{N_b}$
+        \State Apply the adjoint operator: $y_i = K^* \psi_i \in \mathbb{R}^N$
+    \EndFor
+
+    \State Form the matrix $Y = [y_1, \dots, y_l] \in \mathbb{R}^{N \times l}$ \Comment{Equivalent to $Y = K^* \Psi$}
+    \State Compute an orthonormal basis: $Q = \operatorname{orth}(Y)$
+
+    \State \textbf{Projection onto the basis:}
+    \For{$i = 1, \dots, l$}
+        \State Let $q_i$ be the $i$-th column of $Q$
+        \State Solve for $\tilde q_i = M^{-1} q_i$
+        \State Apply the forward operator: $\tilde{b}_i = K \tilde q_i \in \mathbb{R}^{N_b}$
+        \State Set $b_i = \tilde{b}_i^T M_\partial$ \Comment{$i$-th row of $B$}
+    \EndFor
+    \State Form the projected matrix $B = \begin{bmatrix} b_1 \\ \vdots \\ b_l \end{bmatrix} \in \mathbb{R}^{l \times N_b}$
+    \Comment{Equivalent to $B = Q^T K^*$}
+
+    \State Compute the SVD: $B = \tilde{U} \Sigma V^T$
+    \State Set $U = Q \tilde{U}$
+    \State Truncate back to rank $k$: $U, \Sigma, V^T \leftarrow \operatorname{truncate}(U, \Sigma, V^T)$
+
+\end{algorithmic}
+\end{algorithm}

@@ -1,76 +1,76 @@
 \section{Approximating the Forward Operator}\label{sec:approximating}
 \input{figures/singular_values.tex}
 % Opening: motivation and feasibility
-The goal of this sections if to compute the regularization weights given in Equation \eqref{eq:weights}, which requires the SVD $K = U\Sigma V^T$. Forming $K = TA^{-1}M$ requires solving $N$ linear systems $A v = M e_i$, and computing the SVD of the resulting dense $N_b \times N$ matrix costs $\mathcal{O}(N_b^2 N)$ \cite{dongarraSingularValueDecomposition2018}. In two spatial dimensions $N$ grows quadratically with mesh resolution, and in three dimensions cubically, making the construction of $K$ and finding its SVD infeasible.
+The goal of this section is to compute the regularization weights given in Equation \eqref{eq:weights}, which requires the SVD $K = U\Sigma V^T$. Forming $K = TA^{-1}M$ requires solving $N$ linear systems $A v = M e_i$, and computing the SVD of the resulting dense $N_b \times N$ matrix costs $\mathcal{O}(N_b^2 N)$ \cite{dongarraSingularValueDecomposition2018}. In two spatial dimensions $N$ grows quadratically with mesh resolution, and in three dimensions cubically, making the construction of $K$ and finding its SVD infeasible.
 
-This motivates the use of the randomized SVD given in Algorithm~\ref{alg:rsvd}. With target rank $k$ and oversampling parameter $p$ (typically $p \in [5, 10]$ \cite{halkoFindingStructureRandomness2011}), setting $l = k + p$, the rSVD yields a rank-$k$ approximate truncated SVD $K \approx U_k \Sigma_k V_k^T$ at a computational cost of  $\mathcal{O}(N_b N l)$ \cite{halkoFindingStructureRandomness2011}. Since $K$ has a large nullspace and rapidly decaying singular values, as illustrated in Figure~\ref{fig:singular_values}, the target rank $k$ can be chosen much smaller than $N$. 
+The randomized SVD (Algorithm~\ref{alg:rsvd}) reduces this cost to $\mathcal{O}(N_b N l)$ \cite{halkoFindingStructureRandomness2011}, where $l = k + p$, $k$ is the target rank, and $p$ is an oversampling parameter (typically, $p \in [5, 10]$ \cite{halkoFindingStructureRandomness2011}). It yields a rank-$k$ approximation $K \approx U \Sigma V^T$, and since $K$ has a large nullspace and rapidly decaying singular values, as illustrated in Figure~\ref{fig:singular_values}, $k$ can be chosen much smaller than $N$.
 
-The rSVD implementation of Algorithm~\ref{alg:rsvd} requires forming $B = Q^T K$, which requires $K$ to be stored as a dense $N_b \times N$ matrix. We instead propose a matrix-free variant without assembling $K$, a cost of $l$ forward PDE solves and $l$ adjoint PDE solves.
-% Something about how it's adapted specifically to the FEM formulation.
+The rSVD implementation of Algorithm~\ref{alg:rsvd} requires forming $B = Q^T K$, which requires $K$ to be stored as a dense $N_b \times N$ matrix. We instead propose a matrix-free variant without assembling $K$, at a cost of $l$ forward PDE solves and $l$ adjoint PDE solves.
 
 
 \subsection{A matrix-free rSVD scheme}
 \input{figures/rsvd.tex}
-\textcolor{red}{Add oversampling parameter $p$.}
-Let $K$ be the $N_b \times N$ discrete forward operator given in Eq.~\eqref{eq:K}. We are interested in a rank-$k$ approximation $K_k$ of the matrix $K$. By the Eckart–Young–Mirsky theorem, the optimal rank-$k$ approximation of $K$ is the truncated SVD obtained by keeping the $k$ first singular values, and their corresponding singular values. The randomized SVD provides an efficient alternative, by computing an approximate rank-$k$ factorization $K \approx U_k \Sigma_k V_k$, which also approximates the optimal truncated rank-$k$ SVD decomposition. We will now present a matrix-free variation of the rSVD algorithm, suited for problems where the matrix $K$ is not explicitly known.
-\nomenclature[G]{$k$}{Target rank}
-\nomenclature[G]{$p$}{Oversampling parameter}
-
-Like the rSVD, this matrix-free formulation consists of two stages. In the first stage, an approximate basis $Q$ of $K$ is constructed through random sampling of the column space of $K$. In the second stage, the matrix $K$ is projected onto the subspace $\operatorname{span}(Q)$, and a SVD factorization is computed of the projected matrix.
-
-In the first stage, we apply $K$ on $k$ random vectors $\psi_1, \psi_2, \dots, \psi_k$ drawn from some distribution, typically the normal distribution. This yields the random samples $y_1, y_2, \dots, y_k$, where $y_i = K \psi_i$. If we gather the samples and random vectors into matrices $Y = [y_i]_{i=1}^k$ and $\Psi = [\psi_i]_{i}$, we can express $Y$ as
+The algorithm consists of two stages. The first stage constructs an approximate basis $Q$ for the column space of $K$. We select a target rank $k$ and an oversampling parameter $p$, set $l = k + p$, and apply $K$ to $l$ random test vectors $\psi_1, \psi_2, \dots, \psi_l$ drawn from the standard normal distribution. This yields $l$ random samples $y_1, y_2, \dots, y_l$, where $y_i = K \psi_i$. Collecting these into matrices $Y = [y_i]_{i=1}^l$ and $\Psi = [\psi_i]_{i=1}^l$, we have
 \begin{equation*}
     Y = K \Psi.
 \end{equation*}
-\textcolor{red}{(something about how $y_i$ is most likely to line up with the first singular vector)}. Geometrically, we want the $i$-th sample $y_i$ to approximately point in the direction of the the $i$ right singular vector $v_i$. To remove contributions of the previous right singular vectors $v_{i-1}, v_{i-2}, \dots, v_{1}$ on $y_i$, we must orthogonalize the random samples. A QR-factorization
-\begin{equation*}
-    QR = Y
-\end{equation*}
-achieves such an orthogonalization, obtaining the matrix $Q$ which contains the orthogonalized column-vectors $q_1, q_2, \dots, q_k$. This concludes the first step, where we have obtained an approximation of the column space of $K$:
+Each sample $K\psi_i$ is a linear combination of the columns of $K$, and tends to align with the dominant left singular vectors, see Figure~\ref{fig:rsvd}. Orthogonalizing the columns of $Y$ via a QR-factorization $QR = Y$ ensures that the $i$-th column $q_i$ of $Q$ approximately aligns with $u_i$, giving
 \begin{equation*}
     \operatorname{span}(Q) \approx \operatorname{span}(K)
 \end{equation*}
 \nomenclature[G]{$Y$}{Sample matrix}
 \nomenclature[G]{$\Psi$}{Random matrix}
 
-For the second stage, we project $K$ down to the subspace $\operatorname{span}(Q)$. This is typically done by computing $B = Q^T K$. However, since we do not know $K$ explicitly, we instead compute $B^* = K^* Q$, and then $B$ can be found by computing $B = (B^*)^*$.
-
-To do this in practice, we use the the definition of $K^*$ under the finite element space $V_h$,
+The second stage projects $K$ onto $\operatorname{span}(Q)$ by computing $B = Q^T K$. Since we do not know $K$ explicitly, we use $K^*$ to compute $B$. In particular, by the definition of $K^*$,
 \begin{equation}\label{eq:K_star}
     (K^* z)^T M = z^T M_\partial K.
 \end{equation}
-If we choose $z = M_{\partial}^{-1} q_i$ and insert it into Eq.~\eqref{eq:K_star}, we see that
+If we choose $z = M_{\partial}^{-1} q_i$ and insert it into Equation~\eqref{eq:K_star}, we see that
 \begin{equation}\label{eq:rsvd_relation}
     (K^* z)^T M
     = (M_{\partial}^{-1} q_i)^T M_{\partial} K
     = q_i^T K.
 \end{equation}
-Hence, if we let
-\begin{equation}\label{eq:rsvd_adjoint_problem}
-    b_i = (K^* (M_{\partial}^{-1} q_i))^T M
-\end{equation}
-for $i = 1, 2, \dots, k$, and define the $k \times N$ matrix
+Setting $b_i = (K^* (M_{\partial}^{-1} q_i))^T M$ for $i = 1, 2, \dots, l$, and defining the $l \times N$ matrix
 \begin{equation*}
-    B = \begin{bmatrix} b_1 \\ \vdots \\ b_k \end{bmatrix}
+    B = \begin{bmatrix} b_1 \\ \vdots \\ b_l \end{bmatrix},
 \end{equation*}
-it must be that, by Eq.~\eqref{eq:rsvd_relation},
+we obtain, by Equation~\eqref{eq:rsvd_relation},
 \begin{equation*}
-    B = Q^T K,
+    B = Q^T K.
 \end{equation*}
-as desired.
 
-We have computed the projection $B = Q^T K$ by solving the adjoint problem in Eq.~\eqref{eq:rsvd_adjoint_problem} $k$ times. In the final part of the second stage, we take the SVD of $B$,
-\begin{equation*}
-    B = \tilde U_k \Sigma_k V_k^T,
-\end{equation*}
-and set $U_k = Q \tilde U_k$. This gives an approximate SVD decomposition of the form
+Taking the SVD $B = \tilde U \Sigma V^T$, and setting $U = Q \tilde U$, gives an approximate SVD
 \begin{equation}\label{eq:rsvd_approx}
-    K \approx U_k \Sigma_k V_k^T.
+    K \approx U \Sigma V^T.
 \end{equation}
-By noting that $U_k \Sigma_k V_k^T = Q \tilde U_k \Sigma_k V_k^T = Q B = Q Q^T K$, and that $\operatorname{rank}(Q) = k$, we know that the factorization in Eq.~\eqref{eq:rsvd_approx} is a rank-$k$ approximation of $K$. The procedure is summarized in Algorithm~\ref{alg:discrete_rsvd}.
 
+The factorization in \eqref{eq:rsvd_approx} is of rank $l$, since $U \Sigma V^T = Q \tilde U \Sigma V^T = Q B = Q Q^T K$ with $\operatorname{rank}(Q) = l$. A rank-$k$ factorization is obtained by selecting the $k$ first columns of the respective matrices in \eqref{eq:rsvd_approx}. The procedure is summarized in Algorithm~\ref{alg:discrete_rsvd}.
 \input{algorithms/matrix-free-rsvd.tex}
 
 
-\subsection{Forward and adjoint solvers}
-\textcolor{red}{[TODO: add info about the LU solvers / Krylov solvers used to apply $K$ and $K^*$, and their computational setup cost.]}
+\subsection{Approximating the adjoint operator}
+\input{algorithms/matrix-free-rsvd-Kstar.tex}
+
+
+\subsection{Solver setup and precomputation}
+\begin{itemize}
+    \item Assembly of $M$ and $M_\partial$: $\mathcal{O}(N)$ and $\mathcal{O}(N_b)$
+    \item LU factorization for $A$ (to apply $K$): $\mathcal{O}(N^{3/2})$
+    \item LU factorization for $A$ (to apply $K^*$): $\mathcal{O}(N^{3/2})$
+    \item Cholesky factorization for $M_\partial$ (for solving $M_\partial \tilde q_i = q_i$): $\mathcal{O}(N_b)$
+    \item Cholesky factorization for $M$ (for solving $M \tilde q_i = q_i$): $\mathcal{O}(N^{3/2})$
+\end{itemize}
+
+Things to mention:
+\begin{itemize}
+    \item For large problems, use iterative Krylov solvers
+    \item For self-adjoint problems, like here where $A = A^T$, only one LU-solver needs to be set up
+    \item Once the factorization is computed, solving the system is equally fast
+        \subitem LU: forward substitution $Ly = b$, then back substitution $Ux = y$ ($\mathcal{O}(N)$)
+        \subitem Cholesky: forward substitution $Ly = b$, then back substitution $L^Tx = y$ ($\mathcal{O}(N)$)
+    \item Note: $A$ is SPD here, can also use Cholesky
+\end{itemize}
+
+
+

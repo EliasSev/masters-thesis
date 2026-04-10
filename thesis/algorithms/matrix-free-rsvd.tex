@@ -19,7 +19,8 @@
     \State \textbf{Projection onto the basis:}
     \For{$i = 1, \dots, l$}
         \State Let $q_i$ be the $i$-th column of $Q$
-        \State Apply the adjoint operator: $\tilde b_i = K^* (M_{\partial}^{-1} q_i)$
+        \State Solve for $\tilde q_i = M_{\partial}^{-1} q_i$
+        \State Apply the adjoint operator: $\tilde b_i = K^* \tilde q_i$
         \State Set $b_i = \tilde b_i^T M$ \Comment{$i$-th row of $B$}
     \EndFor
     \State Form the projected matrix $B = \begin{bmatrix} b_1 \\ \vdots \\ b_l \end{bmatrix} \in \mathbb{R}^{l \times N}$

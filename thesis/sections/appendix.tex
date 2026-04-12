@@ -17,6 +17,7 @@ with inner product
 \end{equation*}
 The space $L^2(\Omega)$ is a Hilbert space, i.e., a complete inner product space. For details, see Section~3 in Kreyszig \cite{kreyszigIntroductoryFunctionalAnalysis1989}.
 
+
 \paragraph{Sobolev space $H^1$}
 The space $H^1(\Omega)$, known as the first-order Sobolev space, is defined as
 \begin{equation*}
@@ -84,12 +85,22 @@ The QR factorization of $A\in\mathbb R^{m\times n}$ is a decomposition
 where $Q\in\mathbb R^{m\times n}$ has orthonormal columns and $R\in\mathbb R^{n\times n}$ is upper triangular. The matrix $Q$ forms an orthonormal basis for $\operatorname{range}(A)$, as described in Section 6 of Golub and Van Loan \cite{golubMatrixComputations4th2013}.
 
 
+\paragraph{LU decomposition}
+The LU decomposition of $A \in \mathbb{R}^{n \times n}$ is a factorization
+\begin{equation*}
+    A = L U,
+\end{equation*}
+where $L$ is a lower triangular matrix and $U$ an upper triangular matrix. $A$ has an LU decomposition under the condition that $\operatorname{det}(A[1:k, 1:k]) \neq 0$ for $k=1,\dots, n-1$ (see Theorem~3.2.1 in Golub and Van Loan \cite{golubMatrixComputations4th2013}). More generally, any square matrix $A$ has a LU decomposition with partial pivoting (LUP), $PA = LU$. Computing the LU decomposition costs $\mathcal{O}(n^3)$ flops, specifically, $\tfrac{2}{3}n^3$.
+
+Given the LU decomposition $A = LU$, the system $Ax = y$ can be solved by solving $Lz = y$ and $Ux = z$ with $z = Ux$. The two triangular systems are easily solved in $\mathcal{O}(n^2)$ flops.
+
+
 \paragraph{Cholesky factorization}
 Assume that $A\in\mathbb R^{n\times n}$ is SPD. Then $A$ has a unique Cholesky factorization
 \begin{equation*}
     A = L L^T,
 \end{equation*}
-where $L$ is a lower triangular matrix with positive diagonal elements. This factorization is commonly used to efficiently solve linear systems with SPD matrices via forward and backward substitution. For details, see Section~4.2 in Golub and Van Loan \cite{golubMatrixComputations4th2013}.
+where $L$ is a lower triangular matrix with positive diagonal elements. This is a special case of the LU decomposition, ith $U = L^T$. The cost of this procedure is $\mathcal{O}(n^3)$, specifically, $\tfrac{1}{3}n^3$ flops, making it faster than standard LU decomposition. For details, see Section~4.2 in Golub and Van Loan \cite{golubMatrixComputations4th2013}.
 
 
 \paragraph{Incomplete Cholesky factorization}

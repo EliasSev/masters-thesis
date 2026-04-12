@@ -10,7 +10,7 @@ The rSVD implementation of Algorithm~\ref{alg:rsvd} requires forming $B = Q^T K$
 
 \subsection{A matrix-free rSVD scheme}
 \input{figures/rsvd.tex}
-The algorithm consists of two stages. The first stage constructs an approximate basis $Q$ for the column space of $K$. We select a target rank $k$ and an oversampling parameter $p$, set $l = k + p$, and apply $K$ to $l$ random test vectors $\psi_1, \psi_2, \dots, \psi_l$ drawn from the standard normal distribution. This yields $l$ random samples $y_1, y_2, \dots, y_l$, where $y_i = K \psi_i$. Collecting these into matrices $Y = [y_i]_{i=1}^l$ and $\Psi = [\psi_i]_{i=1}^l$, we have
+The algorithm consists of two stages. The first stage constructs an approximate basis $Q$ for the column space of $K$. We select a target rank $k$ and an oversampling parameter $p$, set $l = k + p$, and apply $K$ to $l$ random test vectors $\psi_1, \psi_2, \dots, \psi_l$ drawn from a distribution of choice, typically standard normal distribution \cite{halkoFindingStructureRandomness2011}. This yields $l$ random samples $y_1, y_2, \dots, y_l$, where $y_i = K \psi_i$. Collecting these into matrices $Y = [y_i]_{i=1}^l$ and $\Psi = [\psi_i]_{i=1}^l$, we have
 \begin{equation*}
     Y = K \Psi.
 \end{equation*}
@@ -39,7 +39,6 @@ we obtain, by Equation~\eqref{eq:rsvd_relation},
 \begin{equation*}
     B = Q^T K.
 \end{equation*}
-
 Taking the SVD $B = \tilde U \Sigma V^T$, and setting $U = Q \tilde U$, gives an approximate SVD
 \begin{equation}\label{eq:rsvd_approx}
     K \approx U \Sigma V^T.
@@ -47,13 +46,34 @@ Taking the SVD $B = \tilde U \Sigma V^T$, and setting $U = Q \tilde U$, gives an
 
 The factorization in \eqref{eq:rsvd_approx} is of rank $l$, since $U \Sigma V^T = Q \tilde U \Sigma V^T = Q B = Q Q^T K$ with $\operatorname{rank}(Q) = l$. A rank-$k$ factorization is obtained by selecting the $k$ first columns of the respective matrices in \eqref{eq:rsvd_approx}. The procedure is summarized in Algorithm~\ref{alg:discrete_rsvd}.
 \input{algorithms/matrix-free-rsvd.tex}
+% TODO: Add references to this part
 
 
 \subsection{Approximating the adjoint operator}
+An alternative is to apply the rSVD to the adjoint operator $K^*$. By Equation~\eqref{eq:K_star_def}, $K = M_\partial^{-1} (K^*)^T M$, so if $K^* \approx \bar U \bar \Sigma \bar V^T$ is an approximation obtained via the rSVD, then $K$ can be recovered via $K = M_\partial^{-1} \bar V \bar \Sigma \bar U^T M$. In practice, this variant may yield a better low-rank approximation, depending on the quality of the random sampling $K^* \psi_i$ compared to $K \psi_j$.
+
+Algorithm~\ref{alg:discrete_rsvd} extends directly to $K^*$ by replacing $K$ with $K^*$ and drawing random test vectors $\psi_i \in \mathbb{R}^{N_b}$, obtaining a sampling matrix $Y \in \mathbb{R}^{N \times l}$ and an orthonormal basis $Q = \operatorname{orth}(Y)$. For the projection step $B = Q^T K^*$, choosing $z = M^{-1}q_i$ in the adjoint identity gives $b_i = (K(M^{-1}q_i))^T M_\partial$, by the same argument as in Section~\ref{sec:approximating}. The procedure is summarized in Algorithm~\ref{alg:discrete_rsvd_Kstar}.
 \input{algorithms/matrix-free-rsvd-Kstar.tex}
 
 
+\subsubsection{Recovering the SVD}
+Given the approximate rank-$k$ SVD $K^* \approx \bar{U}\bar{\Sigma}\bar{V}^T$, where $\bar U \in \mathbb{R}^{N \times k}$, $\bar \Sigma \in \mathbb{R}^{k \times k}$, and $\bar V \in \mathbb{R}^{N_b \times k}$, $K$ can be approximated from the relation $K = M_\partial^{-1} \bar V \bar \Sigma \bar U^T M$. We recover the SVD of $K$: define the $N_b \times k$ matrix $A = M_\partial^{-1} \bar V$ and the $N \times k$ matrix $B = M \bar U$, giving the rank-$k$ factorization
+\begin{equation*}
+    K \approx A \bar \Sigma B^T.
+\end{equation*}
+Next, compute the thin QR factorization $Q_A R_A = A$ and $Q_B R_B = B$, where $Q_A \in \mathbb{R}^{N_b \times k}$, $Q_B \in \mathbb{R}^{N \times k}$, and $R_A, R_B \in \mathbb{R}^{k \times k}$. Then, $K \approx Q_A (R_A \bar \Sigma R_B^T) Q_B^T$, and taking the SVD of the small $k \times k$ matrix $R_A \bar \Sigma R_B^T = \hat U \Sigma \hat V^T$ gives 
+\begin{equation*}
+    K \approx Q_A (\hat U \Sigma \hat V^T) Q_B^T.
+\end{equation*}
+By setting $U = Q_A \hat U$ and $V = Q_B \hat V$, we get the rank-$k$ approximate SVD
+\begin{equation*}
+    K \approx U \Sigma V^T.
+\end{equation*}
+
+
 \subsection{Solver setup and precomputation}
+
+
 \begin{itemize}
     \item Assembly of $M$ and $M_\partial$: $\mathcal{O}(N)$ and $\mathcal{O}(N_b)$
     \item LU factorization for $A$ (to apply $K$): $\mathcal{O}(N^{3/2})$
@@ -72,5 +92,13 @@ Things to mention:
     \item Note: $A$ is SPD here, can also use Cholesky
 \end{itemize}
 
-
+Some costs:
+\begin{itemize}
+    \item LU factorization costs $\tfrac{2}{3} n^3$ (Sec. 3.2 in Golub)\cite{golubMatrixComputations4th2013}
+    \item LUP factorization costs the same (Sec 3.4 in Golub)
+    \item Solving a triangular system costs $\mathcal{O}(n^2)$ flops (Sec 3.1 Golub)
+    \item Cholesky factorization costs $\tfrac{1}{3} n^3$ flops (Sec. 4.2 Golub) 
+    \item  Cholesky factorization of sparse SPD matrices can be much smaller \cite{davisDirectMethodsSparse2006}
+    \item For sparse matrices originating finite element systems, the cost can be $\mathcal{O}(n^3)$, with $N=n^2$, so $\mathcal{O}(N^{3/2})$ \cite{georgeNestedDissectionRegular1973}
+\end{itemize}
 

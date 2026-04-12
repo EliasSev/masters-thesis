@@ -3,7 +3,7 @@
 \label{alg:discrete_rsvd_Kstar}
 \begin{algorithmic}[1]
     \Require Forward operator $K: \mathbb{R}^N \to \mathbb{R}^{N_b}$, adjoint operator $K^*: \mathbb{R}^{N_b} \to \mathbb{R}^N$, mass matrices $M, M_\partial$, target rank $k$, oversampling parameter $p$
-    \Ensure Approximate rank-$k$ factorization $K^* \approx U \Sigma V^T$
+    \Ensure Approximate rank-$k$ factorization $K^* \approx \bar U \bar \Sigma \bar V^T$
 
     \State \textbf{Range sketch:}
     \State Set $l = k + p$
@@ -26,9 +26,9 @@
     \State Form the projected matrix $B = \begin{bmatrix} b_1 \\ \vdots \\ b_l \end{bmatrix} \in \mathbb{R}^{l \times N_b}$
     \Comment{Equivalent to $B = Q^T K^*$}
 
-    \State Compute the SVD: $B = \tilde{U} \Sigma V^T$
-    \State Set $U = Q \tilde{U}$
-    \State Truncate back to rank $k$: $U, \Sigma, V^T \leftarrow \operatorname{truncate}(U, \Sigma, V^T)$
+    \State Compute the SVD: $B = \tilde{U} \bar \Sigma \bar V^T$
+    \State Set $\bar U = Q \tilde{U}$
+    \State Truncate back to rank $k$: $\bar U, \bar \Sigma, \bar V^T \leftarrow \operatorname{truncate}(\bar U, \bar \Sigma, \bar V^T)$
 
 \end{algorithmic}
 \end{algorithm}

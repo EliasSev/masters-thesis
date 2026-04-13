@@ -71,34 +71,9 @@ By setting $U = Q_A \hat U$ and $V = Q_B \hat V$, we get the rank-$k$ approximat
 \end{equation*}
 
 
-\subsection{Solver setup and precomputation}
+\subsection{Initial matrix factorizations}
+Both algorithms factorize the stiffness matrix $A$ and the mass matrices $M$ and $M_\partial$ once at initialization. Each application of $K$ or $K^*$ then reduces to triangular solves with $A$, and each mass matrix solve $M_\partial \tilde{q}_i = q_i$ or $M\tilde{q}_i = q_i$ reduces to triangular solves with the respective factorization.
 
+The matrices $A$, $M$ and $M_\partial$ are SPD (see Appendix~\ref{appendix:functional_analysis_and_the_fem}), and can be factorized using the Cholesky decomposition. The sparse structure of the stiffness and mass matrices can be exploited to efficiently compute such factorizations. For instance, the nested dissection method, proposed by George \cite{georgeNestedDissectionRegular1973}, may compute such a Cholesky factorization in $\mathcal{O}(N^{3/2})$ computations. The algorithm minimizes fill-ins, keeping the resulting triangular matrices sparse. As a consequence, once the factorization is done, solving the triangular systems can be done at a cost of $\mathcal{O}(N \log N)$ at each iteration \cite{georgeComputerSolutionLarge1984}. For details, see Appendix~\ref{appendix:triangular}.
 
-\begin{itemize}
-    \item Assembly of $M$ and $M_\partial$: $\mathcal{O}(N)$ and $\mathcal{O}(N_b)$
-    \item LU factorization for $A$ (to apply $K$): $\mathcal{O}(N^{3/2})$
-    \item LU factorization for $A$ (to apply $K^*$): $\mathcal{O}(N^{3/2})$
-    \item Cholesky factorization for $M_\partial$ (for solving $M_\partial \tilde q_i = q_i$): $\mathcal{O}(N_b)$
-    \item Cholesky factorization for $M$ (for solving $M \tilde q_i = q_i$): $\mathcal{O}(N^{3/2})$
-\end{itemize}
-
-Things to mention:
-\begin{itemize}
-    \item For large problems, use iterative Krylov solvers
-    \item For self-adjoint problems, like here where $A = A^T$, only one LU-solver needs to be set up
-    \item Once the factorization is computed, solving the system is equally fast
-        \subitem LU: forward substitution $Ly = b$, then back substitution $Ux = y$ ($\mathcal{O}(N)$)
-        \subitem Cholesky: forward substitution $Ly = b$, then back substitution $L^Tx = y$ ($\mathcal{O}(N)$)
-    \item Note: $A$ is SPD here, can also use Cholesky
-\end{itemize}
-
-Some costs:
-\begin{itemize}
-    \item LU factorization costs $\tfrac{2}{3} n^3$ (Sec. 3.2 in Golub)\cite{golubMatrixComputations4th2013}
-    \item LUP factorization costs the same (Sec 3.4 in Golub)
-    \item Solving a triangular system costs $\mathcal{O}(n^2)$ flops (Sec 3.1 Golub)
-    \item Cholesky factorization costs $\tfrac{1}{3} n^3$ flops (Sec. 4.2 Golub) 
-    \item  Cholesky factorization of sparse SPD matrices can be much smaller \cite{davisDirectMethodsSparse2006}
-    \item For sparse matrices originating finite element systems, the cost can be $\mathcal{O}(n^3)$, with $N=n^2$, so $\mathcal{O}(N^{3/2})$ \cite{georgeNestedDissectionRegular1973}
-\end{itemize}
-
+In particular, if $A = LL^T$ is a Cholesky factorization, then $K = T (LL^T)^{-1}M$. To compute $y_i = K \psi_i$, the system $LL^T v = M \psi_i$ is solved via two triangular solves, and $y_i = T v$. A similar procedure is done when applying $K^* = A^{-T}T^TM_\partial$, where the factorization $A = LL^T$ can be reused since $A = A^T$.

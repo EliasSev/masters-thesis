@@ -112,26 +112,23 @@ where $\tilde L$ is a lower triangular matrix which is sparser than $L$. There a
 
 
 \subsection{Solving triangular systems}\label{appendix:triangular}
-Assume that $T \in \mathbb{R}^{n \times n}$ is a lower triangular matrix. Solving $T x = y$ can then easily be done via forward substitution; for the top row, $x_1$ is solved directly since it's the only unknown. The value of $x_1$ is then substituted into the second row, and solving for $x_2$ is done similarly, and so on. If $T$ us upper triangular, an equivalent procedure is done, but starting from the last row (first solve for $x_n$, then $x_{n-1}$, and so on). For a dense matrix, this process costs $\mathcal{O}(n^2)$ \cite{davisDirectMethodsSparse2006}.
-
-If $T$ is a sparse matrix, the operation count reduces, since zero- elements can be skipped. By Lemma~2.2.1 in George and Liu \cite{georgeComputerSolutionLarge1984}, solving a sparse triangular system $T x = y$ has a computational cost of $\mathcal{O}(\operatorname{nnz}(T))$, where $\operatorname{nnz}(T)$ denotes the number of non-zero elements in $T$.
+Let $T \in \mathbb{R}^{n \times n}$ be triangular. Solving $T x = y$ is done by forward (or backward) substitution: starting from the first (or last) row, each $x_i$ is solved directly after substituting all previously computed values. If $T$ is sparse, zero entries are skipped, and by Lemma~2.2.1 in George and Liu \cite{georgeComputerSolutionLarge1984} the cost reduces to $\mathcal{O}(\operatorname{nnz}(T))$, where $\operatorname{nnz}(T)$ is the number of nonzeros in $T$.
 
 
 \paragraph{General linear systems}
-Let $A \in \mathbb{R}^{n\times n}$ and consider the linear system $A x = y$. If $A$ is invertible, the solution is $x = A^{-1} y$. In practice, the standard procedure is to compute the LU factorization $A = LU$, and solving the two triangular systems
+Let $A \in \mathbb{R}^{n\times n}$ be invertible and consider $A x = y$, then the solution is $x = A^{-1} y$. In practice, the standard procedure is to compute the LU factorization $A = LU$, reducing the problem to two triangular systems
 \begin{equation*}
-    L z = y, \quad U x = z \implies x = U^{-1} z = U^{-1} L^{-1} y
+    L z = y, \quad U x = z \implies x = U^{-1} z = U^{-1} L^{-1} y,
 \end{equation*}
-Note that this is equivalent to Gaussian elimination. Each triangular system easily be computed via forward and backward substitution, each at a cost of $\mathcal{O}(n^2)$. The computation of the factorization itself costs $\tfrac{2}{3}n^3$ flops, so the problem scales as $\mathcal{O}(n^3)$.
+Each triangular system can be solved by forward and backward substitution at $\mathcal{O}(n^2)$. The factorization itself costs $\tfrac{2}{3}n^3$ flops, so the problem scales as $\mathcal{O}(n^3)$. If $A$ is symmetric positive definite, $U = L^T$ and the Cholesky factorization $A = LL^T$ halves the cost to $\tfrac{1}{3}n^3$.
 
-If $A$ is symmetric positive definite, then $U = L^T$ in the LU factorization, so that $A = LL^T$. This is the Cholesky factorization, costing $\tfrac{1}{3} n^3$ computations.
 
 \paragraph{Sparse linear systems}
-For sparse systems $A x = y$, computing the $LU$ factorization comes with additional challenges. Matrix entries which are zero in $A$ but non-zero in $L$ or $U$, so called fill-ins, require more memory and results in a more expensive factorization \cite{larsonFiniteElementMethod2013}. There is therefore a great interest in algorithms which avoid fill-ins for sparse linear systems, for instance, see Davis \cite{davisDirectMethodsSparse2006}.
-
-By keeping $L$ and $U$ sparse, the cost of solving the triangular systems are reduced. S
+For sparse systems $A x = y$, computing the $LU$ factorization comes with additional challenges. Matrix entries which are zero in $A$ but non-zero in $L$ or $U$, so called fill-ins, require more memory and result in a more expensive factorization \cite{larsonFiniteElementMethod2013}. Additionally, the cost of solving the resulting triangular systems is reduced. Much research has gone into the development algorithms which avoid fill-ins, for instance, see Davis \cite{davisDirectMethodsSparse2006}.
 
 
+\paragraph{The nested dissection method}
+For sparse SPD matrices arising from 2D elliptic PDEs (mass matrices, stiffness matrix), the structure of the matrices can be exploited. Alan George proposed the nested dissection method in 1973 \cite{georgeNestedDissectionRegular1973}, a divide and conquer approach, that computes Cholesky factorization in $\mathcal{O}(N^{3/2})$ flops. The resulting triangular matrix $L$ contains $\mathcal{O}(N \log N)$ non-zero elements, so solving $L x = y$ costs $\mathcal{O}(\operatorname{nnz}(L)) = \mathcal{O}(N \log N)$.
 
 
 \subsection{Performance metrics}

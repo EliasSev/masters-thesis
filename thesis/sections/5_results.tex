@@ -1,5 +1,5 @@
 \section{Results}
-\subsection{Test problems}
+\subsection{Test problems}\label{sec:problems}
 \input{figures/problem_illustration.tex}
 Figure~\ref{fig:problem_illustration} shows the three meshes and source functions used throughout the results. Problem I is a square mesh with a single source, used as a baseline. Problem II uses the same geometry with three sources to assess reconstruction under multiple sources. Problem III replaces the square domain with an ``L''-shaped mesh and two sources, introducing a non-convex geometry.
 
@@ -12,7 +12,7 @@ Python 3.9 was used for all computations, together with NumPy and SciPy for line
 
 
 \subsection{Matrix-free rSVD}
-\subsubsection{Computational time}
+\subsubsection{Computational time}\label{sec:computational_time}
 \input{figures/rsvd_computational_time_comp.tex}
 \input{tables/rsvd_computational_time_comp.tex}
 The left plot of Figure~\ref{fig:rsvd_computational_time_comp} shows the computational time $t_{\text{rSVD}}$ of Algorithm~\ref{alg:discrete_rsvd} for target rank $k=10, 25, 50$, with oversampling parameter $p=5$, compared to the time $t_K$ to form $K = T A^{-1} M$ explicitly (Section~\ref{sec:approximating}) over increasingly fine meshes. 
@@ -38,16 +38,44 @@ The relative computational costs stabilize around $k = 100$ (all ranges below ar
 
 
 
-\subsubsection{Target rank effect on error}
+\subsubsection{Target rank effect on reconstruction quality}
 \input{figures/test_problems_selected.tex}
+Figure~\ref{fig:test_problems_selected} shows the weighted Tikhonov solution of Equation~\eqref{eq:discrete_inverse_problem} for selected target ranks with oversampling parameter $p = 5$. The left panel shows the solution using the true $K$ and $W$, while the middle and right panels shows solutions Using $K$ and $W$ approximated by Algorithm~\ref{alg:discrete_rsvd}. The regularization parameter is set to $\lambda = 10^{-4}$ for all solutions.
+
+In Figure~\ref{fig:test_problem_I}, using a target rank of $k=10$, the location of the source is correctly identified. The reconstruction exhibits more smoothing than the exact Tikhonov solution; the regularization already produces significant smoothing \cite{elvetunRegularizationOperatorSource2020}, and the low-rank approximation at $k=10$ increases this effect. Using $k=30$, as shown in the right panel, the source is essentially identical to the exact Tikhonov solution. For Problem II and Problem III of Figure~\ref{fig:test_problem_II} and \ref{fig:test_problem_III}, respectively, we see that the location is slightly incorrect for $k=10$, with the reconstructed source shifted toward the interior of the domain. Additionally, the reconstruction is more smoothed than the exact Tikhonov solution, as in Problem I. These issues are not present when choosing a larger target rank of $k=30$.
+
+At $k = 30$, the rSVD recovers the exact Tikhonov solution across all three problems at a fraction of the computational cost (Section~\ref{sec:computational_time}).
+At $k = 10$, the source location is recovered but the reconstruction is more heavily smoothed, and for multiple sources, the locations are shifted towards the interior of the domain.
 
 \input{figures/rsvd_over_k.tex}
+Figure~\ref{fig:rsvd_over_k} shows the reconstruction error for target ranks
+$k \in [5,\, 100]$ and oversampling parameters $p = 0,\, 5,\, 10$, measured
+by the Euclidean norm, Earth Mover's distance (EMD), and area under the curve
+of intersection over union (AUC-IoU). See Appendix~\ref{appendix:performance_metrics} for details on each metric. An AUC-IoU score of 1 indicates a perfect overlap of the reconstruction and the true source.
+
+
+
+\subsubsection{Mesh size effect on reconstruction error}
+\textcolor{red}{[TODO: In this section describe how while holding the target rank $k$ fixed, and increasing the mesh size $N$, the reconstruction error mostly stays the same. This is a consequence of no new information being added to $y$: any new datapoints are approximately equal to the average of the neighbors.]}
+
 
 \subsubsection{Approximation of singular values}
-\input{figures/singular_values_comp.tex}
+\input{figures/rsvd_adjoint_singular_values.tex}
+\textcolor{red}{[TODO: In this section, show that the estimated singular values are under-estimated using rSVD (on $K$ or $K^*$) compared to the true values.]}
+
+
+\subsubsection{Computational time of adjoint operator}
+\textcolor{red}{[TODO: In this section, show the difference in computational time of Algorithm~\ref{alg:discrete_rsvd} versus Algorithm~\ref{alg:discrete_rsvd_Kstar}. Also, show the computational breakdown of Algorithm~\ref{alg:discrete_rsvd_Kstar}].}
+
+
+\subsubsection{Reconstruction error using the adjoint operator}
+\textcolor{red}{[TODO: In this section, show how using Algorithm~\ref{alg:discrete_rsvd_Kstar} (adjoint rSVD) compares to using Algorithm~\ref{alg:discrete_rsvd} (rSVD) in terms of reconstruction error of the source.]}
+
 
 \subsubsection{Accuracy on noisy data}
 \input{figures/projected_noisy_error.tex}
+\textcolor{red}{[TODO: In this section, when solving the Tikhonov problem with noise, show how the error is affected for increasing $k$, and compare it with the truncated SVD.]}
+
 
 \subsection{Dynamical Low-Rank PCG}
 

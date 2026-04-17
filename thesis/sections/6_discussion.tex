@@ -1,1 +1,26 @@
 \section{Discussion}
+
+\subsection{Difference in approximation quality using the adjoint operator}
+\textcolor{red}{[TODO: redo this sections; it's wrong.]}
+To understand the difference in the reconstruction quality, it is helpful to investigate the structure of $Y = K\Psi$ and $Y' = K^* \Psi'$, which form the sample matrix in Algorithm~\ref{alg:discrete_rsvd} and \ref{alg:discrete_rsvd_Kstar}, respectively. For the sake of simplicity, assume that $K^* = K$, and let $K = U \Sigma V^T$ be the SVD of $K$. The matrix $\tilde \Psi = V^T \Psi$ is a rotation of the random matrix $\Psi$, meaning that $\tilde \Psi$ also is a random matrix. Indeed, the columns of $Y$ are linear combinations of the left singular vectors $u_1, \dots, u_{N_b}$, since
+\begin{equation*}
+    Y = (U\Sigma)\tilde\Psi.
+\end{equation*}
+In a similar manner, the columns of $Y' = K^* \Psi' = (V \Sigma)\tilde\Psi'$ are linear combinations of the right singular values $v_1, \dots, v_{N_b}$.
+
+The quality of the approximate SVD of the rSVD is entirely determined by the sampling $Y$ or $Y'$. Since $K$ is of rank $N_b$, we have that
+\begin{equation*}
+    \operatorname{Col}(K) =
+    \operatorname{span}\{ u_1, \dots, u_{N_b} \},
+    \quad
+    \operatorname{Col}(K)^\perp = \{ 0 \},
+\end{equation*}
+and
+\begin{equation*}
+    \operatorname{Col}(K^T) =
+    \operatorname{span}\{v_1, \dots, v_{N_b}\},
+    \quad
+    \operatorname{Col}(K^T)^\perp =
+    \operatorname{span}\{v_{N_b+1}, \dots, v_N\}.
+\end{equation*}
+By applying rSVD to $K: \mathbb{R}^N \to \mathbb{R}^{N_b}$,

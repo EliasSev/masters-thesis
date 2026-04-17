@@ -10,6 +10,11 @@ from typing import Optional
 from numpy.typing import NDArray
 from abc import ABC, abstractmethod
 from scipy.sparse import csr_matrix, spmatrix
+from scipy.sparse.linalg import splu
+from sksparse.cholmod import cholesky
+
+from scipy.sparse import diags
+from scipy.sparse.linalg import factorized
 
 from fenics import (
     FunctionSpace, Function, TrialFunction, TestFunction,
@@ -24,16 +29,19 @@ class BaseSolver(ABC):
             self,
             V_h: FunctionSpace,
             sigma: float = 1.0,
-            c: float = 1.0,
-            precompute: str = 'LU' 
+            c: float = 1.0, 
         ) -> None:
         self.V_h = V_h
         self.sigma = sigma
         self.c = c
-
+        
+        # The SVD factors of K
         self._U: Optional[NDArray] = None
         self._S: Optional[NDArray] = None
         self._Vt: Optional[NDArray] = None
+
+        # The Elvetun-Nielsen weights
+        self._w = None
 
         # Set up constants and constant matrices
         self.boundary_dofs = self._get_boundary_dofs()
@@ -63,19 +71,6 @@ class BaseSolver(ABC):
         self._rhs_Ks = Function(self.V_h)
         self._sol_Ks = Function(self.V_h)
 
-        if precompute == 'LU':
-            from scipy.sparse.linalg import splu
-            self._solve_M    = splu(self.M.tocsc()).solve
-            self._solve_M_ds = splu(self.M_ds.tocsc()).solve
-
-        elif precompute == 'Cholesky':
-            from sksparse.cholmod import cholesky
-            self._solve_M    = cholesky(self.M.tocsc()).solve_A
-            self._solve_M_ds = cholesky(self.M_ds.tocsc()).solve_A
-
-        else:
-            raise ValueError(f"Unknown 'precompute': {precompute}")
-
     @property 
     def U(self) -> NDArray:
         if self._U is None:
@@ -93,6 +88,12 @@ class BaseSolver(ABC):
         if self._Vt is None:
             raise ValueError("Vt is not computed yet.")
         return self._Vt
+    
+    @property
+    def w(self) -> NDArray:
+        if self._w is None:
+            raise ValueError("Elvetun-Nielsen weights w not computed yet.")
+        return self._w
     
     @abstractmethod
     def solve(self) -> tuple[NDArray, NDArray, NDArray]:
@@ -128,7 +129,7 @@ class BaseSolver(ABC):
     def weights(self) -> NDArray:
         """
         Compute the Elvetun-Nielsen regularization weights:
-            w_i = ∥V V^T (e_i)∥_M / sqrt(M_ii).
+            w_i = ||V V^T (e_i)||_M / sqrt(M_ii).
         """
         V = self.Vt.T
         C = self.Vt @ (self.M @ V)  # (k, N) @ ((N, k) @ (N, k))= (k×k)
@@ -136,8 +137,54 @@ class BaseSolver(ABC):
         
         volumes = np.array(self.M.sum(axis=1)).flatten()  # (N,)
         w = np.sqrt(np.maximum(w_sq, 0)) / volumes        # (N,)
+        self._w = np.array(w)
+        return self._w
+    
+    def tikhonov_solve(
+            self, y: NDArray, w: NDArray, lam: float
+        ) -> NDArray:
+        """
+        A Tikhonov solver which minimizes 
+            |Kx-y|² + lam**2 * |Wx|²
+        using the approximated K and the Elvetun-Nielsen weights W.
+
+        y, (N_b,) : The observed data.
+        lam       : Tikhonov regularization parameter.
+        """
+        U, s, V = self.U, self.S, self.Vt.T
+        M_partial, M = self.M_ds, self.M
+
+        N = V.shape[0]
+        k = s.shape[0]
+
+        # Construct the Right-Hand Side (RHS)
+        RHS = V @ (s * (U.T @ (M_partial @ y)))  # Size (N,)
+
+        # Setup Sparse Part A
+        W_mat = diags(w)
+        A = (lam ** 2) * (W_mat @ M @ W_mat)
+        solve_A = factorized(A.tocsc())
+
+        # Setup Low-Rank Update components
+        # H = A + V @ S @ V.T
+        # S = Sigma @ U.T @ M_partial @ U @ Sigma
+        S_mid = U.T @ (M_partial @ U)
+        S = np.diag(s) @ S_mid @ np.diag(s)
+        S_inv = np.linalg.pinv(S)  # or just np.linalg.inv
+
+        # Woodbury/SMW Solve
+        # Compute Z = A^-1 @ V (N x k)
+        Z = np.zeros((N, k))
+        for i in range(k):
+            Z[:, i] = solve_A(V[:, i])
+
+        C = S_inv + V.T @ Z
+        x0 = solve_A(RHS)  # x0 = A^-1 @ RHS
         
-        return np.array(w)
+        rhs_small = V.T @ x0
+        z = np.linalg.solve(C, rhs_small)
+        x_opt = x0 - Z @ z
+        return x_opt
     
     def _get_M(self) -> spmatrix:
         """Get the mass matrix M as a scipy sparse CSR matrix."""
@@ -218,7 +265,7 @@ class MatrixFreeRSVD(BaseSolver):
             V_h: FunctionSpace,
             sigma: float = 1.0,
             c: float = 1.0,
-            precompute: str = 'LU' 
+            precompute: str = 'Cholesky'
         ) -> None:
         """
         Initialize a MatrixFreeRSVD solver.
@@ -231,8 +278,18 @@ class MatrixFreeRSVD(BaseSolver):
         V_h, FunctionSpace : A fenics FunctionSpace.
         sigma, float       : The diffusion coefficient.
         c, float           : The reaction coefficient.
+        precompute, str    : Factorization method for M and M_ds.
         """
-        super().__init__(V_h, sigma, c, precompute)
+        super().__init__(V_h, sigma, c)
+
+        if precompute == 'LU':
+            self._solve_M_ds = splu(self.M_ds.tocsc()).solve
+
+        elif precompute == 'Cholesky':
+            self._solve_M_ds = cholesky(self.M_ds.tocsc()).solve_A
+
+        else:
+            raise ValueError(f"Unknown 'precompute': {precompute}")
     
     def solve(self,
             k: int,
@@ -252,7 +309,7 @@ class MatrixFreeRSVD(BaseSolver):
         # Random number generator
         rng = np.random.default_rng(seed=seed)
 
-        # Target rank k must be less than dim(Nul(V_h)) = N_b
+        # Target rank k must be less than the rank of K
         assert k <= self.N_b, f"Target rank k={k} must be less than or equal to N_b={self.N_b}"
         l = min(k + p, self.N_b)
 
@@ -275,9 +332,8 @@ class MatrixFreeRSVD(BaseSolver):
         U = Q @ U_tilde
 
         # Truncate back to target rank
-        U, S, Vt = U[:, :k], S[:k], Vt[:k, :]
-        self._U, self._S, self._Vt = U, S, Vt
-        return U, S, Vt
+        self._U, self._S, self._Vt = U[:, :k], S[:k], Vt[:k, :]
+        return self._U, self._S, self._Vt
 
 
 class MatrixFreeRSVDAdjoint(BaseSolver):
@@ -286,7 +342,7 @@ class MatrixFreeRSVDAdjoint(BaseSolver):
             V_h: FunctionSpace,
             sigma: float = 1.0,
             c: float = 1.0,
-            precompute: str = 'LU' 
+            precompute: str = 'Cholesky'
         ) -> None:
         """
         Initialize a MatrixFreeRSVDAdjoint solver.
@@ -299,8 +355,43 @@ class MatrixFreeRSVDAdjoint(BaseSolver):
         V_h, FunctionSpace : A fenics FunctionSpace.
         sigma, float       : The diffusion coefficient.
         c, float           : The reaction coefficient.
+        precompute, str    : Factorization method for M and M_ds.
         """
-        super().__init__(V_h, sigma, c, precompute)
+        super().__init__(V_h, sigma, c)
+
+        # The SVD factors of K*
+        self._U_tilde = None
+        self._S_tilde = None
+        self._Vt_tilde = None
+
+        if precompute == 'LU':
+            self._solve_M    = splu(self.M.tocsc()).solve
+            self._solve_M_ds = splu(self.M_ds.tocsc()).solve
+
+        elif precompute == 'Cholesky':
+            self._solve_M    = cholesky(self.M.tocsc()).solve_A
+            self._solve_M_ds = cholesky(self.M_ds.tocsc()).solve_A
+
+        else:
+            raise ValueError(f"Unknown 'precompute': {precompute}")
+        
+    @property 
+    def U_tilde(self) -> NDArray:
+        if self._U_tilde is None:
+            raise ValueError("U_tilde is not computed yet.")
+        return self._U_tilde
+    
+    @property 
+    def S_tilde(self) -> NDArray:
+        if self._S_tilde is None:
+            raise ValueError("S_tilde is not computed yet.")
+        return self._S_tilde
+    
+    @property 
+    def Vt_tilde(self) -> NDArray:
+        if self._Vt_tilde is None:
+            raise ValueError("Vt_tilde is not computed yet.")
+        return self._Vt_tilde
     
     def solve(self,
             k: int,
@@ -320,7 +411,7 @@ class MatrixFreeRSVDAdjoint(BaseSolver):
         # Random number generator
         rng = np.random.default_rng(seed=seed)
 
-        # Target rank k must be less than the null-space dim N_b
+        # Target rank k must be less than the rank of K*
         assert k <= self.N_b, f"Target rank k={k} must be less than or equal to N_b={self.N_b}"
         l = min(k + p, self.N_b)
 
@@ -343,6 +434,20 @@ class MatrixFreeRSVDAdjoint(BaseSolver):
         U = Q @ U_tilde
 
         # Truncate back to target rank
-        U, S, Vt = U[:, :k], S[:k], Vt[:k, :]
-        self._U, self._S, self._Vt = U, S, Vt
-        return U, S, Vt
+        self._U_tilde, self._S_tilde, self._Vt_tilde = U[:, :k], S[:k], Vt[:k, :]
+        return self._U_tilde, self._S_tilde, self._Vt_tilde
+
+    def recover_K(self) -> tuple[NDArray, NDArray, NDArray]:
+        """
+        Recover the approximate SVD of K from the rSVD of K*.
+        """
+        F = self._solve_M_ds(self.Vt_tilde.T)
+        G = self.M @ self.U_tilde
+
+        Q_F, R_F = np.linalg.qr(F, mode='reduced')
+        Q_G, R_G = np.linalg.qr(G, mode='reduced')
+
+        U_hat, S, V_hatT = np.linalg.svd(R_F * self.S_tilde @ R_G.T, full_matrices=False)
+
+        self._U, self._S, self._Vt  = Q_F @ U_hat, S, (Q_G @ V_hatT.T).T
+        return self._U, self._S, self._Vt

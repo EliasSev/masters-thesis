@@ -42,6 +42,20 @@ def error_auc_iou(
     return np.trapz(ious, tau_range), tau_range[np.argmax(ious)], ious
 
 
+def error3(x: np.ndarray, x_hat: np.ndarray) -> dict[str, float]:
+    """
+    Compute the error triplet {'euclidean': ..., 'emd': ..., 'auc_iou': ...}.
+
+    x, np.array     : ground truth
+    x_hat, np.array : tikhonov solution
+    """
+    return {
+        'euclidean': np.linalg.norm(x - x_hat),
+        'emd': error_movers(x, x_hat),
+        'auc_iou': error_auc_iou(x, x_hat)[0],
+    }
+
+
 class SpaceIndexing:
     """Simple class which contains indexing and dimension info about the function space V_h."""
     def __init__(self, V_h: FunctionSpace):

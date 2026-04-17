@@ -118,7 +118,7 @@ Let $T \in \mathbb{R}^{n \times n}$ be triangular. Solving $T x = y$ is done by 
 \paragraph{General linear systems}
 Let $A \in \mathbb{R}^{n\times n}$ be invertible and consider $A x = y$, then the solution is $x = A^{-1} y$. In practice, the standard procedure is to compute the LU factorization $A = LU$, reducing the problem to two triangular systems
 \begin{equation*}
-    L z = y, \quad U x = z \implies x = U^{-1} z = U^{-1} L^{-1} y,
+    L z = y, \quad U x = z \implies x = U^{-1} z = U^{-1} L^{-1} y.
 \end{equation*}
 Each triangular system can be solved by forward and backward substitution at $\mathcal{O}(n^2)$. The factorization itself costs $\tfrac{2}{3}n^3$ flops, so the problem scales as $\mathcal{O}(n^3)$. If $A$ is symmetric positive definite, $U = L^T$ and the Cholesky factorization $A = LL^T$ halves the cost to $\tfrac{1}{3}n^3$.
 
@@ -131,7 +131,7 @@ For sparse systems $A x = y$, computing the $LU$ factorization comes with additi
 For sparse SPD matrices arising from 2D elliptic PDEs (mass matrices, stiffness matrix), the structure of the matrices can be exploited. Alan George proposed the nested dissection method in 1973 \cite{georgeNestedDissectionRegular1973}, a divide and conquer approach, that computes Cholesky factorization in $\mathcal{O}(N^{3/2})$ flops. The resulting triangular matrix $L$ contains $\mathcal{O}(N \log N)$ non-zero elements, so solving $L x = y$ costs $\mathcal{O}(\operatorname{nnz}(L)) = \mathcal{O}(N \log N)$.
 
 
-\subsection{Performance metrics}
+\subsection{Performance metrics}\label{appendix:performance_metrics}
 Let $x \in \mathbb{R}^N$ denote the true source (it's coefficient vector) and $\hat x \in \mathbb{R}^N$ it's corresponding reconstruction.
 
 To evaluate reconstruction quality, we consider three performance metrics: Euclidean error, Earth mover’s distance (EMD), and the integrated (area under curve) intersection over union (AUC-IoU). These metrics emphasize the localization and spatial shape of the reconstructed source, rather than just the amplitude.
@@ -170,7 +170,7 @@ The AUC-IoU is then the integration of the $\operatorname{IoU}(\tau)$ curve,
 \begin{equation*}
     \operatorname{AUC-IoU} = \int_{0}^{1} \operatorname{IoU}(\tau) \, d\tau.
 \end{equation*}
-This can be approximated using the Trapezoidal rule. The AUC-IoU lines in $[0, 1]$, with 1 being a perfect score.
+This can be approximated using the Trapezoidal rule. The AUC-IoU lies in $[0, 1]$, with 1 being a perfect score.
 
 
 \subsection{Derivation of the Adjoint formulation}\label{appendix:adjoint_derivation}

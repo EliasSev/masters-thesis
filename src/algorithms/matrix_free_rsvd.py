@@ -133,7 +133,7 @@ class MatrixFreeRSVD:
     
     def draw_random_vector(self, distribution: str, rng: np.random.Generator, **kwargs) -> NDArray:
         if distribution == 'standard':
-            return rng.random(self.N)
+            return rng.standard_normal(self.N)
         
         elif distribution == 'rademacher':
             return rng.choice([-0.5, 0.5], size=self.N, p=[0.5, 0.5])

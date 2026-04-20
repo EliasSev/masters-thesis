@@ -238,7 +238,7 @@ class BaseSolver(ABC):
         Draw a random test vector psi of size d.
         """
         if distribution == 'standard':
-            return rng.random(d)
+            return rng.standard_normal(d)
         
         elif distribution == 'rademacher':
             return rng.choice([-0.5, 0.5], size=d, p=[0.5, 0.5])
@@ -447,7 +447,7 @@ class MatrixFreeRSVDAdjoint(BaseSolver):
         Q_F, R_F = np.linalg.qr(F, mode='reduced')
         Q_G, R_G = np.linalg.qr(G, mode='reduced')
 
-        U_hat, S, V_hatT = np.linalg.svd(R_F * self.S_tilde @ R_G.T, full_matrices=False)
+        U_hat, S, V_hatT = np.linalg.svd((R_F * self.S_tilde) @ R_G.T, full_matrices=False)
 
         self._U, self._S, self._Vt  = Q_F @ U_hat, S, (Q_G @ V_hatT.T).T
         return self._U, self._S, self._Vt

@@ -1,0 +1,22 @@
+\begin{figure*}[htbp]
+\centering
+
+\begin{subfigure}{1.0\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{clipped_solution_K.png}
+    \caption{rSVD on $K$ (Algorithm~\ref{alg:discrete_rsvd})}
+    \label{fig:clipped_solution_K}
+\end{subfigure}
+
+\vspace{0.5cm}
+
+\begin{subfigure}{1.0\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{clipped_solution_K_star.png}
+    \caption{rSVD on $K^*$ (Algorithm~\ref{alg:discrete_rsvd_Kstar})}
+    \label{fig:clipped_solution_K_star}
+\end{subfigure}
+
+\caption{Weighted Tikhonov solutions with $k=15$ and $p=5$ for Problem I (left), II (middle), and III (right), using Algorithm~\ref{alg:discrete_rsvd} (top) and Algorithm~\ref{alg:discrete_rsvd_Kstar} (bottom). The colormap is clipped at 0.1 to expose low-amplitude noise in the reconstruction.}
+\label{fig:clipped_solutions}
+\end{figure*}

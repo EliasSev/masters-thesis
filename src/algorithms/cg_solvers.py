@@ -11,7 +11,7 @@ from numpy.typing import NDArray
 from typing import Optional, Union
 from abc import ABC, abstractmethod
 from utils.utils import progress_bar
-from algorithms.matrix_free_rsvd import MatrixFreeRSVD
+from algorithms.rsvd_solvers import MatrixFreeRSVD, MatrixFreeRSVDAdjoint
 
 from pymatting import ichol  # incomplete Cholesky
 from sksparse.cholmod import cholesky  # sparse Cholesky
@@ -34,24 +34,24 @@ class CGSolver(ABC):
     """
     Base class for the class of CG solver:
         - Conjugate Gradient (matrix implementation)
+        - DynamicalLowRankApproximation
         - DynamicalLowRankCG
         - DynamicalLowRankPCG
     """
-    def __init__(self, mfrsvd: MatrixFreeRSVD) -> None:
+    def __init__(self, rsvd: Union[MatrixFreeRSVD, MatrixFreeRSVDAdjoint]) -> None:
         """
         Initialize the DynamicalLowRankPCG.
 
-        mfrsvd, MatrixFreeRSVD: A trained MatrixFreeRSVD objected.
+        rsvd, MatrixFreeRSVD[Adjoint]: A trained MatrixFreeRSVD[Adjoint] objected.
         """
-        self.V_h = mfrsvd.V_h
-        self.M_dx = mfrsvd.M_dx
-        self.M_ds = mfrsvd.M_ds
-        self.U = mfrsvd.Uk
-        self.S = mfrsvd.Sk
-        self.VT = mfrsvd.VkT
-        self.UT = self.U.T
-        self.V = self.VT.T
+        self.V_h                = rsvd.V_h
+        self.M_dx, self.M_ds    = rsvd.M, rsvd.M_ds
+        self.U, self.S, self.VT = rsvd.U, rsvd.S, rsvd.Vt
+        self.UT, self.V         = self.U.T, self.VT.T
 
+        self._x_true = None
+        self._X_true = None
+        self.error = []  # Track the error
         self.residual = []  # Track residuals
         self.niter = 0  # Number of iterations to converge
         
@@ -60,6 +60,17 @@ class CGSolver(ABC):
         self.grid_indices = np.lexsort((coords[:, 0], coords[:, 1]))
         self.dof_indices = np.argsort(self.grid_indices)
         self.n = int(np.sqrt(self.V_h.dim()))
+    
+    @property
+    def x_true(self) -> NDArray:
+        if self._x_true is None:
+            raise ValueError("'x_true' is not set!")
+        return self._x_true
+    
+    @x_true.setter
+    def x_true(self, value: NDArray) -> None:
+        self._x_true = value
+        self._X_true = self.vec_to_matrix(value)
 
     def matrix_to_vec(self, X: NDArray) -> NDArray:
         return X.flatten()[self.dof_indices]
@@ -199,13 +210,13 @@ class CGSolver(ABC):
 
 
 class ConjugateGradient(CGSolver):
-    def __init__(self, mfrsvd: MatrixFreeRSVD) -> None:
+    def __init__(self, rsvd: Union[MatrixFreeRSVD, MatrixFreeRSVDAdjoint]) -> None:
         """
         Initialize the ConjugateGradient.
 
         mfrsvd, MatrixFreeRSVD: A trained MatrixFreeRSVD objected.
         """
-        super().__init__(mfrsvd)
+        super().__init__(rsvd)
 
     def solve(
             self,
@@ -273,16 +284,108 @@ class ConjugateGradient(CGSolver):
         
         self.niter = i
         return self.matrix_to_vec(X)
- 
+    
+
+class DynamicalLowRankApproximation(CGSolver):
+    def __init__(self, rsvd: Union[MatrixFreeRSVD, MatrixFreeRSVDAdjoint]) -> None:
+        super().__init__(rsvd)
+
+    def solve(
+            self,
+            y: NDArray,
+            w: NDArray,
+            lambda_: float = 1e-4,
+            *,
+            alpha: float = 0.1,
+            X0: str = 'qr',
+            max_rank: int = 5,
+            max_iter: int = 250,
+            rtol: float = 1e-8,
+            seed: Optional[int] = None,
+            verbose: bool = True,
+            truncate_tol: float = 0.01
+        ):
+        """
+        Solve min{Phi(X; y, w)} with given lambda_ and max_rank using the DLRA scheme.
+
+        y, NDArray              : The observed data (1D array).
+        w, NDArray              : Tikhonov regularization weights (1D array).
+        lambda_, float          : Tikhonov regularization parameter.
+        alpha, float            : The base Adam step size.
+        max_iter, int           : Maximum number of iterations. 
+        max_rank, int           : Max rank of the solution (dynamical step).
+        rtol, float             : Stopping criterion, relative residual (r0/rk).
+        seed, int|None          : Seed for random number generator (for initial X).
+        verbose, bool           : Print out the results and progress.
+        truncate_tol, float     : Truncation tolerance for the adaptive rank update.
+
+        returns: Solution vector x = vec(X) (1D array).
+        """
+        # Initialize X (random)
+        X, Ux, Sx, Vx = self.initial_X(seed, max_rank=max_rank, X0=X0)
+
+        # Initialize gradient G and search direction D
+        G = self.gradient(X, y, w, lambda_)
+        D = -G.copy()
+
+        # Initial residual
+        res0 = np.sqrt(frobenius2(G))
+
+        # Adam Moments (same shape as X)
+        m_D = np.zeros((self.n, self.n))
+        v_D = np.zeros((self.n, self.n))
+        beta1, beta2 = 0.9, 0.999
+        eps = 1e-8
+
+        for i in range(1, max_iter + 1):
+            # Adam Update for D
+            m_D = beta1 * m_D + (1 - beta1) * D
+            v_D = beta2 * v_D + (1 - beta2) * (D**2)
+            m_hat = m_D / (1 - beta1**i)  # Bias correction
+            v_hat = v_D / (1 - beta2**i)  # Adaptive gradient
+            D_adam = m_hat / (np.sqrt(v_hat) + eps)
+            
+            # DLRA step
+            W_star = (Ux @ Sx) + alpha * (D_adam @ Vx)
+            U_hat, _ = np.linalg.qr(np.hstack([Ux, W_star]))
+
+            L_star = (Vx @ Sx.T) + alpha * (D_adam.T @ Ux)
+            V_hat, _ = np.linalg.qr(np.hstack([Vx, L_star]))
+
+            S_new = (U_hat.T @ Ux) @ Sx @ (Vx.T @ V_hat)
+            S_new = S_new + alpha * (U_hat.T @ D_adam @ V_hat)
+
+            Ux, Sx, Vx = self.truncate(U_hat, S_new, V_hat, truncate_tol, max_rank)
+
+            # Update the gradient and the search direction
+            X = (Ux * Sx) @ Vx.T
+            G = self.gradient(X, y, w, lambda_)
+            D = -G.copy()
+
+            # Relative residual
+            res = np.sqrt(frobenius2(G))
+            rel_res = res / res0
+            self.residual.append(rel_res)
+
+            if rel_res < rtol:
+                if verbose: print(f"Converged at iter {i} [rel_res={rel_res:.3}]")
+                break
+            
+            if verbose and ((i % 100 == 0) or (i == max_iter)):
+                progress_bar(i, max_iter)
+        
+        self.niter = i
+        return self.matrix_to_vec(Ux @ Sx @ Vx.T)
+
 
 class DynamicalLowRankCG(CGSolver):
-    def __init__(self, mfrsvd: MatrixFreeRSVD) -> None:
+    def __init__(self, rsvd: Union[MatrixFreeRSVD, MatrixFreeRSVDAdjoint]) -> None:
         """
         Initialize the DynamicalLowRankCG.
 
-        mfrsvd, MatrixFreeRSVD: A trained MatrixFreeRSVD objected.
+        rsvd, MatrixFreeRSVD[Adjoint]: A trained MatrixFreeRSVD[Adjoint] objected.
         """
-        super().__init__(mfrsvd)
+        super().__init__(rsvd)
         self.setup_time = 0
         self.CG_time = 0
         self.WLS_time = 0
@@ -384,13 +487,13 @@ class DynamicalLowRankPCG(CGSolver):
     """
     Dynamical Low-Rank Preconditioned Conjugate Gradient.
     """
-    def __init__(self, mfrsvd: MatrixFreeRSVD) -> None:
+    def __init__(self, rsvd: Union[MatrixFreeRSVD, MatrixFreeRSVDAdjoint]) -> None:
         """
         Initialize the DynamicalLowRankPCG.
 
-        mfrsvd, MatrixFreeRSVD: A trained MatrixFreeRSVD objected.
+        rsvd, MatrixFreeRSVD[Adjoint]: A trained MatrixFreeRSVD[Adjoint] objected.
         """
-        super().__init__(mfrsvd)
+        super().__init__(rsvd)
 
     def solve(
             self,

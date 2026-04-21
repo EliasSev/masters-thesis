@@ -4,33 +4,40 @@ Implementation of the DynamicalLowRankSolver algorithm.
 import numpy as np
 
 from numpy.typing import NDArray
-from typing import Optional
+from typing import Optional, Union
 from fenics import Function
-from algorithms.matrix_free_rsvd import MatrixFreeRSVD
+from algorithms.rsvd_solvers import MatrixFreeRSVD, MatrixFreeRSVDAdjoint
 from utils.utils import progress_bar
+
+
+def frobenius2(A):
+    """Compute the squared Frobenius norm of A."""
+    a = A.ravel()
+    return np.dot(a, a)
+
+
+def inner_F(A, B):
+    """Compute the Frobenius inner product between A and B."""
+    return np.dot(A.ravel(), B.ravel())
 
 
 class DynamicalLowRankSolver:
     def __init__(
             self,
-            mfrsvd: MatrixFreeRSVD,
+            rsvd: Union[MatrixFreeRSVD, MatrixFreeRSVDAdjoint],
             x_true: Optional[NDArray] = None
         ) -> None:
         """
         Initialize the DynamicalLowRankSolver.
 
-        mfrsvd, MatrixFreeRSVD: A trained MatrixFreeRSVD instance.
+        rsvd, MatrixFreeRSVD[Adjoint]: A trained MatrixFreeRSVD[Adjoint] instance.
         x_true, optional: True x source, to track the error while training.
         """
-        self.V_h = mfrsvd.V_h
-        self.M_dx = mfrsvd.M_dx
-        self.M_ds = mfrsvd.M_ds
-        self.U = mfrsvd.Uk
-        self.S = mfrsvd.Sk
-        self.VT = mfrsvd.VkT
-        self.UT = self.U.T
-        self.V = self.VT.T
-        self.x_true = x_true
+        self.V_h                = rsvd.V_h
+        self.M_dx, self.M_ds    = rsvd.M, rsvd.M_ds
+        self.U, self.S, self.VT = rsvd.U, rsvd.S, rsvd.Vt
+        self.UT, self.V         = self.U.T, self.VT.T
+        self.x_true             = x_true
 
         # Set up vec to matrix and matrix to vec utils
         coords = self.V_h.tabulate_dof_coordinates()
@@ -38,15 +45,9 @@ class DynamicalLowRankSolver:
         self.dof_indices = np.argsort(self.grid_indices)
         self.n = int(np.sqrt(self.V_h.dim()))
 
-        # Record history
-        self._initialize_records()
+        self.residual = []  # Track residuals
+        self.niter = 0  # Number of iterations to converge
 
-    def _initialize_records(self) -> None:
-        self.X_rel = []
-        self.residuals = []
-        if self.x_true is not None:
-            self.errors = []
-    
     def matrix_to_vec(self, X: NDArray) -> NDArray:
         return X.flatten()[self.dof_indices]
 
@@ -63,41 +64,34 @@ class DynamicalLowRankSolver:
             max_iter = 5000,
             max_rank = 5,
             tol = 1e-4,
-            seed = None
+            seed = None,
+            verbose = True
         ) -> Function:
         # Initialize X
         rng = np.random.default_rng(seed)
         X = rng.random((self.n, self.n)) * 1e-2
-        X_old = X.copy()   # Track previous iteration
-        X_best = X.copy()  # Track best solution in terms of residual
 
         Ux, sx, VxT = np.linalg.svd(X, full_matrices=False)
         Vx = VxT.T
         Sx = np.diag(sx)
 
-        # 2. Adam Moments (same shape as X)
+        # Adam Moments (same shape as X)
         m_D = np.zeros((self.n, self.n))
         v_D = np.zeros((self.n, self.n))
         beta1, beta2 = 0.9, 0.999
         eps = 1e-8
 
+        # Initial residual
+        x = self.matrix_to_vec(X)
+        D = self.gradient(x, y, w, lambda_, rho)[0]
+        res0 = np.sqrt(frobenius2(D))
+
         for i in range(1, max_iter + 1):
             X = Ux @ Sx @ VxT
             x = self.matrix_to_vec(X)
 
-            # Check for convergence
-            if i % 25 == 0:
-                dX = np.linalg.norm(X - X_old) / (np.linalg.norm(X_old) + 1e-10)
-                self.X_rel.append(dX)
-                progress_bar(i, max_iter, end_text=f" (diff={dX:.1e})")
-                if dX < tol:
-                    print(f"\nStopping: X converged at iter {i}")
-                    break
-                X_old = X.copy()
-
+            # Compute the search direction D
             D, r = self.gradient(x, y, w, lambda_, rho)
-            self.residuals.append(np.linalg.norm(r))
-            self.errors.append(np.linalg.norm(self.x_true - x))
 
             # Adam Update for D
             m_D = beta1 * m_D + (1 - beta1) * D
@@ -125,12 +119,26 @@ class DynamicalLowRankSolver:
             Ux, Sx, Vx = Ux_next, Sx_next, Vx_next
             VxT = Vx.T
 
+            # Relative residual
+            res = np.sqrt(frobenius2(D))
+            rel_res = res / res0
+            self.residual.append(rel_res)
+
+            if rel_res < tol:
+                if verbose: print(f"Converged at iter {i} [rel_res={rel_res:.3}]")
+                break
+            
+            if verbose and ((i % 100 == 0) or (i == max_iter)):
+                progress_bar(i, max_iter)
+
         else:
             print(f"Warning: X did not converge (max_iter={max_iter} reached)")
         
         X = Ux @ Sx @ VxT
         f = Function(self.V_h)
         f.vector()[:] = self.matrix_to_vec(X)
+
+        self.niter = i
         return f
     
     def gradient(self, x, y, w, lambda_, rho):

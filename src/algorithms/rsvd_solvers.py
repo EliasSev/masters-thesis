@@ -230,7 +230,7 @@ class BaseSolver(ABC):
     def _draw_random_vector(
             self,
             d: int,
-            distribution:str,
+            distribution: str,
             rng: np.random.Generator,
             **kwargs
         ) -> NDArray:

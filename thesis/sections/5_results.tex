@@ -4,13 +4,15 @@
 Figure~\ref{fig:problem_illustration} shows the three meshes and source functions used throughout the results. Problem I is a square mesh with a single source, used as a baseline. Problem II uses the same geometry with three sources to assess reconstruction under multiple sources. Problem III replaces the square domain with an ``L''-shaped mesh and two sources, introducing a non-convex geometry.
 
 
-
 \subsection{Computational setup}
 All numerical experiments were performed on a laptop running Fedora Linux 43 with Linux kernel version 6.19. The system was running with an Intel(R) Core(TM) i7-10510U (4 cores, 8 threads) with 16GB of memory.
 
 Python 3.9 was used for all computations, together with NumPy and SciPy for linear algebra routines \cite{harrisArrayProgrammingNumPy2020,virtanenSciPy10Fundamental2020}. The FEniCS software was used for solving PDEs using the finite element method \cite{alnaesFEniCSProjectVersion2015,loggAutomatedSolutionDifferential2012}. All library specifications, algorithm implementations, and notebooks used to generate the results in this thesis are openly available at: \href{https://github.com/EliasSev/masters-thesis}{github.com/EliasSev/masters-thesis}.
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Matrix-free Randomized SVD Part 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Matrix-free rSVD}
 \subsubsection{Computational time}\label{sec:computational_time}
 \input{figures/rsvd_computational_time_comp.tex}
@@ -37,7 +39,6 @@ The main costs of Algorithm~\ref{alg:discrete_rsvd} are the forward solves using
 The relative computational costs stabilize around $k = 100$ (all ranges below are for $N = 4{,}000$ to $N = 400{,}000$): setup accounts for 6\% to 3\%, stage 2 takes approximately 50\%, stage 4 takes 35\% to 26\%, and stage 5 takes 9\% to 22\%. The remaining fraction is the orthogonalization. At $k = 25$, stage 2 and stage 4 remain the dominant costs, but setup accounts for a larger share (14\% to 8\%), since its absolute time is unaffected by $k$, while stage 5 accounts for 3\% to 5\%.
 
 
-
 \subsubsection{Target rank effect on reconstruction quality}
 \input{figures/test_problems_selected.tex}
 Figure~\ref{fig:test_problems_selected} shows the weighted Tikhonov solution of Equation~\eqref{eq:discrete_inverse_problem} for selected target ranks with oversampling parameter $p = 5$. The left panel shows the solution using the true $K$ and $W$, while the middle and right panels shows solutions Using $K$ and $W$ approximated by Algorithm~\ref{alg:discrete_rsvd}. The regularization parameter is set to $\lambda = 10^{-4}$ for all solutions.
@@ -48,14 +49,18 @@ At $k = 30$, the rSVD recovers the exact Tikhonov solution across all three prob
 At $k = 10$, the source location is recovered but the reconstruction is more heavily smoothed, and for multiple sources, the locations are shifted towards the interior of the domain.
 
 \input{figures/rsvd_over_k.tex}
+\input{tables/rsvd_over_k.tex}
 Figure~\ref{fig:rsvd_over_k} shows the reconstruction error for target ranks
 $k \in [5,\, 100]$ and oversampling parameters $p = 0,\, 5,\, 10$, measured
 by the Euclidean norm, Earth Mover's distance (EMD), and area under the curve
 of intersection over union (AUC-IoU). See Appendix~\ref{appendix:performance_metrics} for details on each metric. An AUC-IoU score of 1 indicates a perfect overlap of the reconstruction and the true source.
 
 
+\subsubsection{Test vector distribution effect on error}
+\input{figures/random_test_vectors.tex}
 
-\subsubsection{Mesh size effect on reconstruction error}
+
+\subsubsection{Mesh resolution effect on reconstruction error}
 \textcolor{red}{[TODO: In this section describe how while holding the target rank $k$ fixed, and increasing the mesh size $N$, the reconstruction error mostly stays the same. This is a consequence of no new information being added to $y$: any new datapoints are approximately equal to the average of the neighbors.]}
 
 
@@ -69,6 +74,7 @@ of intersection over union (AUC-IoU). See Appendix~\ref{appendix:performance_met
 
 
 \subsubsection{Reconstruction error using the adjoint operator}
+\input{figures/clipped_solutions.tex}
 \textcolor{red}{[TODO: In this section, show how using Algorithm~\ref{alg:discrete_rsvd_Kstar} (adjoint rSVD) compares to using Algorithm~\ref{alg:discrete_rsvd} (rSVD) in terms of reconstruction error of the source.]}
 
 
@@ -77,9 +83,24 @@ of intersection over union (AUC-IoU). See Appendix~\ref{appendix:performance_met
 \textcolor{red}{[TODO: In this section, when solving the Tikhonov problem with noise, show how the error is affected for increasing $k$, and compare it with the truncated SVD.]}
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Dynamical Low-Rank (Preconditioned) Conjugate Gradient Part 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Dynamical Low-Rank PCG}
+\subsubsection{Convergence behavior: DLRA vs. DLR-CG}
+% Computational speed and iteration count. Lead with the main result: iteration curves and wall-clock time, DLR-CG vs. DLRA, across the three test problems. This is the headline claim — open with it
+\textcolor{red}{[TODO: In this section, show how typical DLRA has convergence problems, but DLRA-CG does not show such issues. Show some low-rank solutions obtained via both solutions]}
 
-\subsubsection{Error comparisons}
+% Stability as a downstream benefit. Now that you've shown DLR-CG converges in far fewer iterations, note that this also means cases where DLRA stalls or drifts reach a good solution reliably under DLR-CG. A single illustrative example (DLRA struggling vs. DLR-CG converging cleanly on the same problem) lets the reader see the consequence without making it the main claim.
+
+
+\subsubsection{Accuracy of the low-rank solution}
+\textcolor{red}{[TODO: In this section, compare the error using a low-rank solution $X_r$ versus the full-rank solution $X$ (weighted Tikhonov solutions, $K$ and $W$ obtained via rSVD.)]}
+
+% Images: $X_r$ next to $X$ across the three problems.
+% Error metrics across a range of $r$ to show the accuracy–compression trade-off.
+
 
 \subsubsection{Effect of different preconditioners}
+\textcolor{red}{[TODO: In this section, I compare the computational time of DLR-PCG using different preconditioners. Maybe show number of steps.]}
 \input{figures/precondition_times.tex}

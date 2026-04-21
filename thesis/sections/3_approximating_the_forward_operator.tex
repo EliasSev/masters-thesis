@@ -16,10 +16,10 @@ The algorithm consists of two stages. The first stage constructs an approximate 
 \end{equation*}
 Each sample $K\psi_i$ is a linear combination of the columns of $K$, and tends to align with the dominant left singular vectors, see Figure~\ref{fig:rsvd}. Orthogonalizing the columns of $Y$ via a QR-factorization $QR = Y$ ensures that the $i$-th column $q_i$ of $Q$ approximately aligns with $u_i$, giving
 \begin{equation*}
-    \operatorname{span}(Q) \approx \operatorname{span}(K)
+    \operatorname{span}(Q) \approx \operatorname{span}(K).
 \end{equation*}
 \nomenclature[G]{$Y$}{Sample matrix}
-\nomenclature[G]{$\Psi$}{Random matrix}
+\nomenclature[G]{$\Psi$}{Random test matrix}
 
 The second stage projects $K$ onto $\operatorname{span}(Q)$ by computing $B = Q^T K$. Since we do not know $K$ explicitly, we use $K^*$ to compute $B$. In particular, by the definition of $K^*$,
 \begin{equation}\label{eq:K_star}

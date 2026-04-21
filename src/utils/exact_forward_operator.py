@@ -58,6 +58,15 @@ class ExactForwardOperator:
         S = self.assemble_S()
         T = self.assemble_T()
         return T @ S
+
+    def assemble_K_star(self, sigma: float = 1.0, k: float = 1.0) -> NDArray:
+        """Get the exact discrete adjoint operator K^* = A^{-1} T^T M_ds, shape (N, N_b)."""
+        u = TrialFunction(self.V_h)
+        v = TestFunction(self.V_h)
+        a = Constant(sigma) * dot(grad(u), grad(v)) * dx + Constant(k) * u * v * dx
+        A = assemble(a).array()
+        T = self.assemble_T()
+        return solve(A, T.T @ self.M_ds, assume_a="pos")
     
     def assemble_M_dx(self, sigma: float=1.0, k: float=1.0) -> NDArray:
         """

@@ -1,4 +1,4 @@
-\section{Approximating the Forward Operator}\label{sec:approximating}
+\section{Approximating the forward operator}\label{sec:approximating}
 \input{figures/singular_values.tex}
 % Opening: motivation and feasibility
 The goal of this section is to compute the regularization weights given in Equation \eqref{eq:weights}, which requires the SVD $K = U\Sigma V^T$. Forming $K = TA^{-1}M$ requires solving $N$ linear systems $A v = M e_i$, and computing the SVD of the resulting dense $N_b \times N$ matrix costs $\mathcal{O}(N_b^2 N)$ \cite{dongarraSingularValueDecomposition2018}. In two spatial dimensions $N$ grows quadratically with mesh resolution, and in three dimensions cubically, making the construction of $K$ and finding its SVD infeasible.

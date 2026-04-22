@@ -1,0 +1,31 @@
+\begin{figure*}[htbp]
+\centering
+
+\begin{subfigure}{1.0\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{rsvd_adjoint_error_I.png}
+    \caption{Problem I.}
+    \label{fig:rsvd_adjoint_error_I}
+\end{subfigure}
+
+\vspace{0.5cm}
+
+\begin{subfigure}{1.0\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{rsvd_adjoint_error_II.png}
+    \caption{Problem II.}
+    \label{fig:rsvd_adjoint_error_II}
+\end{subfigure}
+
+\vspace{0.5cm}
+
+\begin{subfigure}{1.0\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{rsvd_adjoint_error_III.png}
+    \caption{Problem III.}
+    \label{fig:rsvd_adjoint_error_III}
+\end{subfigure}
+
+\caption{Reconstruction error using rSVD on $K$ (Algorithm~\ref{alg:discrete_rsvd}) versus rSVD on $K^*$ (Algorithm~\ref{alg:discrete_rsvd_Kstar}) for increasing $k$. Columns: Euclidean (left), EMD (middle), AUC-IoU (right).}
+\label{fig:rsvd_adjoint_error}
+\end{figure*}

@@ -52,7 +52,7 @@ We note that the ``Dynamical low-rank update'' part of Algorithm~\ref{alg:dlr-cg
 \input{algorithms/dlr-cg.tex}
 
 
-\subsection{Dynamical Low-Rank Preconditioned CG Scheme}
+\subsection{Dynamical low-rank preconditioned CG scheme}
 Preconditioning is a standard technique for accelerating CG methods, referred to as preconditioned CG (PCG). The system $H x = y$ is replaced by the equivalent system $P^{-1} H x = P^{-1} y$, where $P \approx H$ is the preconditioner matrix. The convergence of CG depends on $\kappa(H)$ (see Sec.~6.11.3 in Saad) \cite{saadIterativeMethodsSparse2003}, so $P$ is chosen such that $\kappa(P^{-1} H) \ll \kappa(H)$. For elliptic PDE-based forward operators $K$, the Hessian $H = K^T M_\partial K + \lambda^2 W^T M W$ typically has a large condition number, making preconditioning effective.
 
 In the dynamical low-rank CG scheme, the preconditioned system $P^{-1} H x = P^{-1} y$ leads to the following adjustments in Algorithm \ref{alg:dlr-cg}:
@@ -72,7 +72,7 @@ These modifications are equivalent to standard preconditioned conjugate gradient
 \input{algorithms/dlr-pcg.tex}
 
 
-\subsection{Choice of Preconditioner}
+\subsection{Choice of preconditioner}
 The effectiveness of PCG depends on the choice of $P$. A good preconditioner must approximate $H$ well, but must be cheap to apply at each iteration. We consider three common preconditioners: Jacobi scaling, incomplete Cholesky (IC), and (sparse) Cholesky. Since $H =  K^T M_\partial K + \lambda^2 W^T M W$ has a sparse plus low-rank structure, the Cholesky-based preconditioners are modified using the Woodbury formula to exploit this \cite{woodbury1950inverting}. We refer to Golub and Van Loan for a comprehensive treatment of preconditioning and iterative methods \cite{golubMatrixComputations4th2013}.
 
 \paragraph{Jacobi scaling.} A Jacobi preconditioner $P = \operatorname{diag}(H)$ approximates $H$ by its diagonal. The approximation is cheap to compute, as $P^{-1}$ is the inverse of a diagonal matrix. It is most effective when $H$ is diagonally dominant.

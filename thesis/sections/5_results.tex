@@ -43,13 +43,9 @@ The dominant costs of Algorithm~\ref{alg:discrete_rsvd} are the forward solves u
 Stage 5's relative cost is primarily determined by the target rank $k$, but also scales linearly with $N$, matching the predicted $\mathcal{O}(l^2 N)$ cost of the SVD of $B$. Its share grows with $k$: at $N = 400{,}000$, stage 5 accounts for 3\% of total time at $k = 10$ and 36\% at $k = 200$. Stage 3 (the QR factorization of the $N_b \times l$ matrix $Y$) remains below 1\% of total time across all mesh sizes.
 
 
-\subsubsection{Target rank effect on reconstruction quality}
+\subsubsection{Target rank effect on reconstruction quality}\label{sec:target_rank_reconstruction}
 \input{figures/test_problems_selected.tex}
-Figure~\ref{fig:test_problems_selected} shows the weighted Tikhonov
-solution of Equation~\eqref{eq:discrete_inverse_problem}: the left
-panel uses the exact $K$ and $W$, while the middle and right panels use
-$K$ and $W$ approximated by Algorithm~\ref{alg:discrete_rsvd} at target
-ranks $k = 10$ and $k = 30$.
+Figure~\ref{fig:test_problems_selected} shows the weighted Tikhonov solution of Equation~\eqref{eq:discrete_inverse_problem}: the left panel uses the exact $K$ and $W$, while the middle and right panels use $K$ and $W$ approximated by Algorithm~\ref{alg:discrete_rsvd} at target ranks $k = 10$ and $k = 30$.
 
 For Problem~I (Figure~\ref{fig:test_problem_I}) at $k=10$, the location of the source is correctly identified, but the reconstruction shows more smoothing than the exact Tikhonov solution. The weighted Tikhonov regularization itself already produces significant smoothing \cite{elvetunRegularizationOperatorSource2020}, and low-rank approximations amplifies this effect at small $k$. At $k=30$, the reconstruction is visually identical to the exact Tikhonov solution. In Problems~II and~III (Figures~\ref{fig:test_problem_II} and~\ref{fig:test_problem_III}), $k = 10$ produces the same over-smoothing plus a slight inward shift of each source toward the interior of the domain. These issues disappear at $k = 30$. Across all three problems, $k = 30$ matches the exact Tikhonov reconstruction visually at a small fraction of the computational cost of solving the exact problem (Section~\ref{sec:computational_time}).
 
@@ -57,8 +53,7 @@ For Problem~I (Figure~\ref{fig:test_problem_I}) at $k=10$, the location of the s
 \input{tables/rsvd_over_k.tex}
 Figure~\ref{fig:rsvd_over_k} shows the reconstruction error for target ranks $k \in [5,\, 100]$ and oversampling parameters $p = 0,\, 5,\, 10$, measured by the Euclidean norm, Earth Mover's distance (EMD), and area under the curve of intersection over union (AUC-IoU). See Appendix~\ref{appendix:performance_metrics} for details on each metric. An AUC-IoU score of 1 indicates a perfect overlap of the reconstruction and the true source. The error curves flatten beyond $k \approx 100$, so the figure is cropped there for more detail at smaller $k$. Table~\ref{tab:rsvd-over-k} gives the relative difference (in \%) between the rSVD and exact Tikhonov solutions at selected $k$ (up to 199), for $p = 5$, across all three problems and metrics.
 
-The rSVD reconstruction error approaches the exact reconstruction error as $k$ increases, for all three error metrics. Larger oversampling $p$ yields a small but consistent reduction in
-error across all three metrics, most visible in the EMD curves. At $k = 50$ and $p = 5$, the Euclidean relative difference is 0.56\%, 2.44\%, and 2.92\% for Problems~I, II, and III; the AUC-IoU gives 1.97\%, 2.87\%, and 4.07\%; and the EMD gives 4.74\%, 6.44\%, and 39.13\%. The EMD is more sensitive to low-amplitude noise in the reconstruction, which increases its relative error even though the noise is difficult to see in Figure~\ref{fig:test_problems_selected}. At $k = 199$ (the largest rank considered), Euclidean and AUC-IoU are within fractions of a percent of the exact Tikhonov values. The EMD ranges from 0.12\% to 7.85\%, which indicates its sensitivity to small noise or small differences shape or position compared to the exact Tikhonov solution.
+The rSVD reconstruction error approaches the exact reconstruction error as $k$ increases, for all three error metrics. Larger oversampling $p$ yields a small but consistent reduction in error across all three metrics, most visible in the EMD curves. At $k = 50$ and $p = 5$, the Euclidean relative difference is 0.56\%, 2.44\%, and 2.92\% for Problems~I, II, and III; the AUC-IoU gives 1.97\%, 2.87\%, and 4.07\%; and the EMD gives 4.74\%, 6.44\%, and 39.13\%. The EMD is more sensitive to low-amplitude noise in the reconstruction, which increases its relative error even though the noise is difficult to see in Figure~\ref{fig:test_problems_selected}. At $k = 199$ (the largest rank considered), Euclidean and AUC-IoU are within fractions of a percent of the exact Tikhonov values. The EMD ranges from 0.12\% to 7.85\%, which indicates its sensitivity to small noise or small differences shape or position compared to the exact Tikhonov solution.
 
 
 \subsubsection{Test vector distribution effect on error}
@@ -67,7 +62,11 @@ error across all three metrics, most visible in the EMD curves. At $k = 50$ and 
 
 \subsubsection{Mesh resolution effect on reconstruction error}
 \input{figures/mesh_resolution_effect.tex}
-\textcolor{red}{[TODO: In this section describe how while holding the target rank $k$ fixed, and increasing the mesh size $N$, the reconstruction error mostly stays the same. This is a consequence of no new information being added to $y$: any new datapoints are approximately equal to the average of the neighbors.]}
+Figure~\ref{fig:mesh_resolution_effect} shows the relative Euclidean, EMD, and AUC-IoU errors for rSVD (Algorithm~\ref{alg:discrete_rsvd}) at fixed target ranks $k = 10,\, 25,\, 50$ as the mesh resolution $N$ increases, averaged over 5 repetitions
+
+For fixed $k$, the Euclidean error and AUC-IoU remain constant across mesh resolutions; reconstruction quality does not depend on $N$. A higher target rank gives lower error throughout. The EMD shows a slight decrease with $N$, likely because finer meshes produce smoother spatial transitions between neighboring mesh elements.
+
+Although $\operatorname{rank}(K) = N_b$ grows with $N$, the target rank $k$ need not be adjusted: refining the mesh adds no new information about the source $f$.
 
 
 \subsubsection{Approximation of singular values}
@@ -81,8 +80,14 @@ error across all three metrics, most visible in the EMD curves. At $k = 50$ and 
 
 
 \subsubsection{Reconstruction error using the adjoint operator}
+\input{figures/rsvd_adjoint_error.tex}
+\input{tables/rsvd_adjoint_error.tex}
 \input{figures/clipped_solutions.tex}
-\textcolor{red}{[TODO: In this section, show how using Algorithm~\ref{alg:discrete_rsvd_Kstar} (adjoint rSVD) compares to using Algorithm~\ref{alg:discrete_rsvd} (rSVD) in terms of reconstruction error of the source.]}
+Figure~\ref{fig:rsvd_adjoint_error} shows the reconstruction error of the weighted Tikhonov solution where $K$ and $W$ are approximated using rSVD on $K$ (Algorithm~\ref{alg:discrete_rsvd}) and rSVD on $K^*$ (Algorithm~\ref{alg:discrete_rsvd_Kstar}) for target ranks $k \in [10, 100)$. The error is measured in Euclidean norm, EMD, and AUC-IoU. Table~\ref{tab:rsvd_adjoint_error} reports the relative difference of rSVD on $K$ compared to rSVD on $K^*$, and Figure~\ref{fig:clipped_solutions} shows solutions of both methods at $k=15$ with the colormap clipped to expose low-amplitude noise in the reconstructions.
+
+In terms of Euclidean norm, both methods give practically the same error, within $\pm 1$\% across all problems and target ranks. For AUC-IoU, the relative difference at $k = 10$ is between $-6$\% and $-4$\%, and and between -2\% and 1\% for $k \ge 25$ with no consistent direction.
+
+The EMD shows that at $k = 10$, rSVD on $K$ gives 10\% to 19\% worse reconstructions than rSVD on $K^*$, though at this rank the smoothing and positional shift of the reconstruction are already significant (Section~\ref{sec:target_rank_reconstruction}). In the range $k \approx 20$ to $k \approx 50$, rSVD on $K^*$ performs worse: at $k=25$, Algorithm~\ref{alg:discrete_rsvd} performs 9\% to 31\% better across all three problems. The difference is a result of noise: at $k=25$, reconstructions from rSVD on $K^*$ contain more low-amplitude noise than those from rSVD on $K$ (Figures~\ref{fig:clipped_solution_K_star} and~\ref{fig:clipped_solution_K}), to which the EMD is particularly sensitive.
 
 
 \subsubsection{Accuracy on noisy data}

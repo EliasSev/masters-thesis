@@ -1,0 +1,23 @@
+\begin{table}[htbp]
+\centering
+\begin{tabular}{c ccc ccc ccc}
+\toprule
+    & \multicolumn{3}{c}{Euclidean (\%)}
+    & \multicolumn{3}{c}{EMD (\%)}
+    & \multicolumn{3}{c}{AUC-IoU (\%)} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-7}\cmidrule(lr){8-10}
+    $k$ & I & II & III & I & II & III & I & II & III \\
+\midrule
+    10 & -0.50 & -0.76 & -0.80 & -9.66 & -6.52 & -19.01 & -6.48 & -4.69 & -3.52 \\
+    25 & -0.17 & -0.13 & 0.39 & 9.27 & 8.75 & 30.63 & -1.36 & -0.63 & 2.05 \\
+    50 & 0.02 & 0.11 & 0.22 & 2.10 & -1.11 & -2.74 & 0.24 & 0.02 & 0.07 \\
+    75 & 0.00 & 0.02 & -0.18 & -2.41 & -0.86 & -7.94 & 0.01 & -0.00 & -0.04 \\
+    99 & -0.01 & -0.03 & 0.07 & 1.10 & 0.51 & 8.57 & -0.00 & -0.00 & 0.04 \\
+\bottomrule
+\end{tabular}
+\caption{The relative error difference by using rSVD on $K^*$ (Algorithm~\ref{alg:discrete_rsvd_Kstar}) compared to rSVD on $K$ (Algorithm~\ref{alg:discrete_rsvd}) for Problem I, II, and III. A positive number means rSVD on $K$ performs better.}
+\label{tab:rsvd_adjoint_error}
+\end{table}
+
+
+

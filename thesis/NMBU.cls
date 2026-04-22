@@ -656,9 +656,14 @@ Your name\fi
 \fi
 }
 
+\newcount\@frontpagecount
+\@frontpagecount=0
+
 \newcommand{\startthesis}{
 \clearpage
-\clearpage~\thispagestyle{empty}\clearpage\pagenumbering{arabic}
+\clearpage~\thispagestyle{empty}%
+\global\@frontpagecount=\c@page
+\clearpage\pagenumbering{arabic}
 }
 
 \newcommand{\orderofabstract}{
@@ -735,7 +740,9 @@ Your name\fi
 }
 
 \AtEndDocument{%
-\cleardoublepage~\thispagestyle{empty}~\clearpage
+\clearpage
+\null\thispagestyle{empty}\clearpage
+\ifodd\numexpr\@frontpagecount+\c@page\relax\null\thispagestyle{empty}\clearpage\fi
 \backpage
 }
 

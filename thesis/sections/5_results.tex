@@ -1,7 +1,11 @@
 \section{Results}
-\subsection{Test problems}\label{sec:problems}
+\subsection{Experimental setup}\label{sec:problems}
 \input{figures/problem_illustration.tex}
 Figure~\ref{fig:problem_illustration} shows the three meshes and source functions used throughout the results. Problem I is a square mesh with a single source, used as a baseline. Problem II uses the same geometry with three sources to assess reconstruction under multiple sources. Problem III replaces the square domain with an ``L''-shaped mesh and two sources, introducing a non-convex geometry.
+
+For all experiments, we set the diffusion coefficient $\sigma = 1$ and the reaction coefficient $c = 1$ in Equation~\eqref{eq:pde}. The finite element space $V_h$ (Equation~\eqref{eq:fem_space}) uses a basis of continuous piecewise-linear hat functions $\phi_i$ (continuous Galerkin, degree 1).
+
+Unless stated otherwise, we use $N = 64^2 = 4096$ for Problems I and II and $N = 6127$ for Problem III, regularization parameter $\lambda = 10^{-4}$, oversampling $p = 5$, and Gaussian random test vectors $\psi_i$ for the rSVD.
 
 
 \subsection{Computational setup}
@@ -18,13 +22,13 @@ Python 3.9 was used for all computations, together with NumPy and SciPy for line
 \input{figures/rsvd_computational_time_comp.tex}
 \input{tables/rsvd_computational_time_comp.tex}
 The left plot of Figure~\ref{fig:rsvd_computational_time_comp} shows the computational time $t_{\text{rSVD}}$ of Algorithm~\ref{alg:discrete_rsvd} for target rank $k=10, 25, 50$, with oversampling parameter $p=5$, compared to the time $t_K$ to form $K = T A^{-1} M$ explicitly (Section~\ref{sec:approximating}) over increasingly fine meshes. 
-The right plot omits $t_K$: at $N = 20{,}000$, the reference time is already $t_K = 339$ seconds (Table~\ref{tab:rsvd_computational_time_comp}), making explicit formation infeasible at larger scales. The median is taken over 30 runs. 
+The right plot omits $t_K$: at $N = 20{,}000$, the reference time is already $t_K = 261$ seconds (Table~\ref{tab:rsvd_computational_time_comp}), making explicit formation infeasible at larger scales. The median is taken over 30 runs. 
 Table~\ref{tab:rsvd_computational_time_comp} shows the ratio $t_K / t_{\text{rSVD}}$, which is the speedup from using Algorithm~\ref{alg:discrete_rsvd} compared to forming $K$ explicitly (time reported for a single run).
 
-The time $t_K$ surpasses $t_{\text{rSVD}}$ for $N=1184$, $1868$, and $2210$ for $k=10$, $25$, and $50$, respectively, with the time $t_K$ increasing quadratically and $t_{\text{rSVD}}$ increasing linearly with $N$. This is consistent with the theoretical costs of $\mathcal{O}(N^2)$ for forming $K$ and $\mathcal{O}(Nl)$ for Algorithm~\ref{alg:discrete_rsvd}, established in Section~\ref{sec:approximating} \textcolor{red}{[TODO: mention this in Section~\ref{sec:approximating}]}.
-When the mesh has $20{,}000$ nodes, the use of Algorithm~\ref{alg:discrete_rsvd} is between 185 and 436 times as fast, as reported in Table~\ref{tab:rsvd_computational_time_comp}.
-
-The computational times $t_{\text{rSVD}}$ for target ranks $10$, $25$ and $50$ scale linearly, as seen in the right plot of Figure~\ref{fig:rsvd_computational_time_comp}. The slope of the linear increase depends on the target rank, with a higher target rank resulting in a steeper slope. For $N=500$, increasing $k$ from 10 to 50 results in an increase of $t_{\text{rSVD}}$ with a factor of 1.5, and for $N=300{,}000$, this factor grows to 2.3.
+The time $t_K$ surpasses $t_{\text{rSVD}}$ for $N=500$, $842$, and $842$ for $k=10$, $25$, and $50$, respectively, with the time $t_K$ increasing quadratically and $t_{\text{rSVD}}$ increasing linearly with $N$. This is consistent with the theoretical costs of $\mathcal{O}(N^2)$ for forming $K$ and $\mathcal{O}(Nl)$ for Algorithm~\ref{alg:discrete_rsvd}, established in Section~\ref{sec:approximating} \textcolor{red}{[TODO: mention this in Section~\ref{sec:approximating}]}.
+When the mesh has $20{,}000$ nodes, the use of Algorithm~\ref{alg:discrete_rsvd} is between 277 and 479 times as fast, as reported in Table~\ref{tab:rsvd_computational_time_comp}.
+ 
+The computational times $t_{\text{rSVD}}$ for target ranks $10$, $25$ and $50$ scale linearly, as seen in the right plot of Figure~\ref{fig:rsvd_computational_time_comp}. The slope of the linear increase depends on the target rank, with a higher target rank resulting in a steeper slope. Increasing $k$ from 10 to 50 results in an increase of $t_{\text{rSVD}}$ with a factor of approximately 1.9, and increasing $k$ from 10 to 25 has a factor of approximately 1.3. This ratio stays constant across all $N>10{,}000$ in our experiments.
 
 For the mesh sizes used in the remaining experiments \textcolor{red}{[TODO: which sections?]}, $N$ is approximately chosen between 1000 and 4000, making Algorithm~\ref{alg:discrete_rsvd} approximately $3$ to $30$ times faster than forming $K$ explicitly.
 
@@ -32,28 +36,29 @@ For the mesh sizes used in the remaining experiments \textcolor{red}{[TODO: whic
 \subsubsection{Computational breakdown}
 \input{figures/rsvd_computational_breakdown.tex}
 \input{tables/rsvd_computational_breakdown.tex}
-Figure~\ref{fig:rsvd_computational_breakdown} shows the median computational time of different stages of Algorithm~\ref{alg:discrete_rsvd} for selected $N$ and increasing $k$, with the relative computational cost shown in the bottom row. The median is taken over 30 runs for $N \le 40{,}000$ and 10 runs for $N = 400{,}000$. The `Setup' stage includes the assembly of the mass matrices $M$ and $M_\partial$, and the setup of the $K$ and $K^*$ solvers (Section~\ref{sec:approximating}) \textcolor{red}{[TODO: add this to Section~\ref{sec:approximating}]}. The other stages of Algorithm~\ref{alg:discrete_rsvd} are `2. $Y = K\Psi$' (lines 1--6), `3. $QR = Y$' (lines 7--8), `4. $B = Q^T K$' (lines 9--14), and `5. $(Q\tilde U)\Sigma V^T$' (lines 15--18). Table~\ref{tab:rsvd_computational_breakdown} shows relative computational time for selected target ranks and mesh sizes.
+Figure~\ref{fig:rsvd_computational_breakdown} shows the median computational time for each stage of Algorithm~\ref{alg:discrete_rsvd} for selected $N$ and increasing $k$, with the relative computational cost shown in the bottom row. The median is taken over 30 runs for $N \le 40{,}000$ and 10 runs for $N = 400{,}000$. The `Setup' stage includes the assembly and factorization of the mass matrices $M$ and $M_\partial$, and the setup of the $K$ and $K^*$ solvers (Section~\ref{sec:initial_matrix_factorizations}). The remaining stages of Algorithm~\ref{alg:discrete_rsvd} are `2. $Y = K\Psi$' (lines 1--6), `3. $QR = Y$' (lines 7--8), `4. $B = Q^T K$' (lines 9--14), and `5. SVD' (lines 15--18). Table~\ref{tab:rsvd_computational_breakdown} shows relative computational time for selected target ranks and mesh sizes.
 
-The main costs of Algorithm~\ref{alg:discrete_rsvd} are the forward solves using $K$ (stage 2) and the adjoint solves using $K^*$ (stage 4), both of which scale linearly with $k$.. The third largest cost is stage 5, which includes computing the SVD of $B \in \mathbb{R}^{l \times N}$, and computing $U = Q \tilde U \in \mathbb{R}^{N_b \times l}$, where $l = k + p$. The cost of the setup in stage 1 and the orthogonalization in stage 3 remain low compared to the other stages for all mesh sizes. The setup stage does not depend on $k$; its relative cost therefore decreases as $k$ increases. The QR factorization of the $N_b \times l$ matrix $Y$ accounts for less than 0.1\% of the total time.
+The dominant costs of Algorithm~\ref{alg:discrete_rsvd} are the forward solves using $K$ (stage 2) and the adjoint solves using $K^*$ (stage 4), both of which scale roughly linearly with $N$, matching the theoretical cost of $\mathcal{O}(l N \log N)$ with $l = k + p$ (Section~\ref{sec:initial_matrix_factorizations}). The setup stage has theoretical cost $\mathcal{O}(N^{3/2})$ but appears near-linear in $N$ over the range considered here. Its share of total time decreases with $k$, because setup is independent of the target rank.
 
-The relative computational costs stabilize around $k = 100$ (all ranges below are for $N = 4{,}000$ to $N = 400{,}000$): setup accounts for 6\% to 3\%, stage 2 takes approximately 50\%, stage 4 takes 35\% to 26\%, and stage 5 takes 9\% to 22\%. The remaining fraction is the orthogonalization. At $k = 25$, stage 2 and stage 4 remain the dominant costs, but setup accounts for a larger share (14\% to 8\%), since its absolute time is unaffected by $k$, while stage 5 accounts for 3\% to 5\%.
+Stage 5's relative cost is primarily determined by the target rank $k$, but also scales linearly with $N$, matching the predicted $\mathcal{O}(l^2 N)$ cost of the SVD of $B$. Its share grows with $k$: Its share grows with $k$: at $N = 400{,}000$, stage 5 accounts for 3\% of total time at $k = 10$ and 36\% at $k = 200$. Stage 3 (the QR factorization of the $N_b \times l$ matrix $Y$) remains below 1\% of total time across all mesh sizes.
 
 
 \subsubsection{Target rank effect on reconstruction quality}
 \input{figures/test_problems_selected.tex}
-Figure~\ref{fig:test_problems_selected} shows the weighted Tikhonov solution of Equation~\eqref{eq:discrete_inverse_problem} for selected target ranks with oversampling parameter $p = 5$. The left panel shows the solution using the true $K$ and $W$, while the middle and right panels shows solutions Using $K$ and $W$ approximated by Algorithm~\ref{alg:discrete_rsvd}. The regularization parameter is set to $\lambda = 10^{-4}$ for all solutions.
+Figure~\ref{fig:test_problems_selected} shows the weighted Tikhonov
+solution of Equation~\eqref{eq:discrete_inverse_problem}: the left
+panel uses the exact $K$ and $W$, while the middle and right panels use
+$K$ and $W$ approximated by Algorithm~\ref{alg:discrete_rsvd} at target
+ranks $k = 10$ and $k = 30$.
 
-In Figure~\ref{fig:test_problem_I}, using a target rank of $k=10$, the location of the source is correctly identified. The reconstruction exhibits more smoothing than the exact Tikhonov solution; the regularization already produces significant smoothing \cite{elvetunRegularizationOperatorSource2020}, and the low-rank approximation at $k=10$ increases this effect. Using $k=30$, as shown in the right panel, the source is essentially identical to the exact Tikhonov solution. For Problem II and Problem III of Figure~\ref{fig:test_problem_II} and \ref{fig:test_problem_III}, respectively, we see that the location is slightly incorrect for $k=10$, with the reconstructed source shifted toward the interior of the domain. Additionally, the reconstruction is more smoothed than the exact Tikhonov solution, as in Problem I. These issues are not present when choosing a larger target rank of $k=30$.
-
-At $k = 30$, the rSVD recovers the exact Tikhonov solution across all three problems at a fraction of the computational cost (Section~\ref{sec:computational_time}).
-At $k = 10$, the source location is recovered but the reconstruction is more heavily smoothed, and for multiple sources, the locations are shifted towards the interior of the domain.
+For Problem~I (Figure~\ref{fig:test_problem_I}) at $k=10$, the location of the source is correctly identified, but the reconstruction shows more smoothing than the exact Tikhonov solution. The weighted Tikhonov regularization itself already produces significant smoothing \cite{elvetunRegularizationOperatorSource2020}, and low-rank approximations amplifies this effect at small $k$. At $k=30$, the reconstruction is visually identical to the exact Tikhonov solution. In Problems~II and~III (Figures~\ref{fig:test_problem_II} and~\ref{fig:test_problem_III}), $k = 10$ produces the same over-smoothing plus a slight inward shift of each source toward the interior of the domain. These issues disappear at $k = 30$. Across all three problems, $k = 30$ matches the exact Tikhonov reconstruction visually at a small fraction of the computational cost of solving the exact problem (Section~\ref{sec:computational_time}).
 
 \input{figures/rsvd_over_k.tex}
 \input{tables/rsvd_over_k.tex}
-Figure~\ref{fig:rsvd_over_k} shows the reconstruction error for target ranks
-$k \in [5,\, 100]$ and oversampling parameters $p = 0,\, 5,\, 10$, measured
-by the Euclidean norm, Earth Mover's distance (EMD), and area under the curve
-of intersection over union (AUC-IoU). See Appendix~\ref{appendix:performance_metrics} for details on each metric. An AUC-IoU score of 1 indicates a perfect overlap of the reconstruction and the true source.
+Figure~\ref{fig:rsvd_over_k} shows the reconstruction error for target ranks $k \in [5,\, 100]$ and oversampling parameters $p = 0,\, 5,\, 10$, measured by the Euclidean norm, Earth Mover's distance (EMD), and area under the curve of intersection over union (AUC-IoU). See Appendix~\ref{appendix:performance_metrics} for details on each metric. An AUC-IoU score of 1 indicates a perfect overlap of the reconstruction and the true source. The error curves flatten beyond $k \approx 100$, so the figure is cropped there for more detail at smaller $k$. Table~\ref{tab:rsvd-over-k} gives the relative difference (in \%) between the rSVD and exact Tikhonov solutions at selected $k$ (up to 199), for $p = 5$, across all three problems and metrics.
+
+The rSVD reconstruction error approaches the exact reconstruction error as $k$ increases, for all three error metrics. Larger oversampling $p$ yields a small but consistent reduction in
+error across all three metrics, most visible in the EMD curves. At $k = 50$ and $p = 5$, the Euclidean relative difference is 0.56\%, 2.44\%, and 2.92\% for Problems~I, II, and III; the AUC-IoU gives 1.97\%, 2.87\%, and 4.07\%; and the EMD gives 4.74\%, 6.44\%, and 39.13\%. The EMD is more sensitive to low-amplitude noise in the reconstruction, which increases its relative error even though the noise is difficult to see in Figure~\ref{fig:test_problems_selected}. At $k = 199$ (the largest rank considered), Euclidean and AUC-IoU are within fractions of a percent of the exact Tikhonov values. The EMD ranges from 0.12\% to 7.85\%, which indicates its sensitivity to small noise or small differences shape or position compared to the exact Tikhonov solution.
 
 
 \subsubsection{Test vector distribution effect on error}
@@ -61,11 +66,12 @@ of intersection over union (AUC-IoU). See Appendix~\ref{appendix:performance_met
 
 
 \subsubsection{Mesh resolution effect on reconstruction error}
+\input{figures/mesh_resolution_effect.tex}
 \textcolor{red}{[TODO: In this section describe how while holding the target rank $k$ fixed, and increasing the mesh size $N$, the reconstruction error mostly stays the same. This is a consequence of no new information being added to $y$: any new datapoints are approximately equal to the average of the neighbors.]}
 
 
 \subsubsection{Approximation of singular values}
-\input{figures/rsvd_adjoint_singular_values.tex}
+\input{figures/approximation_of_singular_values.tex}
 \textcolor{red}{[TODO: In this section, show that the estimated singular values are under-estimated using rSVD (on $K$ or $K^*$) compared to the true values.]}
 
 

@@ -20,7 +20,7 @@
 \usepackage[intoc,refpage]{nomencl}
 
 \makenomenclature
-\renewcommand{\nomname}{List of Symbols}
+\renewcommand{\nomname}{List of symbols}
 \renewcommand{\pagedeclaration}[1]{\dotfill #1}
 \setlength{\nomitemsep}{0pt}
 \newcommand{\nomgroupname}[1]{%
@@ -40,8 +40,36 @@
 \renewcommand{\algorithmicrequire}{\textbf{Input:}}
 \renewcommand{\algorithmicensure}{\textbf{Output:}}
 
+\renewcommand{\listfigurename}{List of figures}
+\renewcommand{\listtablename}{List of tables}
+
 \addbibresource{bib.bib}
 \graphicspath{{../figures/}}
+
+% Add front-matter pages to the table of contents
+\let\origprintabstract\printabstract
+\renewcommand{\printabstract}{%
+  \addcontentsline{toc}{section}{Abstract}%
+  \origprintabstract%
+}
+
+\let\origprintsammendrag\printsammendrag
+\renewcommand{\printsammendrag}{%
+  \addcontentsline{toc}{section}{Sammendrag}%
+  \origprintsammendrag%
+}
+
+\let\origlistoffigures\listoffigures
+\renewcommand{\listoffigures}{%
+  \addcontentsline{toc}{section}{\listfigurename}%
+  \origlistoffigures%
+}
+
+\let\origlistoftables\listoftables
+\renewcommand{\listoftables}{%
+  \addcontentsline{toc}{section}{\listtablename}%
+  \origlistoftables%
+}
 
 % If you are using Norwegian dates in your bibliography, add "norwegiandates" to the document class.
 

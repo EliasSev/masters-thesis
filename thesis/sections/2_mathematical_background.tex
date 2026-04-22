@@ -85,18 +85,17 @@ To obtain a discrete representation of the forward operator
 $\mathcal{K} = \mathcal{T} \circ \mathcal{S}$, 
 we discretize both the PDE operator $\mathcal{S}$ and the trace operator $\mathcal{T}$ using the finite element space $V_h$.
 
-Let $f_h, u_h \in V_h$ denote the finite element approximations of $f$ and $u|_{\partial\Omega}$, respectively. Since $V_h = \operatorname{span}\{\phi_1,\dots,\phi_N\}$, they can be written as
+Let $f_h, u_h \in V_h$ denote the finite element approximations of $f$ and $u$, respectively. Since $V_h = \operatorname{span}\{\phi_1,\dots,\phi_N\}$, they can be written as
 \begin{equation}\label{eq:uh_and_fh}
     f_h = \sum_{j=1}^{N} x_j \phi_j, \quad
     u_h = \sum_{j=1}^{N} u_j \phi_j, 
 \end{equation}
-with coefficient vectors $u = (u_1,\dots,u_N)^T$ 
-and $x = (x_1,\dots,x_N)^T$.
+with coefficient vectors $x = (x_1,\dots,x_N)^T$, $u = (u_1,\dots,u_N)^T$.
 
 Inserting \eqref{eq:uh_and_fh} into the finite element formulation \eqref{eq:fem_formulation} and testing with the basis functions 
 $\{\phi_i\}_{i=1}^N$ yields the linear system
 \begin{equation}\label{eq:matrix_system}
-    A \mathbf{u} = M \mathbf{x},
+    A u = M x,
 \end{equation}
 where $A \in \mathbb{R}^{N \times N}$ is the stiffness matrix and $M \in \mathbb{R}^{N \times N}$ the mass matrix, see Appendix~\ref{appendix:stiffness}.
 \nomenclature[E]{$M$}{Volume mass matrix}%

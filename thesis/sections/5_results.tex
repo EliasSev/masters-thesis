@@ -40,7 +40,7 @@ Figure~\ref{fig:rsvd_computational_breakdown} shows the median computational tim
 
 The dominant costs of Algorithm~\ref{alg:discrete_rsvd} are the forward solves using $K$ (stage 2) and the adjoint solves using $K^*$ (stage 4), both of which scale roughly linearly with $N$, matching the theoretical cost of $\mathcal{O}(l N \log N)$ with $l = k + p$ (Section~\ref{sec:initial_matrix_factorizations}). The setup stage has theoretical cost $\mathcal{O}(N^{3/2})$ but appears near-linear in $N$ over the range considered here. Its share of total time decreases with $k$, because setup is independent of the target rank.
 
-Stage 5's relative cost is primarily determined by the target rank $k$, but also scales linearly with $N$, matching the predicted $\mathcal{O}(l^2 N)$ cost of the SVD of $B$. Its share grows with $k$: Its share grows with $k$: at $N = 400{,}000$, stage 5 accounts for 3\% of total time at $k = 10$ and 36\% at $k = 200$. Stage 3 (the QR factorization of the $N_b \times l$ matrix $Y$) remains below 1\% of total time across all mesh sizes.
+Stage 5's relative cost is primarily determined by the target rank $k$, but also scales linearly with $N$, matching the predicted $\mathcal{O}(l^2 N)$ cost of the SVD of $B$. Its share grows with $k$: at $N = 400{,}000$, stage 5 accounts for 3\% of total time at $k = 10$ and 36\% at $k = 200$. Stage 3 (the QR factorization of the $N_b \times l$ matrix $Y$) remains below 1\% of total time across all mesh sizes.
 
 
 \subsubsection{Target rank effect on reconstruction quality}
@@ -76,6 +76,7 @@ error across all three metrics, most visible in the EMD curves. At $k = 50$ and 
 
 
 \subsubsection{Computational time of adjoint operator}
+\input{figures/computational_time_rsvd_adjoint.tex}
 \textcolor{red}{[TODO: In this section, show the difference in computational time of Algorithm~\ref{alg:discrete_rsvd} versus Algorithm~\ref{alg:discrete_rsvd_Kstar}. Also, show the computational breakdown of Algorithm~\ref{alg:discrete_rsvd_Kstar}].}
 
 

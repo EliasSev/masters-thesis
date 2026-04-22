@@ -65,6 +65,11 @@ class TestProblemsSetup:
 
         return problems
     
+    def get_single_problem(self, pid: str) -> dict[str, Any]:
+        """Set up a single Problem (I, II or III)."""
+        p = self.problem_params[pid]
+        return self.problem_setup(p, compute_weights=False)    
+    
     def problem_setup(
             self, params: dict[str, Any], compute_weights: bool, k: Optional[int] = None
         ) -> dict[str, Any]:

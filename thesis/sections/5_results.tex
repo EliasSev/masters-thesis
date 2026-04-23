@@ -58,7 +58,7 @@ The rSVD reconstruction error approaches the exact reconstruction error as $k$ i
 
 \subsubsection{Test vector distribution effect on error}
 \input{figures/random_test_vectors.tex}
-Three test vector distributions are compared: standard Gaussian ($\psi_{ij} \sim \mathcal{N}(0,1)$), Rademacher ($\psi_{ij} \in \{-\tfrac{1}{2}, \tfrac{1}{2}\}$ with equal probability), and a spatially localized Gaussian peak
+Three test vector distributions are compared: standard Gaussian ($\psi_{ij} \sim \mathcal{N}(0,1)$), Rademacher ($\psi_{ij} \in \{-\tfrac{1}{2}, \tfrac{1}{2}\}$ with equal probability, see \cite{montgomery-smithDistributionRademacherSums1990}), and a spatially localized Gaussian peak
 \begin{equation*}
     \psi_i(x) = \exp\left(-\frac{|x - x_0|^2}{2\sigma^2}\right),
 \end{equation*}
@@ -109,7 +109,7 @@ The EMD shows that at $k = 10$, rSVD on $K$ gives 10\% to 19\% worse reconstruct
 
 
 \subsubsection{Accuracy on noisy data}
-\input{figures/projected_noisy_error.tex}
+\input{figures/noisy_problem.tex}
 \textcolor{red}{[TODO: In this section, when solving the Tikhonov problem with noise, show how the error is affected for increasing $k$, and compare it with the truncated SVD.]}
 
 

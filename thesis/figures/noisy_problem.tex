@@ -1,0 +1,31 @@
+\begin{figure*}[htbp]
+\centering
+
+\begin{subfigure}{1.0\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{noisy_problem_I.png}
+    \caption{Problem I.}
+    \label{fig:noisy_problem_I}
+\end{subfigure}
+
+\vspace{0.5cm}
+
+\begin{subfigure}{1.0\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{noisy_problem_II.png}
+    \caption{Problem II.}
+    \label{fig:noisy_problem_II}
+\end{subfigure}
+
+\vspace{0.5cm}
+
+\begin{subfigure}{1.0\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{noisy_problem_III.png}
+    \caption{Problem III.}
+    \label{fig:noisy_problem_III}
+\end{subfigure}
+
+\caption{Reconstruction error using rSVD (Algorithm~\ref{alg:discrete_rsvd}) and tSVD to approximate $K$ and $W$ at diff ranks. Error measured in: Euclidean norm (left), EMD (middle), AUC-IoU (right). Average over \textcolor{red}{X} runs with $\pm 1$ standard deviation.}
+\label{fig:noisy_problem}
+\end{figure*}

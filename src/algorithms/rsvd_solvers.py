@@ -9,7 +9,7 @@ from typing import Optional
 
 from numpy.typing import NDArray
 from abc import ABC, abstractmethod
-from scipy.sparse import csr_matrix, spmatrix
+from scipy.sparse import csr_matrix, csc_matrix, spmatrix
 from scipy.sparse.linalg import splu
 from sksparse.cholmod import cholesky
 
@@ -145,10 +145,11 @@ class BaseSolver(ABC):
         ) -> NDArray:
         """
         A Tikhonov solver which minimizes 
-            |Kx-y|² + lam**2 * |Wx|²
-        using the approximated K and the Elvetun-Nielsen weights W.
+            |Kx-y|² + λ²|Wx|²
+        using the approximated forward operator K.
 
         y, (N_b,) : The observed data.
+        w, (N,)   : (Elvetun-Nielsen) regularization weights.
         lam       : Tikhonov regularization parameter.
         """
         U, s, V = self.U, self.S, self.Vt.T
@@ -185,6 +186,50 @@ class BaseSolver(ABC):
         z = np.linalg.solve(C, rhs_small)
         x_opt = x0 - Z @ z
         return x_opt
+    
+    def transformed_tikhonov_solve(
+        self, y: NDArray, w: NDArray, lam: float
+        ) -> NDArray:
+        """
+        A solver for the transformed weighted Tikhonov problem 
+            |K⁺Kx - K⁺y|² + λ²|Wx|²
+        using the approximated forward operator K.
+
+        y, (N_b,) : The observed data.
+        w, (N,)   : (Elvetun-Nielsen) regularization weights.
+        lam       : Tikhonov regularization parameter.
+        """
+        N = self.N
+        k = self.S.shape[0]
+
+        # Setup the Sparse Part A
+        W_mat = diags(w)
+        A = (lam**2) * (W_mat @ self.M @ W_mat)
+        solve_A = factorized(csc_matrix(A))
+
+        # RHS Calculation
+        y_proj = self.Vt.T @ ((self.U.T @ y) / self.S)
+        rhs = self.Vt.T @ (self.Vt @ (self.M @ y_proj))
+
+        # Woodbury components
+        # Low-rank part: V (V.T @ M @ V) V.T
+        # S_M = V.T @ M @ V, (k x k dense matrix)
+        S_M = self.Vt @ (self.M @ self.Vt.T)
+        
+        # Z = A^-1 @ V, (N x k)
+        Z = np.zeros((N, k))
+        for i in range(k):
+            Z[:, i] = solve_A(self.Vt.T[:, i])
+
+        # C = inv(S_M) + V.T @ Z
+        # If S_M is singular, use pinv
+        C = np.linalg.pinv(S_M) + self.Vt @ Z
+        
+        # x = A^-1 @ rhs - Z @ inv(C) @ (V.T @ A^-1 @ rhs)
+        x0 = solve_A(rhs)
+        rhs_small = self.Vt @ x0
+        z = np.linalg.solve(C, rhs_small)
+        return x0 - Z @ z
     
     def _get_M(self) -> spmatrix:
         """Get the mass matrix M as a scipy sparse CSR matrix."""

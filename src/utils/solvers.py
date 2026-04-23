@@ -5,7 +5,7 @@ from numpy import diag, zeros
 from numpy.typing import NDArray
 from numpy.linalg import pinv, solve
 
-from scipy.sparse import diags
+from scipy.sparse import diags, csc_matrix
 from scipy.sparse.linalg import factorized, LinearOperator, cg
 
 from fenics import Function
@@ -125,7 +125,7 @@ def fast_proj_solver(
     # 1. Setup the Sparse Part A
     W_mat = diags(W_diag)
     A = (lambda_**2) * (W_mat @ M @ W_mat)
-    solve_A = factorized(A.tocsc())
+    solve_A = factorized(csc_matrix(A))
 
     # 2. RHS Calculation
     y_proj = Vk @ ((Uk.T @ y) / sk)

@@ -19,7 +19,7 @@ from scipy.sparse.linalg import factorized
 from fenics import (
     FunctionSpace, Function, TrialFunction, TestFunction,
     Constant, DirichletBC, dot, grad, dx, ds, assemble,
-    as_backend_type, LUSolver, Expression, interpolate, set_log_level
+    as_backend_type, LUSolver, Expression, interpolate, set_log_level, Point
 )
 set_log_level(30)
 
@@ -246,11 +246,21 @@ class BaseSolver(ABC):
         elif distribution == 'peaks':
             if d != self.N:
                 raise ValueError("Can't use 'peaks' distribution; only implemented for d = self.N")
-            
-            x, y = rng.uniform(low=0, high=1, size=2)
+
+            # Ensure that (x, y) is inside the domain
+            mesh = self.V_h.mesh()
+            coords = mesh.coordinates()
+            lo, hi = coords.min(axis=0), coords.max(axis=0)
+            bbox_tree = mesh.bounding_box_tree()
+            num_cells = mesh.num_cells()
+            while True:
+                x, y = rng.uniform(lo, hi)
+                if bbox_tree.compute_first_entity_collision(Point(x, y)) < num_cells:
+                    break
+
             f_expr = Expression(
                 "A*exp(-((x[0]-x0)*(x[0]-x0) + (x[1]-y0)*(x[1]-y0)) / (2*sigma*sigma))",
-                degree=4, A=kwargs.get('A', 1.0), x0=x, y0=y, sigma=kwargs.get('sigma', 0.2)
+                degree=4, A=kwargs.get('A', 1.0), x0=x, y0=y, sigma=kwargs.get('sigma', 0.1)
             )
             f = interpolate(f_expr, self.V_h)
             return f.vector().get_local()

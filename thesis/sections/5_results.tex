@@ -112,7 +112,7 @@ The EMD shows that at $k = 10$, rSVD on $K$ gives 10\% to 19\% worse reconstruct
 \input{figures/noisy_problem.tex}
 \input{tables/noisy_problem.tex}
 \input{figures/reconstruction_noisy_problem.tex}
-We measure the reconstruction error for the transformed weighted Tikhonov problem of Equation~\eqref{eq:transformed_discrete_inverse_problem}. We replace $y = K x$ with $\tilde y = y + \epsilon$, where $\tfrac{\| \epsilon \|}{\| y \|} = \delta$ with $\delta = 0.01$. The regularization parameter is set to $\lambda = \lambda_{\text{dp}}$, found using the discrepancy principle with safety factor $\nu_{\text{dp}} = 10$ (see Section~5.2 in Hansen \cite{hansen2010discrete}), so that $\lambda$ is selected independently for each method and rank.
+We measure the reconstruction error for the transformed weighted Tikhonov problem of Equation~\eqref{eq:transformed_discrete_inverse_problem}. We replace $y = K x$ with $\tilde y = y + \epsilon$, where $\epsilon_i \sim \mathcal{N}(0, 1)$ and $\tfrac{\| \epsilon \|}{\| y \|} = \delta$ with $\delta = 0.01$. The regularization parameter is set to $\lambda = \lambda_{\text{dp}}$, found using the discrepancy principle with safety factor $\nu_{\text{dp}} = 10$ (see Section~5.2 in Hansen \cite{hansen2010discrete}), so that $\lambda$ is selected independently for each method and rank.
 
 Figure~\ref{fig:noisy_problem} shows reconstruction errors when $K$ and $W$ are approximated using rSVD (Algorithm~\ref{alg:discrete_rsvd}) and tSVD (Section~\ref{sec:tsvd}) at increasing ranks $k$. The error is measured in Euclidean norm, EMD and AUC-IoU. The optimal rank $k^*$ is marked with vertical lines, and listed in Table~\ref{tab:noisy}. Figure~\ref{fig:reconstruction_noisy_problem} shows reconstructions for Problem~II at selected ranks, illustrating how a target rank that is too high includes noise in the reconstruction.
 
@@ -125,7 +125,8 @@ At their respective optimal ranks, rSVD and tSVD give nearly identical Euclidean
 % Dynamical Low-Rank (Preconditioned) Conjugate Gradient Part 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Dynamical low-rank CG}
-\subsubsection{Convergence behavior: DLRA vs. DLR-CG}
+\subsubsection{Rate of convergence}
+\input{figures/number_of_iterations.tex}
 % Computational speed and iteration count. Lead with the main result: iteration curves and wall-clock time, DLR-CG vs. DLRA, across the three test problems. This is the headline claim — open with it
 \textcolor{red}{[TODO: In this section, show how typical DLRA has convergence problems, but DLRA-CG does not show such issues. Show some low-rank solutions obtained via both solutions]}
 

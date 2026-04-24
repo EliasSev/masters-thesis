@@ -202,11 +202,15 @@ The singular value decomposition of a matrix $A\in\mathbb R^{m\times n}$ is a fa
 \end{equation*}
 where $U$ is an $m \times m$ orthogonal matrix, $\Sigma$ is an $m\times n$ diagonal matrix with non-negative entries, called the singular values of $A$, and $V$ is an $n \times n$ orthogonal matrix. The singular values are ordered such that $\sigma_1\ge\sigma_2\ge\dots\ge\sigma_n$. Every matrix has such a factorization, where $\Sigma$ is uniquely determined, but $U$ and $V$ are not \cite{layLinearAlgebraIts2022}. The columns of $U$ and $V$ are called the left and right singular vectors of $A$, respectively.
 
-In 1936, C. Eckart and G. Young showed that the solution to Equation~\eqref{eq:low_rank_problem} is $X = U_k\Sigma_k V_k^T$, where $U_k$ and $V_k$ consist of the first $k$ left and right singular vectors of $A$, respectively, and $\Sigma_k$ contains the first $k$ singular values of $A$ \cite{eckartApproximationOneMatrix1936}. This is known as the Eckart–Young–Mirsky theorem. This implies that
+In 1936, C. Eckart and G. Young showed that the solution to Equation~\eqref{eq:low_rank_problem} is $A_k = U_k\Sigma_k V_k^T$, where $U_k$ and $V_k$ consist of the first $k$ left and right singular vectors of $A$, respectively, and $\Sigma_k$ contains the first $k$ singular values of $A$ \cite{eckartApproximationOneMatrix1936}. This is known as the Eckart–Young–Mirsky theorem. This implies that
 \begin{equation}\label{eq:svd_error}
     \min_{\operatorname{rank}(X)\le k} \|A - X \|_2 = \sigma_{k+1},
 \end{equation}
 where $\sigma_{k+1}$ is the $(k+1)$th singular value of $A$. Equation \eqref{eq:svd_error} says that no rank-$k$ approximation of $A$ can have an error smaller than $\sigma_{k+1}$.
+
+
+\subsubsection{Truncated SVD}\label{sec:tsvd}
+The best rank-$k$ approximation of $A$ given by the Eckart--Young theorem, $A_k = U_k \Sigma_k V_k^T$, is known as the truncated SVD (tSVD). Since it truncates the small singular values of $A$, it serves as a regularization technique \cite{hansen2010discrete}. The tSVD also provides a natural reference for the approximate methods developed in this thesis.
 
 
 \subsubsection{The pseudoinverse}
@@ -271,7 +275,7 @@ Assume that $x^*$ solves the linear system $A x = y$ where $A \in \mathbb{R}^{m 
 \end{equation*}
 
 We are interested in finding a $B$ which improves reconstructions of the Tikhonov problem. This is what Elvetun and Nielsen analyzed in a series of paper, in particular, if the choice $B = A^+$ improves inverse solutions. In the setting of the discrete inverse problem in Equation~\eqref{eq:discrete_inverse_problem}, they analyze the problem
-\begin{equation}
+\begin{equation}\label{eq:transformed_discrete_inverse_problem}
     \min_{x \in \mathbb{R}^N}
     \| K^+ K x - K^+ y \|_{M}^2
     + \lambda^2 \| W x \|_M^2.

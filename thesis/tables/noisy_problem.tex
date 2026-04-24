@@ -1,0 +1,24 @@
+\begin{table}[ht]
+\centering
+\caption{The optimal target/truncation rank $k^*$ of rSVD/tSVD on noisy data using Problems~I, II, and III in terms of error metrics (mean over 50 runs): Euclidean norm, EMD, and AUC-IoU.}
+\label{tab:noisy}
+\begin{tabular}{cc ccccc}
+\toprule
+Problem & Method & Euclidean & EMD & AUC-IoU \\
+\midrule
+\multirow{2}{*}{I}
+& rSVD & 60 & 20 & 60 \\
+& tSVD & 60 & 20 & 80 \\
+ 
+\midrule
+\multirow{2}{*}{II}
+& rSVD & 50 & 20 & 65 \\
+& tSVD & 45 & 20 & 65 \\
+
+\midrule
+\multirow{2}{*}{III}
+& rSVD & 75 & 30 & $\ge$100 \\
+& tSVD & 85 & 30 & 95 \\
+\bottomrule
+\end{tabular}
+\end{table}

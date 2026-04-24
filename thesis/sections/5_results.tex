@@ -110,13 +110,21 @@ The EMD shows that at $k = 10$, rSVD on $K$ gives 10\% to 19\% worse reconstruct
 
 \subsubsection{Accuracy on noisy data}
 \input{figures/noisy_problem.tex}
-\textcolor{red}{[TODO: In this section, when solving the Tikhonov problem with noise, show how the error is affected for increasing $k$, and compare it with the truncated SVD.]}
+\input{tables/noisy_problem.tex}
+\input{figures/reconstruction_noisy_problem.tex}
+We measure the reconstruction error for the transformed weighted Tikhonov problem of Equation~\eqref{eq:transformed_discrete_inverse_problem}. We replace $y = K x$ with $\tilde y = y + \epsilon$, where $\tfrac{\| \epsilon \|}{\| y \|} = \delta$ with $\delta = 0.01$. The regularization parameter is set to $\lambda = \lambda_{\text{dp}}$, found using the discrepancy principle with safety factor $\nu_{\text{dp}} = 10$ (see Section~5.2 in Hansen \cite{hansen2010discrete}), so that $\lambda$ is selected independently for each method and rank.
+
+Figure~\ref{fig:noisy_problem} shows reconstruction errors when $K$ and $W$ are approximated using rSVD (Algorithm~\ref{alg:discrete_rsvd}) and tSVD (Section~\ref{sec:tsvd}) at increasing ranks $k$. The error is measured in Euclidean norm, EMD and AUC-IoU. The optimal rank $k^*$ is marked with vertical lines, and listed in Table~\ref{tab:noisy}. Figure~\ref{fig:reconstruction_noisy_problem} shows reconstructions for Problem~II at selected ranks, illustrating how a target rank that is too high includes noise in the reconstruction.
+
+In terms of Euclidean error, the optimal rank is between 50 and 85 for rSVD, and 45 and 85 for tSVD. The EMD is more sensitive to higher ranks which include more noise (Figure~\ref{fig:reconstruction_noisy_problem}), and the optimal rank for EMD is between 20 and 30 for both methods. For AUC-IoU, optimal ranks are between 50 and 100 for rSVD, and between 65 and 95 for tSVD, except for Problem~III with rSVD where the optimal rank exceeds the tested range ($k \leq 100$).
+
+At their respective optimal ranks, rSVD and tSVD give nearly identical Euclidean errors and AUC-IoU scores across the three problems, with differences below 0.25\%. The largest gap is in EMD: tSVD achieves 2.35\% to 6.33\% lower EMD, with the largest difference on Problem~III.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Dynamical Low-Rank (Preconditioned) Conjugate Gradient Part 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Dynamical Low-Rank PCG}
+\subsection{Dynamical low-rank CG}
 \subsubsection{Convergence behavior: DLRA vs. DLR-CG}
 % Computational speed and iteration count. Lead with the main result: iteration curves and wall-clock time, DLR-CG vs. DLRA, across the three test problems. This is the headline claim — open with it
 \textcolor{red}{[TODO: In this section, show how typical DLRA has convergence problems, but DLRA-CG does not show such issues. Show some low-rank solutions obtained via both solutions]}

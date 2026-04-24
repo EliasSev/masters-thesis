@@ -67,10 +67,21 @@ class CGSolver(ABC):
             raise ValueError("'x_true' is not set!")
         return self._x_true
     
+    @property
+    def X_true(self) -> NDArray:
+        if self._X_true is None:
+            raise ValueError("'X_true' is not set!")
+        return self._X_true
+    
     @x_true.setter
     def x_true(self, value: NDArray) -> None:
         self._x_true = value
         self._X_true = self.vec_to_matrix(value)
+
+    @X_true.setter
+    def X_true(self, value: NDArray) -> None:
+        self._x_true = self.matrix_to_vec(value)
+        self._X_true = value
 
     def matrix_to_vec(self, X: NDArray) -> NDArray:
         return X.flatten()[self.dof_indices]
@@ -330,6 +341,7 @@ class DynamicalLowRankApproximation(CGSolver):
 
         # Initial residual
         res0 = np.sqrt(frobenius2(G))
+        err0 = np.sqrt(frobenius2(X - self.X_true))
 
         # Adam Moments (same shape as X)
         m_D = np.zeros((self.n, self.n))
@@ -366,6 +378,11 @@ class DynamicalLowRankApproximation(CGSolver):
             res = np.sqrt(frobenius2(G))
             rel_res = res / res0
             self.residual.append(rel_res)
+
+            # Relative error
+            err = np.sqrt(frobenius2(X - self.X_true))
+            rel_err = err / err0
+            self.error.append(rel_err)
 
             if rel_res < rtol:
                 if verbose: print(f"Converged at iter {i} [rel_res={rel_res:.3}]")
@@ -432,6 +449,7 @@ class DynamicalLowRankCG(CGSolver):
 
         # Initial residual
         res0 = np.sqrt(frobenius2(G))
+        err0 = np.sqrt(frobenius2(X - self.X_true))
 
         for i in range(1, max_iter + 1):
             # Step size
@@ -471,6 +489,11 @@ class DynamicalLowRankCG(CGSolver):
             res = np.sqrt(frobenius2(G))
             rel_res = res / res0
             self.residual.append(rel_res)
+
+            # Relative error
+            err = np.sqrt(frobenius2(Ux @ Sx @ Vx.T - self.X_true))
+            rel_err = err / err0
+            self.error.append(rel_err)
 
             if rel_res < rtol:
                 if verbose: print(f"Converged at iter {i} [rel_res={rel_res:.3}]")

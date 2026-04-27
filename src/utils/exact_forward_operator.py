@@ -4,10 +4,14 @@ Construction of the exact forward operator K with corresponding weights W.
 import numpy as np
 from numpy.typing import NDArray
 from scipy.linalg import solve
+from scipy.sparse import csr_matrix, csc_matrix, spmatrix
+from sksparse.cholmod import cholesky
 from fenics import (
     FunctionSpace, DirichletBC, Constant, TrialFunction,
-    TestFunction, dot, grad, dx, ds, assemble, Function
+    TestFunction, dot, grad, dx, ds, assemble, Function,
+    as_backend_type, set_log_level
 )
+set_log_level(30)
 
 
 class ExactForwardOperator:
@@ -118,6 +122,107 @@ class ExactForwardOperator:
         
         return w
     
+
+class ExactForwardOperatorFast:
+    """
+    Sparse Cholesky variant of `ExactForwardOperator`.
+
+    Forms K = T A^{-1} M as a dense (N_b, N) array using a sparse Cholesky
+    factorization of A and N_b sparse triangular solves (rather than N).
+
+    Cost in 2D (sparse Cholesky with nested-dissection ordering):
+        - Factorization of A: O(N^{3/2})
+        - Forming K:          O(N_b * N log N) = O(N^{3/2} log N), since N_b ~ sqrt(N)
+
+    The matrices M_dx and M_ds are stored as scipy CSR sparse matrices.
+    """
+
+    def __init__(
+            self,
+            V_h: FunctionSpace,
+            sigma: float = 1.0,
+            c: float = 1.0,
+            assemble_on_init: bool = True,
+        ):
+        self.V_h = V_h
+        self.sigma = sigma
+        self.c = c
+        self.bdofs = self._get_boundary_dofs()
+        self.N = V_h.dim()
+        self.N_b = len(self.bdofs)
+
+        self.A = self._assemble_A()
+        self.M_dx = self._assemble_M_dx()
+        self.M_ds = self._assemble_M_ds()
+
+        self.chol_A = cholesky(self.A.tocsc())
+
+        self.K = self.assemble_K() if assemble_on_init else None
+
+    def _get_boundary_dofs(self) -> NDArray:
+        def boundary(x, on_boundary):
+            return on_boundary
+        bc = DirichletBC(self.V_h, Constant(0.0), boundary)
+        bc_dict = bc.get_boundary_values()
+        return np.array(sorted(bc_dict.keys()), dtype=int)
+
+    def _assemble_sparse(self, form) -> csr_matrix:
+        mat = as_backend_type(assemble(form)).mat()
+        indptr, indices, data = mat.getValuesCSR()
+        return csr_matrix((data, indices, indptr))
+
+    def _assemble_A(self) -> csr_matrix:
+        u = TrialFunction(self.V_h)
+        v = TestFunction(self.V_h)
+        a = (Constant(self.sigma) * dot(grad(u), grad(v))
+             + Constant(self.c) * u * v) * dx
+        return self._assemble_sparse(a)
+
+    def _assemble_M_dx(self) -> csr_matrix:
+        u = TrialFunction(self.V_h)
+        v = TestFunction(self.V_h)
+        return self._assemble_sparse(u * v * dx)
+
+    def _assemble_M_ds(self) -> csr_matrix:
+        u = TrialFunction(self.V_h)
+        v = TestFunction(self.V_h)
+        M_full = self._assemble_sparse(u * v * ds)  # (N, N)
+        return M_full[self.bdofs, :][:, self.bdofs]  # (N_b, N_b)
+
+    def assemble_T(self) -> csr_matrix:
+        """Trace operator T as sparse CSR, shape (N_b, N)."""
+        rows = np.arange(self.N_b)
+        return csr_matrix(
+            (np.ones(self.N_b), (rows, self.bdofs)),
+            shape=(self.N_b, self.N),
+        )
+
+    def assemble_K(self) -> NDArray:
+        """
+        K = T A^{-1} M, returned as a dense (N_b, N) array.
+
+        Uses K = (M A^{-1} T^T)^T = (M Z)^T with Z = A^{-1} T^T (N_b solves).
+        """
+        T_T = csc_matrix(
+            (np.ones(self.N_b), (self.bdofs, np.arange(self.N_b))),
+            shape=(self.N, self.N_b),
+        )
+        Z = self.chol_A.solve_A(T_T.toarray())  # (N, N_b) dense
+        return np.asarray((self.M_dx @ Z).T)    # (N_b, N) dense
+
+    def assemble_K_star(self) -> NDArray:
+        """
+        K^* = A^{-1} T^T M_ds, returned as a dense (N, N_b) array.
+
+        N_b solves of A against the sparse RHS T^T M_ds.
+        """
+        T_T = csc_matrix(
+            (np.ones(self.N_b), (self.bdofs, np.arange(self.N_b))),
+            shape=(self.N, self.N_b),
+        )
+        rhs = (T_T @ self.M_ds).toarray()     # (N, N_b) dense
+        return np.asarray(self.chol_A.solve_A(rhs))
+
 
 def solve_explicit(operator: ExactForwardOperator, w, y, lambda_):
     # Extract matrices

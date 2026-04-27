@@ -38,7 +38,11 @@ class CGSolver(ABC):
         - DynamicalLowRankCG
         - DynamicalLowRankPCG
     """
-    def __init__(self, rsvd: Union[MatrixFreeRSVD, MatrixFreeRSVDAdjoint]) -> None:
+    def __init__(
+            self,
+            rsvd: Union[MatrixFreeRSVD, MatrixFreeRSVDAdjoint],
+            x_true: Optional[NDArray] = None
+        ) -> None:
         """
         Initialize the DynamicalLowRankPCG.
 
@@ -51,15 +55,20 @@ class CGSolver(ABC):
 
         self._x_true = None
         self._X_true = None
-        self.error = []  # Track the error
+
+        self.error = []     # Track the error
         self.residual = []  # Track residuals
-        self.niter = 0  # Number of iterations to converge
+        self.niter = 0      # Number of iterations to converge
         
         # Set up vec to matrix and matrix to vec utils
         coords = self.V_h.tabulate_dof_coordinates()
         self.grid_indices = np.lexsort((coords[:, 0], coords[:, 1]))
         self.dof_indices = np.argsort(self.grid_indices)
         self.n = int(np.sqrt(self.V_h.dim()))
+        
+        # Must be done after grid_indices is set up
+        if x_true is not None:
+            self.x_true = x_true
     
     @property
     def x_true(self) -> NDArray:
@@ -95,7 +104,7 @@ class CGSolver(ABC):
         pass
     
     def initial_X(
-            self, seed: Optional[int], max_rank: int, X0: str = 'svd'
+            self, seed: Optional[int], max_rank: int, X0: str
         ) -> tuple[NDArray, NDArray, NDArray, NDArray]:
         """
         Generate an initial matrix X and its SVD of rank `max_rank`.
@@ -221,13 +230,12 @@ class CGSolver(ABC):
 
 
 class ConjugateGradient(CGSolver):
-    def __init__(self, rsvd: Union[MatrixFreeRSVD, MatrixFreeRSVDAdjoint]) -> None:
-        """
-        Initialize the ConjugateGradient.
-
-        mfrsvd, MatrixFreeRSVD: A trained MatrixFreeRSVD objected.
-        """
-        super().__init__(rsvd)
+    def __init__(
+            self,
+            rsvd: Union[MatrixFreeRSVD, MatrixFreeRSVDAdjoint],
+            x_true: Optional[NDArray] = None
+        ) -> None:
+        super().__init__(rsvd, x_true)
 
     def solve(
             self,
@@ -239,24 +247,29 @@ class ConjugateGradient(CGSolver):
             X0_rank: int = 3,
             max_iter: int = 250,
             rtol: float = 1e-8,
+            etol: Optional[float] = None,
             seed: Optional[int] = None,
             verbose: bool = True,
         ):
         """
         Solve min{Phi(X; y, w)} with given lambda_ and max_rank using a standard CG scheme.
 
-        y, NDArray              : The observed data (1D array).
-        w, NDArray              : Tikhonov regularization weights (1D array).
-        lambda_, float          : Tikhonov regularization parameter.
-        max_iter, int           : Maximum number of iterations. 
-        X0, str                 : How to initialize X.
-        X0_rank, int            : The rank of X0 (only used if X0 = 'qr-low-rank' or 'householder')
-        rtol, float             : Stopping criterion, relative residual (r0/rk).
-        seed, int|None          : Seed for random number generator (for initial X).
-        verbose, bool           : Print out the results and progress.
+        y, NDArray     : The observed data (1D array).
+        w, NDArray     : Tikhonov regularization weights (1D array).
+        lambda_, float : Tikhonov regularization parameter.
+        max_iter, int  : Maximum number of iterations. 
+        X0, str        : How to initialize X.
+        X0_rank, int   : The rank of X0 (only used if X0 = 'qr-low-rank' or 'householder')
+        rtol, float    : Stopping criterion, relative residual (r0/rk).
+        etol, float    : Alternative stopping criterion, relative error (e0/ek).
+        seed, int|None : Seed for random number generator (for initial X).
+        verbose, bool  : Print out the results and progress.
 
         returns: Solution vector x = vec(X) (1D array).
         """
+        # Temp fix (lambda should be squared directly in the implementation!)
+        lambda_ = lambda_**2
+
         # Initialize X (random)
         X = self.initial_X(seed, max_rank=X0_rank, X0=X0)[0]
 
@@ -298,8 +311,12 @@ class ConjugateGradient(CGSolver):
     
 
 class DynamicalLowRankApproximation(CGSolver):
-    def __init__(self, rsvd: Union[MatrixFreeRSVD, MatrixFreeRSVDAdjoint]) -> None:
-        super().__init__(rsvd)
+    def __init__(
+            self,
+            rsvd: Union[MatrixFreeRSVD, MatrixFreeRSVDAdjoint],
+            x_true: Optional[NDArray] = None
+        ) -> None:
+        super().__init__(rsvd, x_true)
 
     def solve(
             self,
@@ -316,6 +333,7 @@ class DynamicalLowRankApproximation(CGSolver):
             max_rank: int = 5,
             max_iter: int = 250,
             rtol: float = 1e-8,
+            etol: Optional[float] = None,
             seed: Optional[int] = None,
             verbose: bool = True,
             truncate_tol: float = 0.01,
@@ -324,31 +342,33 @@ class DynamicalLowRankApproximation(CGSolver):
         Solve min{Phi(X; y, w)} with given lambda_ and max_rank using the DLRA scheme
         with a selectable step rule.
 
-        y, NDArray              : The observed data (1D array).
-        w, NDArray              : Tikhonov regularization weights (1D array).
-        lambda_, float          : Tikhonov regularization parameter.
-        method, str             : Step rule, one of:
-                                    'adam'  - adaptive step via Adam moments,
-                                    'fixed' - constant step size along -G,
-                                    'sd'    - steepest descent with exact line search.
-        alpha, float            : Step size for 'fixed'; base learning rate for 'adam'.
-                                  Ignored when method='sd'.
-        beta1, beta2, float     : Adam moment decay rates. Used only when method='adam'.
-        eps, float              : Adam denominator stabilizer. Used only when method='adam'.
-        X0, str                 : How to initialize X.
-        max_rank, int           : Max rank of the solution (dynamical step).
-        max_iter, int           : Maximum number of iterations.
-        rtol, float             : Stopping criterion, relative residual (r0/rk).
-        seed, int|None          : Seed for random number generator (for initial X).
-        verbose, bool           : Print out the results and progress.
-        truncate_tol, float     : Truncation tolerance for the adaptive rank update.
+        y, NDArray          : The observed data (1D array).
+        w, NDArray          : Tikhonov regularization weights (1D array).
+        lambda_, float      : Tikhonov regularization parameter.
+        method, str         : Step rule, one of:
+                             'adam'  - adaptive step via Adam moments,
+                             'fixed' - constant step size along -G,
+                             'sd'    - steepest descent with exact line search.
+        alpha, float        : Step size for 'fixed'; base learning rate for 'adam'.
+                             Ignored when method='sd'.
+        beta1, beta2, float : Adam moment decay rates. Used only when method='adam'.
+        eps, float          : Adam denominator stabilizer. Used only when method='adam'.
+        X0, str             : How to initialize X.
+        max_rank, int       : Max rank of the solution (dynamical step).
+        max_iter, int       : Maximum number of iterations.
+        rtol, float         : Stopping criterion, relative residual (r0/rk).
+        etol, float         : Alternative stopping criterion, relative error (e0/ek).
+        seed, int|None      : Seed for random number generator (for initial X).
+        verbose, bool       : Print out the results and progress.
+        truncate_tol, float : Truncation tolerance for the adaptive rank update.
 
         returns: Solution vector x = vec(X) (1D array).
         """
-        self.residual, self.error = [], []
+        lambda_ = lambda_**2
+        self.residual, self.error = [1.0], [1.0]
 
         common = dict(
-            X0=X0, max_rank=max_rank, max_iter=max_iter, rtol=rtol,
+            X0=X0, max_rank=max_rank, max_iter=max_iter, rtol=rtol, etol=etol,
             seed=seed, verbose=verbose, truncate_tol=truncate_tol,
         )
         method = method.lower()
@@ -369,7 +389,7 @@ class DynamicalLowRankApproximation(CGSolver):
     def _solve_adam(
             self, y, w, lambda_, *,
             alpha, beta1, beta2, eps,
-            X0, max_rank, max_iter, rtol, seed, verbose, truncate_tol,
+            X0, max_rank, max_iter, rtol, etol, seed, verbose, truncate_tol,
         ):
         X, Ux, Sx, Vx = self.initial_X(seed, max_rank=max_rank, X0=X0)
 
@@ -392,11 +412,11 @@ class DynamicalLowRankApproximation(CGSolver):
 
             Ux, Sx, Vx = self._dlra_step(Ux, Sx, Vx, D_adam, alpha, truncate_tol, max_rank)
 
-            X = (Ux * Sx) @ Vx.T
+            X = Ux @ Sx @ Vx.T
             G = self.gradient(X, y, w, lambda_)
             D = -G.copy()
 
-            if self._track_and_check(G, X, res0, err0, rtol, i, max_iter, verbose):
+            if self._track_and_check(G, X, res0, err0, rtol, etol, i, max_iter, verbose):
                 break
 
         self.niter = i
@@ -405,7 +425,7 @@ class DynamicalLowRankApproximation(CGSolver):
     def _solve_fixed(
             self, y, w, lambda_, *,
             alpha,
-            X0, max_rank, max_iter, rtol, seed, verbose, truncate_tol,
+            X0, max_rank, max_iter, rtol, etol, seed, verbose, truncate_tol,
         ):
         X, Ux, Sx, Vx = self.initial_X(seed, max_rank=max_rank, X0=X0)
 
@@ -418,11 +438,11 @@ class DynamicalLowRankApproximation(CGSolver):
         for i in range(1, max_iter + 1):
             Ux, Sx, Vx = self._dlra_step(Ux, Sx, Vx, D, alpha, truncate_tol, max_rank)
 
-            X = (Ux * Sx) @ Vx.T
+            X = Ux @ Sx @ Vx.T
             G = self.gradient(X, y, w, lambda_)
             D = -G.copy()
 
-            if self._track_and_check(G, X, res0, err0, rtol, i, max_iter, verbose):
+            if self._track_and_check(G, X, res0, err0, rtol, etol, i, max_iter, verbose):
                 break
 
         self.niter = i
@@ -430,7 +450,7 @@ class DynamicalLowRankApproximation(CGSolver):
 
     def _solve_sd(
             self, y, w, lambda_, *,
-            X0, max_rank, max_iter, rtol, seed, verbose, truncate_tol,
+            X0, max_rank, max_iter, rtol, etol, seed, verbose, truncate_tol,
         ):
         X, Ux, Sx, Vx = self.initial_X(seed, max_rank=max_rank, X0=X0)
 
@@ -447,11 +467,11 @@ class DynamicalLowRankApproximation(CGSolver):
 
             Ux, Sx, Vx = self._dlra_step(Ux, Sx, Vx, D, alpha, truncate_tol, max_rank)
 
-            X = (Ux * Sx) @ Vx.T
+            X = Ux @ Sx @ Vx.T
             G = self.gradient(X, y, w, lambda_)
             D = -G.copy()
 
-            if self._track_and_check(G, X, res0, err0, rtol, i, max_iter, verbose):
+            if self._track_and_check(G, X, res0, err0, rtol, etol, i, max_iter, verbose):
                 break
 
         self.niter = i
@@ -473,7 +493,7 @@ class DynamicalLowRankApproximation(CGSolver):
 
         return self.truncate(U_hat, S_new, V_hat, truncate_tol, max_rank)
 
-    def _track_and_check(self, G, X, res0, err0, rtol, i, max_iter, verbose):
+    def _track_and_check(self, G, X, res0, err0, rtol, etol, i, max_iter, verbose):
         """Record residual/error, check convergence, print progress. Returns True if done."""
         rel_res = np.sqrt(frobenius2(G)) / res0
         self.residual.append(rel_res)
@@ -482,22 +502,26 @@ class DynamicalLowRankApproximation(CGSolver):
         self.error.append(rel_err)
 
         if rel_res < rtol:
-            if verbose: print(f"Converged at iter {i} [rel_res={rel_res:.3}]")
+            if verbose: print(f"Converged at iter {i} [rtol criteria: rel_res={rel_res:.3}]")
             return True
-
+        
+        if etol is not None:
+            if rel_err < etol:
+                if verbose: print(f"Converged at iter {i} [etol criteria: rel_res={rel_err:.3}]")
+                return True
+        
         if verbose and ((i % 100 == 0) or (i == max_iter)):
             progress_bar(i, max_iter)
         return False
 
 
 class DynamicalLowRankCG(CGSolver):
-    def __init__(self, rsvd: Union[MatrixFreeRSVD, MatrixFreeRSVDAdjoint]) -> None:
-        """
-        Initialize the DynamicalLowRankCG.
-
-        rsvd, MatrixFreeRSVD[Adjoint]: A trained MatrixFreeRSVD[Adjoint] objected.
-        """
-        super().__init__(rsvd)
+    def __init__(
+            self,
+            rsvd: Union[MatrixFreeRSVD, MatrixFreeRSVDAdjoint],
+            x_true: Optional[NDArray] = None
+        ) -> None:
+        super().__init__(rsvd, x_true)
         self.setup_time = 0
         self.CG_time = 0
         self.WLS_time = 0
@@ -513,6 +537,7 @@ class DynamicalLowRankCG(CGSolver):
             max_rank: int = 5,
             max_iter: int = 250,
             rtol: float = 1e-8,
+            etol: Optional[float] = None,
             seed: Optional[int] = None,
             verbose: bool = True,
             truncate_tol: float = 0.01,
@@ -527,6 +552,7 @@ class DynamicalLowRankCG(CGSolver):
         max_iter, int           : Maximum number of iterations.
         max_rank, int           : Max rank of the solution (dynamical step).
         rtol, float             : Stopping criterion, relative residual (r0/rk).
+        etol, float             : Alternative stopping criterion, relative error (e0/ek).
         seed, int|None          : Seed for random number generator (for initial X).
         verbose, bool           : Print out the results and progress.
         truncate_tol, float     : Truncation tolerance for the adaptive rank update.
@@ -537,7 +563,8 @@ class DynamicalLowRankCG(CGSolver):
 
         returns: Solution vector x = vec(X) (1D array).
         """
-        self.residual, self.error = [], []
+        lambda_ = lambda_**2
+        self.residual, self.error = [1.0], [1.0]
         
         # Initialize X (random)
         self.setup_time = self.CG_time = self.WLS_time = 0
@@ -603,10 +630,15 @@ class DynamicalLowRankCG(CGSolver):
             self.error.append(rel_err)
 
             if rel_res < rtol:
-                if verbose: print(f"Converged at iter {i} [rel_res={rel_res:.3}]")
+                if verbose: print(f"Converged at iter {i} [rtol criteria: rel_res={rel_res:.3}]")
                 break
+            
+            if etol is not None:
+                if rel_err < etol:
+                    if verbose: print(f"Converged at iter {i} [etol criteria: rel_res={rel_err:.3}]")
+                    break
 
-            if verbose and ((i % 10 == 0) or (i == max_iter)):
+            if verbose and ((i % 100 == 0) or (i == max_iter)):
                 progress_bar(i, max_iter)
 
         self.niter = i
@@ -617,13 +649,12 @@ class DynamicalLowRankPCG(CGSolver):
     """
     Dynamical Low-Rank Preconditioned Conjugate Gradient.
     """
-    def __init__(self, rsvd: Union[MatrixFreeRSVD, MatrixFreeRSVDAdjoint]) -> None:
-        """
-        Initialize the DynamicalLowRankPCG.
-
-        rsvd, MatrixFreeRSVD[Adjoint]: A trained MatrixFreeRSVD[Adjoint] objected.
-        """
-        super().__init__(rsvd)
+    def __init__(
+            self,
+            rsvd: Union[MatrixFreeRSVD, MatrixFreeRSVDAdjoint],
+            x_true: Optional[NDArray] = None
+        ) -> None:
+        super().__init__(rsvd, x_true)
 
     def solve(
             self,
@@ -637,8 +668,10 @@ class DynamicalLowRankPCG(CGSolver):
             X0: str = 'qr',
             max_iter: int = 250,
             rtol: float = 1e-8,
+            etol: float = 0.0,
             seed: Optional[int] = None,
-            verbose: bool = True
+            verbose: bool = True,
+            restart_every: Optional[int] = None,
         ) -> NDArray:
         """
         Solve min{Phi(X; y, w)} with given lambda_ and max_rank using the DLR-PCG scheme.
@@ -655,9 +688,14 @@ class DynamicalLowRankPCG(CGSolver):
         verbose, bool       : Print out the results and progress.
         truncate_tol, float : Truncation tolerance for the adaptive rank update.
         X0, str             : How to initialize X.
+        restart_every, int|None : If set, recompute the true gradient at the truncated X
+                                  and reset D = -G every this many iterations.
 
         returns: Solution vector x = vec(X) (1D array).
         """
+        lambda_ = lambda_**2
+        self.error, self.residual = [1.0], [1.0]  # Initial relative err/res
+
         # Initialize X (random)
         X, Ux, Sx, Vx = self.initial_X(seed, max_rank, X0)
 
@@ -669,16 +707,16 @@ class DynamicalLowRankPCG(CGSolver):
         Z = self.apply_P_inv(G, P_inv)
         D = -Z.copy()
 
-        # Initial residual
         res0 = np.sqrt(frobenius2(G))
+        err0 = np.sqrt(frobenius2(X - self.X_true))
         
         for i in range(1, max_iter + 1):
             # Step size
             HD = self.apply_H(D, w, lambda_)
             denom = inner_F(D, HD)
-            if denom < 1e-32:
-                if verbose: print(f"alpha too small ({denom}). Stopping at iter = {i}")
-                break
+            #if denom < 1e-32:
+            #    if verbose: print(f"alpha too small ({denom}). Stopping at iter = {i}")
+            #    break
             alpha = inner_F(G, Z) / denom
 
             # W-step
@@ -697,19 +735,34 @@ class DynamicalLowRankPCG(CGSolver):
             Ux, Sx, Vx = self.truncate(U_hat, S_new, V_hat, truncate_tol, max_rank)
             
             # Update the gradient and the search direction
-            denom = inner_F(G, Z)
-            G = G + alpha * HD
-            Z = self.apply_P_inv(G, P_inv)
-            beta = inner_F(G, Z) / denom
-            D = -Z + beta * D
+            if restart_every is not None and i % restart_every == 0:
+                X = Ux @ Sx @ Vx.T
+                G = self.gradient(X, y, w, lambda_)
+                Z = self.apply_P_inv(G, P_inv)
+                D = -Z.copy()
+            else:
+                denom = inner_F(G, Z)
+                G = G + alpha * HD
+                Z = self.apply_P_inv(G, P_inv)
+                beta = inner_F(G, Z) / denom
+                D = -Z + beta * D
 
             # Relative residual
             res = np.sqrt(frobenius2(G))
             rel_res = res / res0
             self.residual.append(rel_res)
 
+            # Relative error
+            err = np.sqrt(frobenius2(Ux @ Sx @ Vx.T - self.X_true))
+            rel_err = err / err0
+            self.error.append(rel_err)
+
             if rel_res < rtol:
                 if verbose: print(f"Converged at iter {i} [rel_res={rel_res:.3}]")
+                break
+
+            if rel_err < etol:
+                if verbose: print(f"Converged at iter {i} [etol criteria: rel_res={rel_err:.3}]")
                 break
             
             if verbose and ((i % 10 == 0) or (i == max_iter)):

@@ -1,0 +1,16 @@
+\begin{table}[ht]
+\centering
+\begin{tabular}{lrrrr}
+\hline
+Method & $< 0.90$ & $< 0.85$ & $< 0.75$ & $< 0.70$ \\
+\hline
+Adam                   & 1657 & \texttt{--} & \texttt{--} & \texttt{--} \\
+Fixed                  & 21532 & \texttt{--} & \texttt{--} & \texttt{--} \\
+Steepest descent       & 1534 & 21778 & \texttt{--} & \texttt{--} \\
+DLRA-CG                & 49 & 100 & 176 & \texttt{--} \\
+Restarted DLRA-CG      & 36 & 160 & 736 & 3976 \\
+\hline
+\end{tabular}
+\caption{Number of iterations to reach a given relative reconstruction error $\|X^{(i)} - X^*\|_F / \|X^{(0)} - X^*\|_F$ for each method, where \texttt{--} indicates the threshold was not reached. For restarted CG, $N_r = 10$ was used.}
+\label{tab:convergence_iterations}
+\end{table}

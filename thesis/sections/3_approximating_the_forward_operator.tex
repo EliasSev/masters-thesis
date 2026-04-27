@@ -56,7 +56,7 @@ Algorithm~\ref{alg:discrete_rsvd} extends directly to $K^*$ by replacing $K$ wi
 \input{algorithms/matrix-free-rsvd-Kstar.tex}
 
 
-\subsubsection{Recovering the SVD}
+\subsubsection{Recovering the SVD}\label{sec:reconvering_the_svd}
 Given the approximate rank-$k$ SVD $K^* \approx \bar{U}\bar{\Sigma}\bar{V}^T$, where $\bar U \in \mathbb{R}^{N \times k}$, $\bar \Sigma \in \mathbb{R}^{k \times k}$, and $\bar V \in \mathbb{R}^{N_b \times k}$, $K$ can be approximated from the relation $K = M_\partial^{-1} \bar V \bar \Sigma \bar U^T M$. We recover the SVD of $K$: define the $N_b \times k$ matrix $A = M_\partial^{-1} \bar V$ and the $N \times k$ matrix $B = M \bar U$, giving the rank-$k$ factorization
 \begin{equation*}
     K \approx A \bar \Sigma B^T.

@@ -1,5 +1,7 @@
 \begin{figure*}[thbp]
     \centerline{\includegraphics[width=1.0\textwidth]{number_of_iterations.png}}
-    \caption{Relative reconstruction error $\|X_i - X\|_F / \|X_0 - X\|_F$ versus iteration count for three DLRA step-size rules (Adam, fixed step, steepest descent with exact line search) and DLR-CG (with and without restarting).}
+    \caption{Relative reconstruction error ($\|X^{(i)} - X^*\|_F / \|X^{(i)} - X^*\|_F$) versus iteration count.
+    Left: three DLRA step-size rules (Adam, fixed step, steepest descent with exact line search) and DLRA-CG (with and without restarting, using $N_r = 10$ for restarting).
+    Right: DLRA using CG with different restart periods $N_r$, with $N_r = \infty$ being no restarting.}
     \label{fig:number_of_iterations}
 \end{figure*}

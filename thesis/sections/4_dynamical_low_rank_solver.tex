@@ -1,78 +1,106 @@
 \section{Dynamical low-rank approximation}
 \input{figures/low_rank_manifold.tex}
-Consider the problem of finding a rank-$r$ solution $X$ via the update scheme $X^{(k+1)} = X^{(k)} + \alpha_k D^{(k)}$, where $D^{(k)}$ is a search direction and $\alpha_k > 0$ a step size. Starting from a rank-$r$ matrix $X^{(0)}$, there is in general no guarantee that $D^{(k)}$ preserves low rank, so that $X^{(k)}$ may leave the space $\mathcal{M}_r$ of rank-$r$ matrices after a single step.
+Consider the problem of finding a rank-$r$ solution $X$ via the update scheme $X^{(i+1)} = X^{(i)} + \alpha_i D^{(i)}$, where $D^{(i)}$ is a search direction and $\alpha_i > 0$ a step size. Starting from a rank-$r$ matrix $X^{(0)}$, there is in general no guarantee that $D^{(i)}$ preserves low rank, so that $X^{(i)}$ may leave the space $\mathcal{M}_r$ of rank-$r$ matrices after a single step.
 
-One can replace $D^{(k)}$ by its projection onto the tangent space $\mathcal{T}_{X^{(k)}}(\mathcal{M}_r)$. This is the idea behind the Dynamical Low-Rank Approximation (DLRA) of Koch and Lubich \cite{kochDynamicalLowrankApproximation2007}. They proposed, in a continuous-time setting, evolving an approximation on $\mathcal{M}_r$ by projecting the derivative of the matrix onto the tangent space at the current approximation. Using this concept in our discrete setting, we replace $D^{(k)}$ by its tangent-space projection $\mathcal{P}_{X^{(k)}}[D^{(k)}]$, yielding the update
+One can replace $D^{(i)}$ by its projection onto the tangent space $\mathcal{T}_{X^{(i)}}(\mathcal{M}_r)$. This is the idea behind the Dynamical Low-Rank Approximation (DLRA) of Koch and Lubich \cite{kochDynamicalLowrankApproximation2007}. They proposed, in a continuous-time setting, evolving an approximation on $\mathcal{M}_r$ by projecting the derivative of the matrix onto the tangent space at the current approximation. Using this concept in our discrete setting, we replace $D^{(i)}$ by its tangent-space projection $\mathcal{P}_{X^{(i)}}[D^{(i)}]$, yielding the update
 \begin{equation*}
-    X^{(k+1)} = X^{(k)} 
-    + \alpha_k \mathcal{P}_{X^{(k)}}(D^{(k)}).
+    X^{(i+1)} = X^{(i)} 
+    + \alpha_i \mathcal{P}_{X^{(i)}}(D^{(i)}).
 \end{equation*}
-This is illustrated in Figure~\ref{fig:low_rank_manifold}. Rather than updating $X^{(k)}$ directly, the DLRA algorithm operates on its SVD factorization $X^{(k)} = U \Sigma V^T$, updating the factors $U$, $\Sigma$, and $V$ at each iteration.
+This is illustrated in Figure~\ref{fig:low_rank_manifold}. Rather than updating $X^{(i)}$ directly, the DLRA algorithm operates on its SVD factorization $X^{(i)} = U_x \Sigma_x V_x^T$, updating the factors $U_x$, $\Sigma_x$, and $V_x$ at each iteration (we use the subscript ``$x$'' to
+distinguish these factors from those of the forward operator
+$K = U \Sigma V^T$).
 
-However, as pointed out by Koch and Lubich, when $\Sigma$ is ill-conditioned, which occurs when $r$ exceeds the effective rank of $X^{(k)}$, the projector $\mathcal{P}_{X^{(k)}}$ suffers from stiffness, leading to very small step sizes and issues with rounding errors.
+However, as pointed out by Koch and Lubich, when $\Sigma_x$ is ill-conditioned, which occurs when $r$ exceeds the effective rank of $X^{(i)}$, the projector $\mathcal{P}_{X^{(i)}}$ suffers from stiffness, leading to very small step sizes and issues with rounding errors.
 
-To address this, Lubich and Oseledets proposed splitting the projector $\mathcal{P}_{X^{(k)}}$ into simpler sub-projections \cite{lubichProjectorsplittingIntegratorDynamical2013}. Crucially, each sub-projection can be evaluated without forming $\Sigma^{-1}$, and avoids the stiffness problem present in the original formulation. In recent years, additional advancements have been made to DLRA, offering improved stability, parallelism, and rank-adaptivity \cite{cerutiUnconventionalRobustIntegrator2020, cerutiRankadaptiveRobustIntegrator2021}.
+To address this, Lubich and Oseledets proposed splitting the projector $\mathcal{P}_{X^{(i)}}$ into simpler sub-projections \cite{lubichProjectorsplittingIntegratorDynamical2013}. Crucially, each sub-projection can be evaluated without forming $\Sigma^{-1}$, and avoids the stiffness problem present in the original formulation. In recent years, additional advancements have been made to DLRA, offering improved stability, parallelism, and rank-adaptivity \cite{cerutiUnconventionalRobustIntegrator2020, cerutiRankadaptiveRobustIntegrator2021}.
 
-Historically, DLRA was developed for time-continuous matrix differential equations. Schotthöfer et al. recently proposed a discrete rank-adaptive update scheme based on a robust projector-splitting integrator for training low-rank neural networks \cite{schotthoferLowrankLotteryTickets2022}. The discrete DLRA scheme used in this work follows their formulation.
+Historically, DLRA was developed for time-continuous matrix differential equations. Schotthöfer et al. recently proposed a discrete rank-adaptive update scheme based on a robust projector-splitting integrator for training low-rank neural networks \cite{schotthoferLowrankLotteryTickets2022}, see Algorithm~\ref{alg:dlra}. The discrete DLRA scheme used in this work follows their formulation.
+\input{algorithms/DLRA.tex}
+
+
+\subsection{Step-size selection and rank adaptation}
+Algorithm~\ref{alg:dlra} admits several choices for the step size $\alpha_i$ and the truncation criterion.
+
+\paragraph{Step size.}
+A fixed step size $\alpha_i = \alpha > 0$ coincides with one step of gradient descent on the factors $K'$, $L'$, and
+$\hat \Sigma$, analogous to the stochastic gradient descent (SGD) step used by Schotthöfer et al. \cite{schotthoferLowrankLotteryTickets2022}, but using the full gradient. Adam computes adaptive step sizes from estimates of the first and second moments of the gradient \cite{kingmaAdamMethodStochastic2017}, and Schotthöfer et al. find it converges faster in practice than SGD for training neural networks \cite{schotthoferLowrankLotteryTickets2022}. For the quadratic objective $\Phi$ considered in this thesis (Equation~\eqref{eq:discrete_inverse_problem}), steepest descent selects the step size that minimizes $\Phi$ along $D^{(i)}$,
+\begin{equation*}
+    \alpha_i
+    = \frac{\|\nabla\Phi(X^{(i)})\|_F^2}
+           {\langle D^{(i)},\, H D^{(i)} \rangle_F},
+\end{equation*}
+and requires no tuning (Section~8.2 in Chong et al. \cite{chong2023introduction}).
+
+
+\paragraph{Rank adaption.} In the dynamical low-rank update (KLS) step of Algorithm~\ref{alg:dlra}, the factors $\hat{U}$ and $\hat{V}$ have $2r$ columns and $\hat{\Sigma}$ is of shape $2r \times 2r$. The truncation step (line 10) moves the factors back to a specified maximum rank $r$ \cite{schotthoferLowrankLotteryTickets2022}. The truncation can also be done adaptively via a truncation threshold $\vartheta$, as done by Schotthöfer et al \cite{schotthoferLowrankLotteryTickets2022}. 
 
 
 \subsection{Application to the inverse problem}
-In the source identification problem given in Eq.~\eqref{eq:problem}, the source $f \in L^2(\Omega)$ is often expected to be of low rank. If $x \in \mathbb{R}^{n^2}$ is some discretization of $f$, reordering $x$ into an $n \times n$ matrix $X = \operatorname{mat}(x)$, we expect that $r = \operatorname{rank}(X)$ is a small number, i.e., $r \ll n$. It is therefore natural to consider low-rank methods which can locate such solutions.
+In many applications, the source $f \in L^2(\Omega)$ in Equation~\eqref{eq:problem} is sparse \cite{elvetunWeightedSparsityRegularization2023}, i.e., of low rank. If $x \in \mathbb{R}^{n^2}$ is some discretization of $f$, reordering $x$ into an $n \times n$ matrix $X = \operatorname{mat}(x)$, we expect that $r = \operatorname{rank}(X)$ is a small number ($r \ll n$). It is therefore natural to consider low-rank methods which can locate such solutions.
 
-In the following sections, we consider the problem of minimizing a quadratic cost function
+In the following sections, we consider the problem of minimizing a quadratic objective function
 \begin{equation*}
     \Phi(X): \mathbb{R}^{n \times n} \rightarrow \mathbb R.
 \end{equation*}
-In our discrete case, the minimization problem given in Eq.~\eqref{eq:problem} translates into minimizing
+In our discrete case, the minimization problem given in Equation~\eqref{eq:problem} translates into minimizing
 \begin{equation*}
     \Phi(X) = \frac 1 2 \|Kx - y\|_{M_\partial}^2
     + \frac{\lambda^2}{2} \| W x \|_M^2.
 \end{equation*}
-Using the product rule, we get the gradient (with respect to $x$) $\nabla \Phi (X) = K^T M_\partial (K x - y) + \lambda^2 W^T M W x$, and the Hessian $H = K^T M_\partial K + \lambda^2 W^T M W$.
+Using the product rule, we get the gradient (with respect to $x$) $\nabla \Phi (X) = K^T M_\partial (K x - y) + \lambda^2 W^T M W x$, and the Hessian $H = K^T M_\partial K + \lambda^2 W^T M W$. The terms $K^T M_\partial K$ and $\lambda^2 W^T M W$ are SPD, making the Hessian $H$ SPD too.
 
 
-\subsection{Dynamical low-rank CG scheme}
-Since $\Phi$ is quadratic with a symmetric positive definite (SPD) Hessian $H$ ($K^T M_\partial K$ is positive semi-definite and $\lambda^2 W^T M W$ is SPD), the conjugate gradient (CG) method is a natural minimization strategy \cite{saadIterativeMethodsSparse2003}.
+\subsection{DLRA with conjugate search directions}
+Since $\Phi$ is quadratic with a SPD Hessian $H$, the conjugate gradient (CG) method is a natural minimization strategy \cite{saadIterativeMethodsSparse2003,fletcherFunctionMinimizationConjugate1964,hestenesMethodsConjugateGradients1952}.
 
-CG generates a sequence of search directions $\{D^{(k)}\}$ that are $H$-conjugate, i.e.\ $\langle D^{(i)}, H D^{(j)}\rangle_F = 0$ for $i \neq j$. Starting from the initial search direction $D^{(0)} = -G^{(0)}$, each step computes an optimal step size
+CG generates a sequence of search directions $\{D^{(i)}\}$ that are $H$-conjugate, i.e.\ $\langle D^{(i)}, H D^{(j)}\rangle_F = 0$ for $i \neq j$. Starting from the initial search direction $D^{(0)} = -G^{(0)}$, each step computes an optimal step size
 \begin{equation*}
-    \alpha_k = \frac{\|G^{(k)}\|_F^2}{\langle D^{(k)},\, H D^{(k)}\rangle_F},
+    \alpha_k = \frac{\|G^{(i)}\|_F^2}{\langle D^{(i)},\, H D^{(i)}\rangle_F},
 \end{equation*}
 and updates the search direction by the Fletcher-Reeves rule \cite{fletcherFunctionMinimizationConjugate1964},
-\begin{equation*}
-    D^{(k+1)} = -G^{(k+1)} + \beta_k D^{(k)},
+\begin{equation}\label{eq:fletcher-reeves}
+    D^{(i+1)} = -G^{(i+1)} + \beta_i D^{(i)},
     \qquad
-    \beta_k = \frac{\|G^{(k+1)}\|_F^2}{\|G^{(k)}\|_F^2}.
+    \beta_i = \frac{\|G^{(i+1)}\|_F^2}{\|G^{(i)}\|_F^2}.
+\end{equation}
+
+In our low-rank setting, we propose replacing the descent directions used in the method of Schotthöfer et al. (Algorithm~\ref{alg:DLRA-CG}) with $H$-conjugate search directions $\{D^{(i)}\}$ obtained via the CG method. The motivation is that $H$-conjugate directions exploit curvature information of $H$, leading to faster convergence. The full scheme is given in Algorithm~\ref{alg:DLRA-CG}, which we refer to as DLRA-CG throughout.
+\input{algorithms/DLRA-CG.tex}
+
+
+\subsubsection{Restarted CG}\label{sec:restarted_cg}
+During the construction of $H$-conjugate search directions $\{D^{(i)}\}$, numerical round-off errors accumulate, so that 
+\begin{equation*}
+    \langle D^{(i)},\, HD^{(j)} \rangle_F = 0, \quad i \neq j,
 \end{equation*}
+will not be exactly satisfied \cite{hestenesMethodsConjugateGradients1952}. As $|i - j|$ increases, the violation of $H$-conjugacy may grow, so that the final iterate $X^{(i)}$ is not a satisfactory approximation of the solution \cite{hestenesMethodsConjugateGradients1952}. For the DLRA-CG scheme, the loss of $H$-conjugacy is accelerated by the truncation step: the update in Equation~\eqref{eq:fletcher-reeves} is derived under the assumption that $X^{(i+1)} = X^{(i)} + \alpha_i D^{(i)}$, which is not generally true after truncation.
 
-In our low-rank setting, we propose replacing the descent directions used in the method of Schotthöfer et al. with $H$-conjugate search directions $\{D^{(k)}\}$ obtained via the CG method. The motivation is that $H$-conjugate directions exploit curvature information of $H$, leading to faster convergence. The full scheme is given in Algorithm~\ref{alg:dlr-cg}.
-
-We note that the ``Dynamical low-rank update'' part of Algorithm~\ref{alg:dlr-cg} is equivalent to Schotthöfer et al.'s method, with the search direction replaced. The $\operatorname{truncate}$-function is the rank-adaptive step of the algorithm, and takes in arguments \texttt{tol} and \texttt{max\_rank}.
-
-\input{algorithms/dlr-cg.tex}
+Restarted CG \cite{powellRestartProceduresConjugate1977} addresses this by recomputing the true gradient
+$G^{(i)} = \nabla\Phi(X^{(i)})$ and resetting the search direction to $D^{(i)} = -G^{(i)}$ every $N_r$ iterations, discarding the accumulated search directions that have lost $H$-conjugacy. In Algorithm~\ref{alg:DLRA-CG}, this replaces the recurrence $G^{(i+1)} = G^{(i)} + \alpha_i HD^{(i)}$ with a fresh gradient evaluation $G^{(i+1)} = \nabla\Phi(X^{(i+1)})$, and sets $D^{(i+1)} = -G^{(i+1)}$, discarding the $\beta_i$ step.
 
 
-\subsection{Dynamical low-rank preconditioned CG scheme}
+\subsection{DLRA using preconditioned CG}
 Preconditioning is a standard technique for accelerating CG methods, referred to as preconditioned CG (PCG). The system $H x = y$ is replaced by the equivalent system $P^{-1} H x = P^{-1} y$, where $P \approx H$ is the preconditioner matrix. The convergence of CG depends on $\kappa(H)$ (see Sec.~6.11.3 in Saad) \cite{saadIterativeMethodsSparse2003}, so $P$ is chosen such that $\kappa(P^{-1} H) \ll \kappa(H)$. For elliptic PDE-based forward operators $K$, the Hessian $H = K^T M_\partial K + \lambda^2 W^T M W$ typically has a large condition number, making preconditioning effective.
 
-In the dynamical low-rank CG scheme, the preconditioned system $P^{-1} H x = P^{-1} y$ leads to the following adjustments in Algorithm \ref{alg:dlr-cg}:
+In the DLRA-CG scheme, the preconditioned system $P^{-1} H x = P^{-1} y$ leads to the following adjustments in Algorithm \ref{alg:DLRA-CG}:
 \begin{equation*}
-    \alpha_k = \frac
-    {\langle G_k, Z_k \rangle_F}
-    {\langle D_k, H D_k \rangle_F}, \qquad
-    \beta_k = \frac
-    {\langle G_{k+1}, Z_{k+1} \rangle_F}
-    {\langle G_k, Z_k \rangle_F}, \qquad
-    D_{k+1} = -Z_{k+1} + \beta_k D_k
+    \alpha_i = \frac
+    {\langle G^{(i)}, Z^{(i)} \rangle_F}
+    {\langle D^{(i)}, H D^{(i)} \rangle_F}, \quad
+    \beta_i = \frac
+    {\langle G^{(i+1)}, Z^{(i+1)} \rangle_F}
+    {\langle G^{(i)}, Z^{(i)} \rangle_F}, \quad
+    D^{(i+1)} = -Z^{(i+1)} + \beta_i D^{(i)}.
 \end{equation*}
-These modifications are equivalent to standard preconditioned conjugate gradient, as originally described by Concus et al. \cite{concusGeneralizedConjugateGradient1976}. The resulting dynamical low-rank PCG scheme is summarized in Algorithm \ref{alg:dlr-pcg}.
-\nomenclature[H]{$\Phi(X)$}{Cost function}
-\nomenclature[H]{$H$}{Hessian of $\Phi(X)$}
+These modifications are equivalent to standard preconditioned conjugate gradient, as originally described by Concus et al. \cite{concusGeneralizedConjugateGradient1976}. The resulting scheme summarized in Algorithm \ref{alg:DLRA-PCG}, which we refer to as DLRA-PCG.
+\nomenclature[H]{$\Phi$}{Objective function}
+\nomenclature[H]{$H$}{Hessian of $\Phi$}
 \nomenclature[H]{$P$}{Preconditioner matrix}
-\input{algorithms/dlr-pcg.tex}
+\input{algorithms/DLRA-PCG.tex}
 
 
-\subsection{Choice of preconditioner}
+\subsubsection{Choice of preconditioner}
 The effectiveness of PCG depends on the choice of $P$. A good preconditioner must approximate $H$ well, but must be cheap to apply at each iteration. We consider three common preconditioners: Jacobi scaling, incomplete Cholesky (IC), and (sparse) Cholesky. Since $H =  K^T M_\partial K + \lambda^2 W^T M W$ has a sparse plus low-rank structure, the Cholesky-based preconditioners are modified using the Woodbury formula to exploit this \cite{woodbury1950inverting}. We refer to Golub and Van Loan for a comprehensive treatment of preconditioning and iterative methods \cite{golubMatrixComputations4th2013}.
 
 \paragraph{Jacobi scaling.} A Jacobi preconditioner $P = \operatorname{diag}(H)$ approximates $H$ by its diagonal. The approximation is cheap to compute, as $P^{-1}$ is the inverse of a diagonal matrix. It is most effective when $H$ is diagonally dominant.

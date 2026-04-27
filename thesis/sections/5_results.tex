@@ -33,7 +33,7 @@ The computational times $t_{\text{rSVD}}$ for target ranks $10$, $25$ and $50$ s
 For the mesh sizes used in the remaining experiments \textcolor{red}{[TODO: which sections?]}, $N$ is approximately chosen between 1000 and 4000, making Algorithm~\ref{alg:discrete_rsvd} approximately $3$ to $30$ times faster than forming $K$ explicitly.
 
 
-\subsubsection{Computational breakdown}
+\subsubsection{Computational breakdown}\label{sec:computational_breakdown}
 \input{figures/rsvd_computational_breakdown.tex}
 \input{tables/rsvd_computational_breakdown.tex}
 Figure~\ref{fig:rsvd_computational_breakdown} shows the median computational time for each stage of Algorithm~\ref{alg:discrete_rsvd} for selected $N$ and increasing $k$, with the relative computational cost shown in the bottom row. The median is taken over 30 runs for $N \le 40{,}000$ and 10 runs for $N = 400{,}000$. The `Setup' stage includes the assembly and factorization of the mass matrices $M$ and $M_\partial$, and the setup of the $K$ and $K^*$ solvers (Section~\ref{sec:initial_matrix_factorizations}). The remaining stages of Algorithm~\ref{alg:discrete_rsvd} are `2. $Y = K\Psi$' (lines 1--6), `3. $QR = Y$' (lines 7--8), `4. $B = Q^T K$' (lines 9--14), and `5. SVD' (lines 15--18). Table~\ref{tab:rsvd_computational_breakdown} shows relative computational time for selected target ranks and mesh sizes.
@@ -93,8 +93,10 @@ As was found in Section~\ref{sec:target_rank_reconstruction}, a target rank of $
 
 
 \subsubsection{Computational time of adjoint operator}
-\input{figures/computational_time_rsvd_adjoint.tex}
-\textcolor{red}{[TODO: In this section, show the difference in computational time of Algorithm~\ref{alg:discrete_rsvd} versus Algorithm~\ref{alg:discrete_rsvd_Kstar}. Also, show the computational breakdown of Algorithm~\ref{alg:discrete_rsvd_Kstar}].}
+\input{tables/computational_time_adjoint.tex}
+Table~\ref{tab:computational_time_adjoint} shows that rSVD on $K^*$ takes approximately 1.3 times longer than rSVD on $K$ for $k = 10$, $1.2$ times longer for $k = 50$, and $1.1$ times longer for $k = 200$, across all reported $N$. When the recovery of the SVD is included ($t_2 / t$), it takes approximately 1.3 times as long across all $k$ and $N$.
+
+For larger $k$, the recovery of the SVD takes up an increasing amount of time, as it involves QR factorizations of an $N_b \times k$ and an $N \times k$ matrix, in addition to an SVD of a $k \times k$ matrix (Section~\ref{sec:reconvering_the_svd}). Additionally, as $k$ goes to $200$, the ratio $t_1 / t$ gets closer to 1.0, as an increasing amount of the time of Algorithm~\ref{alg:discrete_rsvd} goes to the SVD step (Section~\ref{sec:computational_breakdown}).
 
 
 \subsubsection{Reconstruction error using the adjoint operator}
@@ -122,15 +124,22 @@ At their respective optimal ranks, rSVD and tSVD give nearly identical Euclidean
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Dynamical Low-Rank (Preconditioned) Conjugate Gradient Part 
+% Dynamical Low-Rank Approximation using (Preconditioned) Conjugate Gradient Part 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Dynamical low-rank CG}
+\subsection{Dynamical low-rank approximation solvers}
+All experiments in this section use Problem~I unless stated otherwise. We write $X^* \in \mathbb{R}^{n \times n}$ for the matrix form of the true source, i.e.\ $x^* = \operatorname{vec}(X^*)$, and $N_r$ for the restart period of restarted DLRA-CG (Section~\ref{sec:restarted_cg}).
+
+
 \subsubsection{Rate of convergence}
 \input{figures/number_of_iterations.tex}
-% Computational speed and iteration count. Lead with the main result: iteration curves and wall-clock time, DLR-CG vs. DLRA, across the three test problems. This is the headline claim — open with it
-\textcolor{red}{[TODO: In this section, show how typical DLRA has convergence problems, but DLRA-CG does not show such issues. Show some low-rank solutions obtained via both solutions]}
+\input{tables/convergence_iterations.tex}
+Figure~\ref{fig:number_of_iterations} compares the reconstruction error per iteration for three DLRA step-size rules and DLRA-CG, with and without restarting. The right panel shows the effect of the restart period $N_r$ on the convergence of DLRA-CG.
 
-% Stability as a downstream benefit. Now that you've shown DLR-CG converges in far fewer iterations, note that this also means cases where DLRA stalls or drifts reach a good solution reliably under DLR-CG. A single illustrative example (DLRA struggling vs. DLR-CG converging cleanly on the same problem) lets the reader see the consequence without making it the main claim.
+DLRA-CG reaches the lowest error fastest but then rises, a consequence of the loss of $H$-conjugacy described in Section~\ref{sec:restarted_cg}. Restarted DLRA-CG avoids this rise and reaches the minimum error faster than all three DLRA step-size rules, at the cost of a slower initial convergence than DLRA-CG without restarting.
+
+When $N_r$ is chosen lower for restarted DLRA-CG, the convergence rate reduces, but the algorithm converges to lower error solutions. If $N_r$ is chosen too high, the semi-convergent behavior is seen again, approaching the behavior of DLRA-CG without restarting ($N_r = \infty$).
+
+A smaller $N_r$ slows convergence but drives the error lower, and for larger $N_r$, the semiconvergent behavior of DLRA-CG re-appears. Table~\ref{tab:convergence_iterations} shows the iteration count to reach selected error thresholds. DLRA-CG reaches a relative error of $0.86$ in 20 iterations, restarted DLRA-CG takes 37, and steepest descent takes 843. Neither DLRA-CG nor restarted DLRA-CG reaches a relative error of $0.85$, and further iterations do not reduce the error. A smaller $N_r$ achieves a lower minimum error.
 
 
 \subsubsection{Accuracy of the low-rank solution}

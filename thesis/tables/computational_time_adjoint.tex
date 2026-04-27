@@ -1,0 +1,23 @@
+\begin{table}[htbp]
+\centering
+\begin{tabular}{c cc cc cc}
+\toprule
+    & \multicolumn{2}{c}{$k = 10$}
+    & \multicolumn{2}{c}{$k = 50$}
+    & \multicolumn{2}{c}{$k = 200$} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(lr){6-7}
+    $N$ & $t_1 / t$ & $t_2 / t$ & $t_1 / t$ & $t_2 / t$ & $t_1 / t$ & $t_2 / t$ \\
+\midrule
+    4000   & 1.29 & 1.30 & 1.22 & 1.31 & 1.12 & 1.31 \\
+    28000  & 1.25 & 1.26 & 1.24 & 1.32 & 1.09 & 1.31 \\
+    52000  & 1.31 & 1.33 & 1.24 & 1.35 & 1.08 & 1.30 \\
+    76000  & 1.29 & 1.30 & 1.24 & 1.36 & 1.09 & 1.32 \\
+    100000 & 1.29 & 1.30 & 1.22 & 1.35 & 1.09 & 1.32 \\
+\bottomrule
+\end{tabular}
+\caption{Relative computational time compared to rSVD on $K$ (time $t$) for selected $k$ and $N$. Two relative times are reported: $t_1 / t$, where $t_1$ is the time for rSVD on $K^*$ alone (Algorithm~\ref{alg:discrete_rsvd_Kstar}), and $t_2 / t$, where $t_2$ includes the recovery of the SVD of $K$ from the SVD of $K^*$ (Section~\ref{sec:reconvering_the_svd}). Values are medians over 50 runs.}
+\label{tab:computational_time_adjoint}
+\end{table}
+
+
+

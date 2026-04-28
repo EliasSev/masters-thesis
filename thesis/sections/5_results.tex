@@ -122,26 +122,32 @@ At their respective optimal ranks, rSVD and tSVD give nearly identical Euclidean
 % Dynamical Low-Rank Approximation using (Preconditioned) Conjugate Gradient Part 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Dynamical low-rank approximation solvers}
-All experiments in this section use Problem~I unless stated otherwise. We write $X^* \in \mathbb{R}^{n \times n}$ for the matrix form of the true source, i.e.\ $x^* = \operatorname{vec}(X^*)$, and $N_r$ for the restart period of restarted DLRA-CG (Section~\ref{sec:restarted_cg}).
+Unless stated otherwise, all experiments use a rank-$50$ rSVD approximation of $K$ and $W$ (Algorithm~\ref{alg:discrete_rsvd}, $p = 5$, standard Gaussian test vectors $\psi_i$) to form $\Phi$, its gradient, and its Hessian (Section~\ref{sec:application_to_inverse_problem}), on which Algorithm~\ref{alg:DLRA-CG} is applied to find a low-rank solution.
+
+We write $X^* \in \mathbb{R}^{n \times n}$ for the matrix form of the true source, i.e., $x^* = \operatorname{vec}(X^*)$, and $N_r$ for the restart period of restarted DLRA-CG (Section~\ref{sec:restarted_cg}).
 
 
 \subsubsection{Rate of convergence}
 \input{figures/number_of_iterations.tex}
 \input{tables/convergence_iterations.tex}
-Figure~\ref{fig:number_of_iterations} compares the reconstruction error per iteration for three DLRA step-size rules and DLRA-CG, with and without restarting. The right panel shows the effect of the restart period $N_r$ on the convergence of DLRA-CG.
+Figure~\ref{fig:number_of_iterations} compares the reconstruction error per iteration for three DLRA step-size rules (Algorithm~\ref{alg:dlra}) and DLRA-CG (Algorithm~\ref{alg:DLRA-CG}), with and without restarting. The right panel shows the effect of the restart period $N_r$ on the convergence of DLRA-CG.
 
-DLRA-CG reaches the lowest error fastest but then rises, a consequence of the loss of $H$-conjugacy described in Section~\ref{sec:restarted_cg}. Restarted DLRA-CG avoids this rise and reaches the minimum error faster than all three DLRA step-size rules, at the cost of a slower initial convergence than DLRA-CG without restarting.
+DLRA-CG reaches the lowest error fastest but then rises, a consequence of the loss of $H$-conjugacy described in Section~\ref{sec:restarted_cg}, illustrating a form of semi-convergence. Restarted DLRA-CG (with $N_r = 10$) avoids this rise, at the cost of slower convergence, but convergences faster than the three DLRA step-size rules, which all fail to converge within $25{,}000$ iterations (and the Adam rule gets stuck).
 
-When $N_r$ is chosen lower for restarted DLRA-CG, the convergence rate reduces, but the algorithm converges to lower error solutions. If $N_r$ is chosen too high, the semi-convergent behavior is seen again, approaching the behavior of DLRA-CG without restarting ($N_r = \infty$).
-
-A smaller $N_r$ slows convergence but drives the error lower, and for larger $N_r$, the semiconvergent behavior of DLRA-CG re-appears. Table~\ref{tab:convergence_iterations} shows the iteration count to reach selected error thresholds. DLRA-CG reaches a relative error of $0.86$ in 20 iterations, restarted DLRA-CG takes 37, and steepest descent takes 843. Neither DLRA-CG nor restarted DLRA-CG reaches a relative error of $0.85$, and further iterations do not reduce the error. A smaller $N_r$ achieves a lower minimum error.
+A smaller $N_r$ slows convergence but drives the error lower, and for larger $N_r$, the semi-convergent behavior of DLRA-CG re-appears. Table~\ref{tab:convergence_iterations} shows the iteration count to reach selected error thresholds. DLRA-CG reaches a relative error of $0.9$ in 49 iterations, and restarted DLRA-CG takes 36 iterations. The step-size rules Adam, fixed, and steepest descent reaches this threshold in 1757, 21532, and 1532 iterations. To reach a threshold of $0.75$, it takes DLRA-CG without and with restarting 100 and 160 iterations respectively, the three other methods fail to reach this error within the iteration budget of $25{,}000$. Only restarted DLRA-CG reaches the relative error threshold of $0.70$.
 
 
-\subsubsection{Accuracy of the low-rank solution}
-\textcolor{red}{[TODO: In this section, compare the error using a low-rank solution $X_r$ versus the full-rank solution $X$ (weighted Tikhonov solutions, $K$ and $W$ obtained via rSVD.)]}
+\subsubsection{Quality of the low-rank solution}
+\input{figures/low_rank_convergence.tex}
+DLRA-CG shows semi-convergence: the iterates initially approach the true source, but start to drift away from the optimal solution when $H$-conjugacy is lost (Section~\ref{sec:restarted_cg}). Figure~\ref{fig:low_rank_convergence} shows the difference between the minimum reconstruction iterate and the converged iterate. In both Problems I and II, the positions of the sources are slightly shifted away from the boundary for the converged solutions (right panels), while the optimal iterate is correctly located (middle panels). In both Problems I and II, the late-stage iterate (right panels) shows a slight inward shift of the source positions, while the minimum-error iterate (middle panels) correctly reproduces the source locations. The early iterate (left panels) has not yet localized the sources.
 
-% Images: $X_r$ next to $X$ across the three problems.
-% Error metrics across a range of $r$ to show the accuracy–compression trade-off.
+Compared to the full-rank solutions of Section~\ref{sec:target_rank_reconstruction}, which have smoothing pulled toward the interior, the low-rank solutions are more uniformly smoothed with no such tail. For Problem~I, this creates a circular source, and for Problem~II, this results in cleanly separated sources (in Figure~\ref{fig:test_problem_II} they were connected). The low-amplitude noise in the full-rank rSVD solution is replaced by a checker-like pattern of similar amplitude.
+
+
+\input{figures/low_rank_different_r.tex}
+
+
+\subsubsection{Quality improvement using restarted CG}
 
 
 \subsubsection{Effect of different preconditioners}

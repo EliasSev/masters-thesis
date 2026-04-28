@@ -36,7 +36,7 @@ and requires no tuning (Section~8.2 in Chong et al. \cite{chong2023introduction}
 \paragraph{Rank adaption.} In the dynamical low-rank update (KLS) step of Algorithm~\ref{alg:dlra}, the factors $\hat{U}$ and $\hat{V}$ have $2r$ columns and $\hat{\Sigma}$ is of shape $2r \times 2r$. The truncation step (line 10) moves the factors back to a specified maximum rank $r$ \cite{schotthoferLowrankLotteryTickets2022}. The truncation can also be done adaptively via a truncation threshold $\vartheta$, as done by Schotthöfer et al \cite{schotthoferLowrankLotteryTickets2022}. 
 
 
-\subsection{Application to the inverse problem}
+\subsection{Application to the inverse problem}\label{sec:application_to_inverse_problem}
 In many applications, the source $f \in L^2(\Omega)$ in Equation~\eqref{eq:problem} is sparse \cite{elvetunWeightedSparsityRegularization2023}, i.e., of low rank. If $x \in \mathbb{R}^{n^2}$ is some discretization of $f$, reordering $x$ into an $n \times n$ matrix $X = \operatorname{mat}(x)$, we expect that $r = \operatorname{rank}(X)$ is a small number ($r \ll n$). It is therefore natural to consider low-rank methods which can locate such solutions.
 
 In the following sections, we consider the problem of minimizing a quadratic objective function
@@ -76,8 +76,8 @@ During the construction of $H$-conjugate search directions $\{D^{(i)}\}$, numeri
 \end{equation*}
 will not be exactly satisfied \cite{hestenesMethodsConjugateGradients1952}. As $|i - j|$ increases, the violation of $H$-conjugacy may grow, so that the final iterate $X^{(i)}$ is not a satisfactory approximation of the solution \cite{hestenesMethodsConjugateGradients1952}. For the DLRA-CG scheme, the loss of $H$-conjugacy is accelerated by the truncation step: the update in Equation~\eqref{eq:fletcher-reeves} is derived under the assumption that $X^{(i+1)} = X^{(i)} + \alpha_i D^{(i)}$, which is not generally true after truncation.
 
-Restarted CG \cite{powellRestartProceduresConjugate1977} addresses this by recomputing the true gradient
-$G^{(i)} = \nabla\Phi(X^{(i)})$ and resetting the search direction to $D^{(i)} = -G^{(i)}$ every $N_r$ iterations, discarding the accumulated search directions that have lost $H$-conjugacy. In Algorithm~\ref{alg:DLRA-CG}, this replaces the recurrence $G^{(i+1)} = G^{(i)} + \alpha_i HD^{(i)}$ with a fresh gradient evaluation $G^{(i+1)} = \nabla\Phi(X^{(i+1)})$, and sets $D^{(i+1)} = -G^{(i+1)}$, discarding the $\beta_i$ step.
+Restarted CG \cite{powellRestartProceduresConjugate1977} addresses this by re-computing the true gradient
+$G^{(i)} = \nabla\Phi(X^{(i)})$ and resetting the search direction to $D^{(i)} = -G^{(i)}$ every $N_r$ iterations, discarding the previous search directions that have lost $H$-conjugacy. In Algorithm~\ref{alg:DLRA-CG}, this replaces the recurrence $G^{(i+1)} = G^{(i)} + \alpha_i HD^{(i)}$ with a fresh gradient evaluation $G^{(i+1)} = \nabla\Phi(X^{(i+1)})$, and sets $D^{(i+1)} = -G^{(i+1)}$, skipping the $\beta_i$ step.
 
 
 \subsection{DLRA using preconditioned CG}

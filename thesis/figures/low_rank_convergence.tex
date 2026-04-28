@@ -1,0 +1,22 @@
+\begin{figure*}[htbp]
+\centering
+
+\begin{subfigure}{1.0\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{low_rank_convergence_I.png}
+    \caption{Problem I and $r = 1$.}
+    \label{fig:low_rank_convergence_I}
+\end{subfigure}
+
+\vspace{0.5cm}
+
+\begin{subfigure}{1.0\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{low_rank_convergence_II.png}
+    \caption{Problem II and $r = 2$.}
+    \label{fig:low_rank_convergence_II}
+\end{subfigure}
+
+\caption{Iterates $X^{(i)}$ of Algorithm~\ref{alg:DLRA-CG} (no restarting) at three stages of the same run: an early iterate before the error minimum (left), the iterate at minimum reconstruction error (middle), and a converged iterate at which the error has risen above the minimum due to semi-convergence (right). True source outlined in white.}
+\label{fig:low_rank_convergence}
+\end{figure*}

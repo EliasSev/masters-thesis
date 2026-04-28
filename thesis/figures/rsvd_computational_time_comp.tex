@@ -1,5 +1,5 @@
 \begin{figure*}[thbp]
     \centerline{\includegraphics[width=1.0\textwidth]{rsvd_computational_time_comp.png}}
-    \caption{Median computational time of using Algorithm~\ref{alg:discrete_rsvd}, $t_{\text{rSVD}}$, compared to explicitly forming $K$, $t_K$, for increasing $N$. Computing $K$ is infeasible for large $N$, so $t_K$ is omitted from the right plot.}
+    \caption{Computational time of using Algorithm~\ref{alg:discrete_rsvd} ($t_{\text{rSVD}}$), explicitly forming $K$ ($t_K$), and computing the SVD of $K$ ($t_{\text{SVD}}$) for increasing $N$. Forming $K$ and computing its SVD are infeasible for large $N$, so $t_K$ and $t_{\text{SVD}}$ are omitted from the right plot. Median values over 30 runs, measured in seconds.}
     \label{fig:rsvd_computational_time_comp}
 \end{figure*}

@@ -38,26 +38,29 @@ Equation~\eqref{eq:rsvd_cost} also explains the cost breakdown in Figure~\ref{fi
 
 
 \subsection{Difference in approximation quality using the adjoint operator}
-\textcolor{red}{[TODO: redo this sections; it's wrong.]}
-To understand the difference in the reconstruction quality, it is helpful to investigate the structure of $Y = K\Psi$ and $Y' = K^* \Psi'$, which form the sample matrix in Algorithm~\ref{alg:discrete_rsvd} and \ref{alg:discrete_rsvd_Kstar}, respectively. For the sake of simplicity, assume that $K^* = K$, and let $K = U \Sigma V^T$ be the SVD of $K$. The matrix $\tilde \Psi = V^T \Psi$ is a rotation of the random matrix $\Psi$, meaning that $\tilde \Psi$ also is a random matrix. Indeed, the columns of $Y$ are linear combinations of the left singular vectors $u_1, \dots, u_{N_b}$, since
-\begin{equation*}
-    Y = (U\Sigma)\tilde\Psi.
-\end{equation*}
-In a similar manner, the columns of $Y' = K^* \Psi' = (V \Sigma)\tilde\Psi'$ are linear combinations of the right singular values $v_1, \dots, v_{N_b}$.
+\input{figures/true_singular_values.tex}
+The reconstruction error of using rSVD on $K$ gives a small improvement over using rSVD on $K^*$ (Table~\ref{tab:rsvd_adjoint_error}). To understand this, it is helpful to investigate the structure of $Y = K\Psi$ and $Y' = K^* \Psi'$, which form the sample matrix in Algorithm~\ref{alg:discrete_rsvd} and \ref{alg:discrete_rsvd_Kstar}, respectively.
 
-The quality of the approximate SVD of the rSVD is entirely determined by the sampling $Y$ or $Y'$. Since $K$ is of rank $N_b$, we have that
+Let $K = U \Sigma V^T$ be the SVD of $K$, and partition $\Sigma$ as $\Sigma = \operatorname{diag}(\Sigma_1,\, \Sigma_2)$, where $\Sigma_1$ contains the $k + 1$ first values of $K$, and $\Sigma_2$ the remainder. Correspondingly, partition the right singular values as $V = [V_1\,\, V_2]$, and write $K$ as
 \begin{equation*}
-    \operatorname{Col}(K) =
-    \operatorname{span}\{ u_1, \dots, u_{N_b} \},
-    \quad
-    \operatorname{Col}(K)^\perp = \{ 0 \},
+    K = U \begin{bmatrix}
+    \Sigma_1 & \\ & \Sigma_2
+    \end{bmatrix}
+    \begin{bmatrix}
+    V_1^T \\ V_2^T
+    \end{bmatrix}.
 \end{equation*}
-and
+Right-multiplying by $\Psi$ and setting $\Psi_1 = V_1^T \Omega$ and $\Psi_2 = V_2^T \Omega$ gives
 \begin{equation*}
-    \operatorname{Col}(K^T) =
-    \operatorname{span}\{v_1, \dots, v_{N_b}\},
-    \quad
-    \operatorname{Col}(K^T)^\perp =
-    \operatorname{span}\{v_{N_b+1}, \dots, v_N\}.
+    K = U \begin{bmatrix}
+    \Sigma_1 \Psi_1 \\
+    \Sigma_2 \Psi_2
+    \end{bmatrix}.
 \end{equation*}
-By applying rSVD to $K: \mathbb{R}^N \to \mathbb{R}^{N_b}$,
+Intuitively, $\Sigma_1 \Psi_1$ represents the actions of $K$, while $\Sigma_2 \Psi_2$ is the perturbation. When the singular values of $K$ decays rapidly, the perturbation $\Sigma_2 \Psi_2$ remains low, resulting in a good rank-$k$ approximation.
+
+The quality of the random sampling $Y = K\Psi$ and $Y' = K^* \Psi'$ depends on the spectral decay of $K$ and $K^*$, which is shown in Theorem~10.5 in Halko et al. \cite{halkoFindingStructureRandomness2011}. This is confirmed by inspecting the singular values of $K$ and $K^*$, see Figure~\ref{fig:true_singular_values}. By Equation~\eqref{eq:K_star_def}, we have the relation
+\begin{equation*}
+    K^* = M^{-1} K^T M_\partial.
+\end{equation*}
+So, the mass matrices $M$ and $M_\partial$ changes the spectral decay of $K^T$ to a slower kind, making sampling more difficult.

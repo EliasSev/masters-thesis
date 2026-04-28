@@ -1,15 +1,22 @@
 \begin{table}[ht]
 \centering
-\caption{The computational speedup $t_K / t_{\text{rSVD}}$ using Algorithm~\ref{alg:discrete_rsvd} for different $k$ compared to forming $K$, with reference time $t_K$.}
+\caption{Computational time ratios: $t^{(k)}_{\text{rSVD}}$ at $k = 25$ and $k = 50$ relative to $k = 10$, and $(t_K + t_{\text{SVD}})$ relative to $t^{(k)}_{\text{rSVD}}$ for $k = 10, 25, 50$. Medians over 30 runs.
+} 
 \label{tab:rsvd_computational_time_comp}
-\begin{tabular}{c c c c c}
+\begin{tabular}{c c c c c c}
 \toprule
-\textbf{$N$} & $k=10$ & $k=25$ & $k=50$ & $t_{K}$ \\
+    \textbf{$N$} &
+    $\tfrac{t^{(25)}_{\text{rSVD}}}{t^{(10)}_{\text{rSVD}}}$ &
+    $\tfrac{t^{(50)}_{\text{rSVD}}}{t^{(10)}_{\text{rSVD}}}$ & 
+    $\tfrac{t_K + t_{\text{SVD}}}  {t^{(10)}_{\text{rSVD}}}$ &
+    $\tfrac{t_K + t_{\text{SVD}}}  {t^{(25)}_{\text{rSVD}}}$ &
+    $\tfrac{t_K + t_{\text{SVD}}}  {t^{(50)}_{\text{rSVD}}}$ \\
 \midrule
-    1000 & 3.7 & 3.7 & 2.6 & 0.1595 \\
-    5000 & 32.8 & 26.6 & 18.6 & 5.381 \\
-    10000 & 117.9 & 92.1 & 67.6 & 36.1 \\
-    20000 & 479.1 & 377.8 & 276.5 & 260.6 \\
+    1,000   & 0.79 & 1.14 & 4.21  & 5.31  & 3.68 \\
+    25,750  & 1.29 & 1.77 & 11.81 & 9.13  & 6.68 \\
+    50,500  & 1.26 & 1.85 & 16.21 & 12.84 & 8.78 \\
+    75,250  & 1.27 & 1.85 & 21.13 & 16.61 & 11.39 \\
+    100,000 & 1.29 & 1.87 & 25.47 & 19.76 & 13.62 \\
 \bottomrule
 \end{tabular}
 \end{table}

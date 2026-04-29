@@ -2,7 +2,7 @@
 \input{figures/low_rank_manifold.tex}
 Consider the problem of finding a rank-$r$ solution $X$ via the update scheme $X^{(i+1)} = X^{(i)} + \alpha_i D^{(i)}$, where $D^{(i)}$ is a search direction and $\alpha_i > 0$ a step size. Starting from a rank-$r$ matrix $X^{(0)}$, there is in general no guarantee that $D^{(i)}$ preserves low rank, so that $X^{(i)}$ may leave the space $\mathcal{M}_r$ of rank-$r$ matrices after a single step.
 
-One can replace $D^{(i)}$ by its projection onto the tangent space $\mathcal{T}_{X^{(i)}}(\mathcal{M}_r)$. This is the idea behind the Dynamical Low-Rank Approximation (DLRA) of Koch and Lubich \cite{kochDynamicalLowrankApproximation2007}. They proposed, in a continuous-time setting, evolving an approximation on $\mathcal{M}_r$ by projecting the derivative of the matrix onto the tangent space at the current approximation. Using this concept in our discrete setting, we replace $D^{(i)}$ by its tangent-space projection $\mathcal{P}_{X^{(i)}}[D^{(i)}]$, yielding the update
+One can replace $D^{(i)}$ by its projection onto the tangent space $\mathcal{T}_{X^{(i)}}(\mathcal{M}_r)$, a classical concept from Riemannian geometry \cite{docarmoRiemannianGeometry1992,absilOptimizationAlgorithmsMatrix2008}. This is the idea behind the Dynamical Low-Rank Approximation (DLRA) of Koch and Lubich \cite{kochDynamicalLowrankApproximation2007}. They proposed, in a continuous-time setting, evolving an approximation on $\mathcal{M}_r$ by projecting the derivative of the matrix onto the tangent space at the current approximation. Using this concept in our discrete setting, we replace $D^{(i)}$ by its tangent-space projection $\mathcal{P}_{X^{(i)}}[D^{(i)}]$, yielding the update
 \begin{equation*}
     X^{(i+1)} = X^{(i)} 
     + \alpha_i \mathcal{P}_{X^{(i)}}(D^{(i)}).
@@ -13,7 +13,7 @@ $K = U \Sigma V^T$).
 
 However, as pointed out by Koch and Lubich, when $\Sigma_x$ is ill-conditioned, which occurs when $r$ exceeds the effective rank of $X^{(i)}$, the projector $\mathcal{P}_{X^{(i)}}$ suffers from stiffness, leading to very small step sizes and issues with rounding errors.
 
-To address this, Lubich and Oseledets proposed splitting the projector $\mathcal{P}_{X^{(i)}}$ into simpler sub-projections \cite{lubichProjectorsplittingIntegratorDynamical2013}. Crucially, each sub-projection can be evaluated without forming $\Sigma^{-1}$, and avoids the stiffness problem present in the original formulation. In recent years, additional advancements have been made to DLRA, offering improved stability, parallelism, and rank-adaptivity \cite{cerutiUnconventionalRobustIntegrator2020, cerutiRankadaptiveRobustIntegrator2021}.
+To address this, Lubich and Oseledets proposed splitting the projector $\mathcal{P}_{X^{(i)}}$ into simpler sub-projections \cite{lubichProjectorsplittingIntegratorDynamical2013}. Crucially, each sub-projection can be evaluated without forming $\Sigma_x^{-1}$, and avoids the stiffness problem present in the original formulation. In recent years, additional advancements have been made to DLRA, offering improved stability, parallelism, and rank-adaptivity \cite{cerutiUnconventionalRobustIntegrator2020, cerutiRankadaptiveRobustIntegrator2021}.
 
 Historically, DLRA was developed for time-continuous matrix differential equations. Schotthöfer et al. recently proposed a discrete rank-adaptive update scheme based on a robust projector-splitting integrator for training low-rank neural networks \cite{schotthoferLowrankLotteryTickets2022}, see Algorithm~\ref{alg:dlra}. The discrete DLRA scheme used in this work follows their formulation.
 \input{algorithms/DLRA.tex}
@@ -49,6 +49,9 @@ In our discrete case, the minimization problem given in Equation~\eqref{eq:probl
     + \frac{\lambda^2}{2} \| W x \|_M^2.
 \end{equation*}
 Using the product rule, we get the gradient (with respect to $x$) $\nabla \Phi (X) = K^T M_\partial (K x - y) + \lambda^2 W^T M W x$, and the Hessian $H = K^T M_\partial K + \lambda^2 W^T M W$. The terms $K^T M_\partial K$ and $\lambda^2 W^T M W$ are SPD, making the Hessian $H$ SPD too.
+\nomenclature[H]{$\Phi$}{Objective function}%
+\nomenclature[H]{$\nabla\Phi$}{Gradient of $\Phi$}%
+\nomenclature[H]{$H$}{Hessian of $\Phi$}%
 
 
 \subsection{DLRA with conjugate search directions}
@@ -94,9 +97,7 @@ In the DLRA-CG scheme, the preconditioned system $P^{-1} H x = P^{-1} y$ leads t
     D^{(i+1)} = -Z^{(i+1)} + \beta_i D^{(i)}.
 \end{equation*}
 These modifications are equivalent to standard preconditioned conjugate gradient, as originally described by Concus et al. \cite{concusGeneralizedConjugateGradient1976}. The resulting scheme summarized in Algorithm \ref{alg:DLRA-PCG}, which we refer to as DLRA-PCG.
-\nomenclature[H]{$\Phi$}{Objective function}
-\nomenclature[H]{$H$}{Hessian of $\Phi$}
-\nomenclature[H]{$P$}{Preconditioner matrix}
+\nomenclature[H]{$P$}{Preconditioner matrix}%
 \input{algorithms/DLRA-PCG.tex}
 
 

@@ -1,0 +1,22 @@
+\begin{figure*}[htbp]
+\centering
+
+\begin{subfigure}{1.0\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{low_rank_solution_error_I.png}
+    \caption{Problem I.}
+    \label{fig:low_rank_solution_error_I}
+\end{subfigure}
+
+\vspace{0.5cm}
+
+\begin{subfigure}{1.0\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{low_rank_solution_error_II.png}
+    \caption{Problem II.}
+    \label{fig:low_rank_solution_error_II}
+\end{subfigure}
+
+\caption{Reconstruction error vs.\ rSVD target rank $k$: full-rank Tikhonov solutions  (rank-$k$ rSVD approximation of $K$ and $W$, Algorithm~\ref{alg:discrete_rsvd}) and DLRA-CG solutions at ranks $r = 1, 2, 5$ using the same approximation. Exact Tikhonov solution: dashed line. Columns: Euclidean norm (left), EMD (middle), AUC-IoU (right). Mean $\pm 1$ standard deviation over 30 runs.}
+\label{fig:low_rank_solution_error}
+\end{figure*}

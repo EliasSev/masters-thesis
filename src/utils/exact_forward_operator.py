@@ -223,6 +223,30 @@ class ExactForwardOperatorFast:
         rhs = (T_T @ self.M_ds).toarray()     # (N, N_b) dense
         return np.asarray(self.chol_A.solve_A(rhs))
 
+    def get_weights(self, normalize: bool = True, tol: float = 1e-12) -> NDArray:
+        """
+        Get the regularization weights as a 1D array: w = diag(W).
+        """
+        _, s, Vt = np.linalg.svd(self.K, full_matrices=False)
+        r = np.sum(s > (s[0] * tol))  # rank k of K
+
+        Vr = Vt[:r, :].T 
+        
+        # Compute y_i^T * M_dx * y_i for all i
+        # Mathematically: diag(R^T * M_dx * R)
+        # Since R = Vr * Vr^T: diag(Vr * Vr^T * M_dx * Vr * Vr^T)
+        # Let C = Vr^T * M_dx * Vr  (an r x r matrix)
+        # Then w_sq = diag(Vr * C * Vr^T)
+        C = Vr.T @ self.M_dx @ Vr
+        w_sq = np.sum(Vr * (Vr @ C), axis=1)
+        
+        if normalize:
+            volumes = np.array(self.M_dx.sum(axis=1)).flatten()
+            w = np.sqrt(np.maximum(w_sq, 0)) / volumes
+        else:
+            w = w_sq
+        
+        return w
 
 def solve_explicit(operator: ExactForwardOperator, w, y, lambda_):
     # Extract matrices

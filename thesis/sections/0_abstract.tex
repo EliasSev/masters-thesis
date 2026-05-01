@@ -1,0 +1,34 @@
+\abstract{
+% Problem context
+We study source identification as an elliptic PDE-constrained inverse problem, where the forward operator has rapid decay of singular values and a large nullspace, making solutions unstable and non-unique. The use of Tikhonov regularization results in biased solutions, concentrating reconstructions near the boundary of the domain regardless of the true source location. True sources are often sparse, yet Tikhonov yields smooth reconstructions, blending distinct sources into connected regions.
+
+% Gap
+Elvetun and Nielsen correct the bias by applying a regularization operator, but the procedure requires explicit knowledge of the forward operator, making it infeasible at scale. It suffers from the same smoothing issues as the Tikhonov method, making low-rank solutions a more natural approach for sparse sources. Dynamical low-rank approximation (DLRA) provides a robust framework for computing them but converges slowly for ill-posed problems.
+
+% Contribution
+We propose a matrix-free variant of the randomized SVD (rSVD), avoiding explicit construction of the forward operator, and making the weighted Tikhonov approach scalable. We also apply conjugate gradient (CG) within the DLRA framework (DLRA-CG) to accelerate convergence and recover sparse sources.
+
+% Key results
+We apply the matrix-free rSVD approach to previously inaccessible problems with no meaningful loss in reconstruction quality. Using DLRA-CG, we recover low-rank solutions that separate distinct sources more clearly and achieve lower reconstruction error than full-rank weighted Tikhonov. The method converges substantially faster than DLRA.
+
+% Takeaways
+Together, these contributions make large-scale sparse source identification possible, addressing the computational cost of the weighted Tikhonov approach and the tendency of these methods to blur distinct sources.
+}
+
+
+\sammendrag{
+% Problem context
+Vi studerer kildeidentifikasjon som et elliptisk PDE-betinget invers problem, der fremoveroperatoren har raskt avtagende singulærverdier og et stort nullrom, noe som gjør løsninger ustabile og ikke-entydige. Bruk av Tikhonov-regularisering gir forventningsskjeve løsninger som konsentrerer seg nær randen av domenet, uavhengig av den sanne kildeposisjonen. Sanne kilder er ofte lokaliserte, men Tikhonov gir glatte løsninger hvor distinkte kilder blir slått sammen til sammenhengende områder.
+
+% Gap
+Elvetun og Nielsen retter opp skjevheten ved å anvende en regulariseringsoperator, men prosedyren krever eksplisitt kunnskap om fremoveroperatoren, noe som gjør den uegnet for store problemer. Den lider av de samme utglattingsproblemene som Tikhonov-metoden, noe som gjør lavrangs-løsninger til en mer naturlig tilnærming for lokaliserte kilder. Dynamisk lavrangs-approksimasjon (DLRA) gir et robust rammeverk for å finne slike kilder, men konvergerer sakte for dårlig stilte problemer.
+
+% Contribution
+Vi foreslår en matrisfri variant av den randomiserte SVD-en (rSVD) som unngår eksplisitt konstruksjon av fremoveroperatoren og gjør den vektede Tikhonov-tilnærmingen skalerbar. Vi anvender også konjugert gradient (CG) innenfor DLRA-rammeverket (DLRA-CG) for å akselerere konvergensen og gjenvinne separerte kilder.
+
+% Key results
+Den matrisfrie rSVD-tilnærmingen gjør det mulig å løse problemer som tidligere var utenfor rekkevidde, uten betydelig tap i rekonstruksjonskvalitet. DLRA-CG gir lavrangs-løsninger som skiller distinkte kilder tydeligere og oppnår lavere rekonstruksjonsfeil. Metoden konvergerer vesentlig raskere enn DLRA.
+
+% Takeaways
+Samlet sett gjør disse bidragene storskala identifikasjon av distinkte kilder mulig, ved å redusere den beregningsmessige kostnaden til den vektede Tikhonov-tilnærmingen og motvirke tendensen metodene har til å slå sammen distinkte kilder.
+}

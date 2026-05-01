@@ -43,19 +43,26 @@ In the following sections, we consider the problem of minimizing a quadratic obj
 \begin{equation*}
     \Phi(X): \mathbb{R}^{n \times n} \rightarrow \mathbb R.
 \end{equation*}
-In our discrete case, the minimization problem given in Equation~\eqref{eq:problem} translates into minimizing
+In our discrete case, the minimization problem given in Equation~\eqref{eq:discrete_inverse_problem} translates into minimizing
 \begin{equation*}
     \Phi(X) = \frac 1 2 \|Kx - y\|_{M_\partial}^2
     + \frac{\lambda^2}{2} \| W x \|_M^2.
 \end{equation*}
-Using the product rule, we get the gradient (with respect to $x$) $\nabla \Phi (X) = K^T M_\partial (K x - y) + \lambda^2 W^T M W x$, and the Hessian $H = K^T M_\partial K + \lambda^2 W^T M W$. The terms $K^T M_\partial K$ and $\lambda^2 W^T M W$ are SPD, making the Hessian $H$ SPD too.
+Using the product rule, we get the gradient $\nabla \Phi$ and Hessian $H$ of $\Phi$ with respect to $x$,
+\begin{equation*}
+    \begin{aligned}
+    \nabla \Phi (X) &= K^T M_\partial (K x - y) + \lambda^2 W^T M W x, \\
+    H &= K^T M_\partial K + \lambda^2 W^T M W.
+    \end{aligned}
+\end{equation*}
+The Hessian is SPD, since $K^T M_\partial K$ and $\lambda^2 W^T M W$ are SPD. By the optimality condition $\nabla \Phi (X) = 0$, the minimizer of $\Phi$ is the solution of $H x = K^T M_\partial y$, i.e., the normal equations of Equation~\eqref{eq:discrete_inverse_problem}.
 \nomenclature[H]{$\Phi$}{Objective function}%
 \nomenclature[H]{$\nabla\Phi$}{Gradient of $\Phi$}%
 \nomenclature[H]{$H$}{Hessian of $\Phi$}%
 
 
 \subsection{DLRA with conjugate search directions}
-Since $\Phi$ is quadratic with a SPD Hessian $H$, the conjugate gradient (CG) method is a natural minimization strategy \cite{saadIterativeMethodsSparse2003,fletcherFunctionMinimizationConjugate1964,hestenesMethodsConjugateGradients1952}.
+Since $\Phi$ is quadratic with a SPD Hessian $H$, the conjugate gradient (CG) method is a natural minimization strategy \cite{saadIterativeMethodsSparse2003,fletcherFunctionMinimizationConjugate1964,hestenesMethodsConjugateGradients1952}, see Appendix~\ref{appendix:conjugate_gradient_algorithm}.
 
 CG generates a sequence of search directions $\{D^{(i)}\}$ that are $H$-conjugate, i.e.\ $\langle D^{(i)}, H D^{(j)}\rangle_F = 0$ for $i \neq j$. Starting from the initial search direction $D^{(0)} = -G^{(0)}$, each step computes an optimal step size
 \begin{equation*}
@@ -102,20 +109,26 @@ These modifications are equivalent to standard preconditioned conjugate gradient
 
 
 \subsubsection{Choice of preconditioner}
-The effectiveness of PCG depends on the choice of $P$. A good preconditioner must approximate $H$ well, but must be cheap to apply at each iteration. We consider three common preconditioners: Jacobi scaling, incomplete Cholesky (IC), and (sparse) Cholesky. Since $H =  K^T M_\partial K + \lambda^2 W^T M W$ has a sparse plus low-rank structure, the Cholesky-based preconditioners are modified using the Woodbury formula to exploit this \cite{woodbury1950inverting}. We refer to Golub and Van Loan for a comprehensive treatment of preconditioning and iterative methods \cite{golubMatrixComputations4th2013}.
+The effectiveness of PCG depends on the choice of $P$. A good preconditioner must approximate $H$ well, but must be cheap to apply at each iteration. We consider four preconditioners: Jacobi scaling, incomplete Cholesky (IC), IC with a Woodbury correction, and a ``perfect'' preconditioner based on a sparse Cholesky factorisation.
 
-\paragraph{Jacobi scaling.} A Jacobi preconditioner $P = \operatorname{diag}(H)$ approximates $H$ by its diagonal. The approximation is cheap to compute, as $P^{-1}$ is the inverse of a diagonal matrix. It is most effective when $H$ is diagonally dominant.
+\paragraph{Jacobi scaling.} A Jacobi preconditioner $P = \operatorname{diag}(H)$ approximates $H$ by its diagonal (Section~11.5, \cite{golubMatrixComputations4th2013}). The approximation is cheap to compute, as $P^{-1}$ is the inverse of a diagonal matrix. It is most effective when $H$ is diagonally dominant.
  
-\paragraph{Incomplete Cholesky.} For a symmetric positive definite (SPD) matrix $S$, the incomplete Cholesky factorization computes an approximation $S \approx  L L^T$, where $L$ is lower triangular. The Hessian $H = K^T M_\partial K + \lambda^2 W^T M W$ consists of a low-rank part plus a sparse part. We only apply the IC factorization to the sparse part $S = \lambda^2 W^T M W$, yielding $S \approx L L^T$. To account for the low-rank part, we let $K = U \Sigma V^T$ be the SVD of $K$ (which is assumed to be of rank $k$), and define $F = V \Sigma L_U$, where $L_U$ is the Cholesky factor of the $k \times k$ matrix $U^T M_\partial U$ (which is SPD since $M_\partial$ is SPD and $U$ has linearly independent columns). Then, the low-rank part can be written as $F F^T = V \Sigma L_U L_U^T \Sigma V^T = K^T M_\partial K$. By the Woodbury formula,
+\paragraph{Incomplete Cholesky.} Under the assumption that $K$ is of rank $k$ (for example, obtained using Algorithm~\ref{alg:discrete_rsvd}), the Hessian consists of a low-rank plus a sparse term,
 \begin{equation*}
-    (S + FF^T)^{-1} = S^{-1} - 
-    S^{-1} F (I_k + F^T S^{-1} F)^{-1} F^T S^{-1}.
+    H = \underbrace{K^T M_\partial K}_{\text{low-rank}}
+    + \underbrace{\lambda^2 W^T M W}_{\text{sparse}}
+    = F + S.
 \end{equation*}
-Replacing $S^{-1}$ with the approximate inverse $L^{-T} L^{-1}$ yields the preconditioner
-\begin{equation*}
-    P^{-1} = L^{-T} L^{-1} -
-    L^{-T} (L^{-1} F) C^{-1} (L^{-1} F)^T L^{-1},
-\end{equation*}
-where $C = I_k + (L^{-1} F)^T(L^{-1} F)$ is a $k \times k$ SPD matrix.
+To see why, we can insert the rank-$k$ SVD of $K$ into $F = K^T M_\partial K$ to get $V \Sigma U^T M_\partial U \Sigma V^T$. Since $U^T M_\partial U \in \mathbb{R}^{k \times k}$ is SPD, it has full rank $k$, and hence $F$ has rank $k$. The term $S = \lambda^2 W^T M W$ is sparse since it is just a scaling of $M$, which itself is sparse.
 
-\paragraph{Sparse Cholesky.} The sparse Cholesky preconditioner follows the same Woodbury construction as the incomplete Cholesky preconditioner, but replaces the approximate factorization of $S$ with the exact sparse Cholesky factorization $S = LL^T$. Since the Woodbury formula then gives $P^{-1} = H^{-1}$, this is equivalent to solving $H x = y$ directly \textcolor{red}{(wrong)}, and CG converges in a single iteration. However, the setup is more expensive compared to incomplete Cholesky.
+Since $S$ is SPD, it can effectively be approximated using an incomplete Cholesky factorization $S \approx L L^T$, where $L$ is lower-triangular (Section~11.5, \cite{golubMatrixComputations4th2013}). The preconditioner can then be set as $P^{-1} = L^{-T} L^{-1}$. This preconditioner works well when the sparse part approximates the Hessian well ($H \approx S$).
+
+\paragraph{IC with Woodbury correction.}
+To account for the low-rank part of $H$, we can use the Woodbury formula \cite{woodbury1950inverting} as a correction. Using the SVD of $K$, we write $F = (V \Sigma) U^T M_\partial U (V \Sigma)^T = \tilde V C \tilde V^T$ where $\tilde V = V \Sigma$ and $C = U^T M_\partial U$. By the Woodbury formula,
+\begin{equation*}
+    (S + \tilde{V} C \tilde{V}^T)^{-1} =
+    S^{-1} - S^{-1}\tilde{V}(C^{-1} + \tilde{V}^T S^{-1} \tilde{V})^{-1}\tilde{V}^T S^{-1}.
+\end{equation*}
+Replacing $S$ with an incomplete Cholesky factorization $L L^T$ gives the preconditioner.
+
+\paragraph{Perfect preconditioner.} If we replace the incomplete Cholesky factorization $L L^T$ with an exact sparse Cholesky factorization of $S$, we obtain a ``perfect'' preconditioner with $P^{-1} = H^{-1}$. Applying this is equivalent to solving $H x = K^T M_\partial y$ directly. For standard PCG, this would be equivalent to solving the normal equations $Hx = K^T M_\partial y$ directly in a single iteration. In the DLRA-PCG setting, however, a truncation is performed at each iteration, so convergence in a single step is not guaranteed.

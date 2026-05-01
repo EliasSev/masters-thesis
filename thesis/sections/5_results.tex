@@ -154,7 +154,7 @@ Figure~\ref{fig:low_rank_different_r} shows DLRA-CG solutions for Problems~I and
 
 Figure~\ref{fig:low_rank_solution_error} shows that for Problem~I, the rank 1 DLRA-CG solution achieves lower Euclidean and AUC-IoU error than the full rank rSVD solution. For EMD, the full-rank solution is better, possibly because the focused distribution of the rank-1 solution differs more from the flat true source than the smoother full-rank reconstruction. For ProblemII, the rank-2 solution outperforms rank-1, rank-5, and full-rank solutions across all metrics for $k > 10$. Reconstructions of rank 5 achieves approximately the same error as full-rank rSVD reconstructions.
 
-As shown in Section~\ref{sec:target_rank_reconstruction}, full-rank rSVD solutions approach but do not outperform the exact Tikhonov solution in the range $k \in [5,\,100]$ (Figure~\ref{fig:rsvd_over_k_II}). The low-rank solutions do: for Problem~I, the rank-1 solution achieves lower Euclidean and AUC-IoU error than the exact Tikhonov solution, and for ProblemII, the rank-2 solution outperforms it across all metrics \textcolor{red}{[TODO: at which $k$ does this happen?]}.
+As shown in Section~\ref{sec:target_rank_reconstruction}, full-rank rSVD solutions approach but do not outperform the exact Tikhonov solution in the range $k \in [5,\,100]$ (Figure~\ref{fig:rsvd_over_k_II}). The low-rank solutions do: for Problem~I, the rank-1 solution achieves lower Euclidean and AUC-IoU error than the exact Tikhonov solution, and for Problem~II, the rank-2 solution outperforms it across all metrics \textcolor{red}{[TODO: at which $k$ does this happen?]}.
 
 
 \subsubsection{Effect of different preconditioners}

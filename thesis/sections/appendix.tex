@@ -213,3 +213,48 @@ where
     (\sigma \nabla w \cdot \nabla u + c w u)\, dx.
 \end{equation*}
 This is the variational formulation of Equation~\eqref{eq:variational_formulation_adjoint} with $u := v$.
+
+
+\subsection{Conjugate gradient algorithm}\label{appendix:conjugate_gradient_algorithm}
+Consider the quadratic function $f(x) = \tfrac 1 2 x^T A x - y^T x$ where $A$ is SPD, which has the gradient $\nabla f(x) = A x - y$. By the optimality condition $\nabla f(x) = 0$, the minimum of the function is the solution of $A x = y$.
+
+Consider the update rule $x_{k+1} = x_k + \alpha_k d_k$, where $\alpha_k$ is a step-size and $d_k$ some search direction. The optimal $\alpha_k$ is the minimizer of  the function $h(\alpha) = f(x_{k} + \alpha d_k)$. And, setting $h'(\alpha) = 0$ yields the step-size
+\begin{equation*}
+    \alpha_k = \frac{r_k^Tr_k}{d_k^TAd_k}, \quad r_k = y - Ax_k.
+\end{equation*}
+Choosing $d_k = -\nabla f(x_k)$ gives the steepest descent method \cite{chong2023introduction}. However, if the condition number of $A$ is high, then the contours of $f$ gets stretched out, giving an elliptic landscape. Using the steepest descent rule, we have that $d_{k+1}^T d_k = 0$ \cite{chong2023introduction}, so the search directions will zig-zag across the landscape.
+
+Instead, if we seek search directions that are $A$-orthogonal, $d_{k+1}^T A d_k = 0$, we are moving within a transformed landscape where the contours of $f$ are perfectly circular. Choosing $d_{k+1}$ as a linear combination of $-\nabla f(x_{k+1}) = r_{k+1}$ and the previous direction $d_k$,
+\begin{equation*}
+    d_{k+1} = r_{k+1} + \beta_k d_k,
+\end{equation*}
+enforcing $d_{k+1}^T A d_k = 0$,
+\begin{equation*}
+    (r_{k+1} + \beta_k)^T A d_k = 0,
+\end{equation*}
+and solving for $\beta_k$, leads to
+\begin{equation*}
+    \beta_k = -
+    \frac{r_{k+1}^T A d_k}
+	     {d_k^T A d_k}.
+\end{equation*}
+This is the conjugate gradient algorithm \cite{chong2023introduction}.
+
+The $A$-term in the formula of $\beta_k$ can be computationally expensive to compute if $f$ is non-linear \cite{chong2023introduction}. The formula of $\beta_k$ can be rewritten without $A$ to obtain the Fletcher-Reeves formula \cite{fletcherFunctionMinimizationConjugate1964},
+\begin{equation*}
+    \beta_k =
+    \frac{r_{k+1}^T r_{k+1}}
+	     {r_k^T r_k}.
+\end{equation*}
+Alternatively, the Hestenes–Stiefel formula \cite{hestenesMethodsConjugateGradients1952} computes $\beta_k$ as
+\begin{equation*}
+    \beta_k = 
+    \frac{r_{k+1}^T (r_{k+1} - r_k)}
+	     {d_k^T(r_{k+1} - r_k)}.
+\end{equation*}
+Another well-known modification is the Polak–Ribière formula,
+\begin{equation*}
+    \beta_k = 
+    \frac{r_{k+1}^T(r_{k+1} - r_k)}
+         {r_k^T r_k}.
+\end{equation*}

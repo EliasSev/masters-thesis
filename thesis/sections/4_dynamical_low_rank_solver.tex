@@ -109,7 +109,7 @@ These modifications are equivalent to standard preconditioned conjugate gradient
 
 
 \subsubsection{Choice of preconditioner}
-The effectiveness of PCG depends on the choice of $P$. A good preconditioner must approximate $H$ well, but must be cheap to apply at each iteration. We consider four preconditioners: Jacobi scaling, incomplete Cholesky (IC), IC with a Woodbury correction, and a ``perfect'' preconditioner based on a sparse Cholesky factorisation.
+The effectiveness of PCG depends on the choice of $P$. A good preconditioner must approximate $H$ well, but must be cheap to apply at each iteration. We consider four preconditioners: Jacobi scaling, incomplete Cholesky (IC), IC with a Woodbury correction, and a ``perfect'' preconditioner based on a sparse Cholesky factorization.
 
 \paragraph{Jacobi scaling.} A Jacobi preconditioner $P = \operatorname{diag}(H)$ approximates $H$ by its diagonal (Section~11.5, \cite{golubMatrixComputations4th2013}). The approximation is cheap to compute, as $P^{-1}$ is the inverse of a diagonal matrix. It is most effective when $H$ is diagonally dominant.
  
@@ -131,4 +131,4 @@ To account for the low-rank part of $H$, we can use the Woodbury formula \cite{w
 \end{equation*}
 Replacing $S$ with an incomplete Cholesky factorization $L L^T$ gives the preconditioner.
 
-\paragraph{Perfect preconditioner.} If we replace the incomplete Cholesky factorization $L L^T$ with an exact sparse Cholesky factorization of $S$, we obtain a ``perfect'' preconditioner with $P^{-1} = H^{-1}$. Applying this is equivalent to solving $H x = K^T M_\partial y$ directly. For standard PCG, this would be equivalent to solving the normal equations $Hx = K^T M_\partial y$ directly in a single iteration. In the DLRA-PCG setting, however, a truncation is performed at each iteration, so convergence in a single step is not guaranteed.
+\paragraph{Perfect preconditioner.} If we replace the incomplete Cholesky factorization $L L^T$ with an exact sparse Cholesky factorization of $S$, we obtain a ``perfect'' preconditioner with $P^{-1} = H^{-1}$. For standard PCG, this would be equivalent to solving the normal equations $Hx = K^T M_\partial y$ directly in a single iteration. In the DLRA-PCG setting, however, a truncation is performed at each iteration, so convergence in a single step is not guaranteed.

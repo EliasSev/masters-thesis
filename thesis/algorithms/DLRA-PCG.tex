@@ -3,9 +3,9 @@
 \label{alg:DLRA-PCG}
 \begin{algorithmic}[1]
 
-\Require Hessian $H$, initial matrix $X^{(0)}$ with SVD $X^{(0)} = U_x \Sigma_x V_x^T$, preconditioner $P^{-1}$
+\Require Hessian $H$, initial matrix $X^{(0)}$ with SVD $X^{(0)} = U_x \Sigma_x V_x^T$, solution rank $r$, preconditioner $P^{-1}$
 
-\Ensure Low-rank solution $x = \operatorname{vec}(X)$
+\Ensure Rank-$r$ solution $x = \operatorname{vec}(X)$
 
 \State Compute initial gradient $G^{(0)} = \nabla \Phi(X^{(0)})$
 \State Precondition $Z^{(0)} = P^{-1} G^{(0)}$
@@ -27,12 +27,12 @@
     \State $\hat U = \operatorname{orth}([U_x, K'])$
     \State $\hat V = \operatorname{orth}([V_x, L'])$
     \State $\hat \Sigma = (\hat U^T U_x)\Sigma_x(V_x^T \hat V) + \alpha_i (\hat U^T D^{(i)} \hat V)$
-    \State $(U_x, \Sigma_x, V_x) = \operatorname{truncate}(\hat U, \hat \Sigma, \hat V)$
-    \Comment{$X^{(i)} = U_x \Sigma_x V_x^T$}
+    \State $(U_x, \Sigma_x, V_x) = \operatorname{truncate}_r(\hat U, \hat \Sigma, \hat V)$
+    \Comment{$X^{(i+1)} = U_x \Sigma_x V_x^T$}
 
     \State \textbf{Search direction update:}
     \State $G^{(i+1)} = G^{(i)} + \alpha_i H D^{(i)}$
-    \Comment{or $G^{(i+1)} = \nabla \Phi(X^{(i)})$ }
+    %\Comment{or $G^{(i+1)} = \nabla \Phi(X^{(i)})$ }
     \State $Z^{(i+1)} = P^{-1} G^{(i+1)}$
     \State $\displaystyle \beta_i =
     \frac{\langle G^{(i+1)}, Z^{(i+1)} \rangle_F}

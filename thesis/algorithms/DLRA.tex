@@ -3,9 +3,9 @@
 \label{alg:dlra}
 \begin{algorithmic}[1]
 
-\Require Initial matrix $X^{(0)} = U_x \Sigma_x V_x^T$, max rank $r$, step-size rule $\{\alpha_i\}$
+\Require Initial matrix $X^{(0)} = U_x \Sigma_x V_x^T$, solution rank $r$, step-size rule $\{\alpha_i\}$
 
-\Ensure Low-rank solution $x = \operatorname{vec}(X)$
+\Ensure Rank-$r$ solution $x = \operatorname{vec}(X)$
 
 \For{$i = 0,1,2,\dots,\text{max\_iter}$}
 

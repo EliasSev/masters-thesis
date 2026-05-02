@@ -1,1 +1,24 @@
 \section{Conclusion}
+% Restatement
+We studied a source identification problem with an elliptic PDE-constrained forward operator which suffers from rapid decay of singular values and a large nullspace, leading to ill-posedness. Standard Tikhonov regularization gives biased solutions concentrated near the domain boundary, and smooths solutions such that distinct sources blur together.
+
+% Contribution
+We introduced a matrix-free rSVD approach that computes a rank-$k$ approximation to the SVD of the forward operator, avoiding explicit formation, and making Elvetun and Nielsen's weighted Tikhonov approach applicable at large scale. We also introduced the DLRA-CG method to accelerate the convergence of DLRA and efficiently recover sparse sources.
+
+% Key results [TODO: replace X and Y]
+The matrix-free rSVD solved previously computationally infeasible problems without meaningful loss in reconstruction quality. For the problems studied, a target rank of approximately $50$ sufficed, independent of the mesh size $N$. On noisy data, the target rank acted as additional regularization, yielding comparable results to truncated SVD.
+We also applied DLRA-CG to recover low-rank solutions, with convergence X to Y times faster than DLRA with steepest descent. The solutions achieved lower reconstruction error and separated distinct sources more clearly than full-rank weighted Tikhonov. DLRA-CG showed semi-convergence, which was solved using restarting, at the cost of slower convergence. Preconditioning (DLRA-PCG) achieved significantly faster convergence but increased the reconstruction error. Restarting partially resolved the higher error but produced unstable results for some preconditioners.
+
+% Limitations [TODO: EMD 9-30% under what k?]
+The matrix-free rSVD was tested on a single elliptic PDE with simple two-dimensional geometries and square sources, and its performance on other operators or domains remains untested. For operators with a slow decay of singular values, the target rank $k$ must be larger, reducing the feasibility of the method. The random nature of the method gives varying reconstructions between runs, but this can be controlled by the oversampling parameter $p$. Applying the method to the adjoint operator $K^*$ gave mixed results: EMD error increased by 9–30\% due to higher background noise, while Euclidean error and AUC-IoU remained within 1–2\% for $k \geq 25$.
+
+% [TODO: for DLRA-CG, mention loss of H-conjugacy?]
+The DLRA-CG method is sensitive to the choice of rank $r$, where too small a rank gives incorrect solutions while a rank only slightly above optimal resembles a full-rank reconstruction. Without restarting, it is unclear when to stop to avoid semi-convergence. However, using DLRA-CG with restarting requires choosing a restart period: too short and convergence approaches steepest descent, too long and semi-convergence returns. Preconditioning introduced further complications, where iterates converged toward non-optimal solutions, with the effect more severe for preconditioners that closely approximated the Hessian.
+
+% Future work
+Extending the matrix-free rSVD to other PDE types, three-dimensional domains, more complex sources, and other geometries would establish how broadly the results generalize. The method could be extended using power iteration, like Algorithm~4.3 in \cite{halkoFindingStructureRandomness2011}, for problems of slow spectral decay, or using an adaptive rank selection based on a specified tolerance, like Algorithm~4.2 in \cite{halkoFindingStructureRandomness2011}. It is however unclear how a tolerance for $K$ transfers to the reconstruction error. Further investigation is needed to determine under which conditions the adjoint approach is preferable.
+
+For DLRA-CG, the rank-adaptive variant of Schotthöfer et al. \cite{schotthoferLowrankLotteryTickets2022} could be explored, which removes the need for manual rank selection by automatically adapting the rank of the iterates based on a threshold. Stopping criteria such as the discrepancy principle or the L-curve \cite{hansen2010discrete} could be used to address semi-convergence. Establishing a convergence theory for DLRA-CG remains an open problem, particularly regarding the effect of preconditioning.
+
+% Final summary
+Together, these contributions provide efficient low-rank methods for sparse source identification in large-scale PDE-constrained inverse problems.

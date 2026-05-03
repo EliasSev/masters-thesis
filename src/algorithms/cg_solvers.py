@@ -105,51 +105,64 @@ class CGSolver(ABC):
         pass
     
     def initial_X(
-            self, seed: Optional[int], max_rank: int, X0: str
+            self, seed: Optional[int], max_rank: int, X0: Union[str, NDArray]
         ) -> tuple[NDArray, NDArray, NDArray, NDArray]:
         """
         Generate an initial matrix X and its SVD of rank `max_rank`.
         """
         rng = np.random.default_rng(seed)
 
-        if X0 == 'svd':
-            X = rng.random((self.n, self.n)) * 1e-3
-            Ux, sx, VxT = np.linalg.svd(X, full_matrices=False)
+        # Custom 'X0' passed in by user
+        if isinstance(X0, np.ndarray):
+            Ux, sx, VxT = np.linalg.svd(X0, full_matrices=False)
             Sx = np.diag(sx)
             Vx = VxT.T
-        
-        elif X0 == 'qr':
-            Ux = rng.random((self.n, self.n))
-            Vx = rng.random((self.n, self.n))
-            Ux, _ = np.linalg.qr(Ux)
-            Vx, _ = np.linalg.qr(Vx)
 
-            # Mimic the singular values of X ~ Uniform(0, 1):
-            # sigma_1 = 0.5 * n, sigma_2, ..., sigma_n = O(sqrt(n))
-            sx = np.sqrt(self.n) * rng.random(self.n)
-            sx[0] = 0.5 * self.n
-            sx = np.sort(sx)[::-1] * 1e-3
-            Sx = np.diag(sx)
+        elif isinstance(X0, str):
+            if X0 == 'svd':
+                X = rng.random((self.n, self.n)) * 1e-3
+                Ux, sx, VxT = np.linalg.svd(X, full_matrices=False)
+                Sx = np.diag(sx)
+                Vx = VxT.T
+            
+            elif X0 == 'qr':
+                Ux = rng.random((self.n, self.n))
+                Vx = rng.random((self.n, self.n))
+                Ux, _ = np.linalg.qr(Ux)
+                Vx, _ = np.linalg.qr(Vx)
 
-        elif X0 == 'low-rank-qr':
-            Ux = rng.random((self.n, self.n))
-            Vx = rng.random((self.n, self.n))
-            Ux, _ = np.linalg.qr(Ux)
-            Vx, _ = np.linalg.qr(Vx)
+                # Mimic the singular values of X ~ Uniform(0, 1):
+                # sigma_1 = 0.5 * n, sigma_2, ..., sigma_n = O(sqrt(n))
+                sx = np.sqrt(self.n) * rng.random(self.n)
+                sx[0] = 0.5 * self.n
+                sx = np.sort(sx)[::-1] * 1e-3
+                Sx = np.diag(sx)
 
-            sx = np.sqrt(self.n) * rng.random(self.n)
-            sx[0] = 0.5 * self.n
-            sx = np.sort(sx)[::-1] * 1e-3
-            sx[max_rank:] = 0
-            Sx = np.diag(sx)
+            elif X0 == 'low-rank-qr':
+                Ux = rng.random((self.n, self.n))
+                Vx = rng.random((self.n, self.n))
+                Ux, _ = np.linalg.qr(Ux)
+                Vx, _ = np.linalg.qr(Vx)
 
-        elif X0 == 'householder':
-            Ux = self.fast_orthogonal(rng, max_rank)
-            Vx = self.fast_orthogonal(rng, max_rank)
+                sx = np.sqrt(self.n) * rng.random(self.n)
+                sx[0] = 0.5 * self.n
+                sx = np.sort(sx)[::-1] * 1e-3
+                sx[max_rank:] = 0
+                Sx = np.diag(sx)
 
-            sx = np.sqrt(self.n) * rng.random(self.n)
-            sx[0] = 0.5 * self.n
-            Sx = np.diag(np.sort(sx)[::-1] * 1e-3)
+            elif X0 == 'householder':
+                Ux = self.fast_orthogonal(rng, max_rank)
+                Vx = self.fast_orthogonal(rng, max_rank)
+
+                sx = np.sqrt(self.n) * rng.random(self.n)
+                sx[0] = 0.5 * self.n
+                Sx = np.diag(np.sort(sx)[::-1] * 1e-3)
+            
+            else:
+                raise ValueError(f"Invalid 'X0': '{X0}'")
+
+        else:
+            raise ValueError(f"Invalid 'X0' type {type(X0)}")
 
         X = Ux @ Sx @ Vx.T
         return X, Ux, Sx, Vx

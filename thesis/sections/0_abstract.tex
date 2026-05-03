@@ -24,10 +24,10 @@ Vi studerer kildeidentifikasjon som et elliptisk PDE-betinget invers problem, de
 Elvetun og Nielsen retter opp skjevheten ved å anvende en regulariseringsoperator, men prosedyren krever eksplisitt kunnskap om fremoveroperatoren, noe som gjør den uegnet for store problemer. Den lider av de samme utglattingsproblemene som Tikhonov-metoden, noe som gjør lavrangs-løsninger til en mer naturlig tilnærming for lokaliserte kilder. Dynamisk lavrangs-approksimasjon (DLRA) gir et robust rammeverk for å finne slike kilder, men konvergerer sakte for dårlig stilte problemer.
 
 % Contribution
-Vi foreslår en matrisfri variant av den randomiserte SVD-en (rSVD) som unngår eksplisitt konstruksjon av fremoveroperatoren og gjør den vektede Tikhonov-tilnærmingen skalerbar. Vi anvender også konjugert gradient (CG) innenfor DLRA-rammeverket (DLRA-CG) for å akselerere konvergensen og gjenvinne separerte kilder.
+Vi foreslår en matrisefri variant av den randomiserte SVD-en (rSVD) som unngår eksplisitt konstruksjon av fremoveroperatoren og gjør den vektede Tikhonov-tilnærmingen skalerbar. Vi anvender også konjugert gradient (CG) innenfor DLRA-rammeverket (DLRA-CG) for å akselerere konvergensen og gjenvinne separerte kilder.
 
 % Key results
-Den matrisfrie rSVD-tilnærmingen gjør det mulig å løse problemer som tidligere var utenfor rekkevidde, uten betydelig tap i rekonstruksjonskvalitet. DLRA-CG gir lavrangs-løsninger som skiller distinkte kilder tydeligere og oppnår lavere rekonstruksjonsfeil. Metoden konvergerer vesentlig raskere enn DLRA.
+Den matrisefrie rSVD-tilnærmingen gjør det mulig å løse problemer som tidligere var utenfor rekkevidde, uten betydelig tap i rekonstruksjonskvalitet. DLRA-CG gir lavrangs-løsninger som skiller distinkte kilder tydeligere og oppnår lavere rekonstruksjonsfeil. Metoden konvergerer vesentlig raskere enn DLRA.
 
 % Takeaways
 Samlet sett gjør disse bidragene storskala identifikasjon av distinkte kilder mulig, ved å redusere den beregningsmessige kostnaden til den vektede Tikhonov-tilnærmingen og motvirke tendensen metodene har til å slå sammen distinkte kilder.

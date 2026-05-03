@@ -1,4 +1,4 @@
-\section{Results}
+\section{Results}\label{sec:results}
 \subsection{Experimental setup}\label{sec:problems}
 \input{figures/problem_illustration.tex}
 Figure~\ref{fig:problem_illustration} shows the three meshes and source functions used throughout the results. Problem I is a square mesh with a single source, used as a baseline. Problem II uses the same geometry with three sources to assess reconstruction under multiple sources. Problem III replaces the square domain with an ``L''-shaped mesh and two sources, introducing a non-convex geometry.
@@ -157,5 +157,9 @@ Figure~\ref{fig:low_rank_solution_error} shows that for Problem~I, the rank 1 DL
 As shown in Section~\ref{sec:target_rank_reconstruction}, full-rank rSVD solutions approach but do not outperform the exact Tikhonov solution in the range $k \in [5,\,100]$ (Figure~\ref{fig:rsvd_over_k_II}). The low-rank solutions do: for Problem~I, the rank-1 solution achieves lower Euclidean and AUC-IoU error than the exact Tikhonov solution, and for Problem~II, the rank-2 solution outperforms it across all metrics \textcolor{red}{[TODO: at which $k$ does this happen?]}.
 
 
-\subsubsection{Effect of different preconditioners}
-\input{figures/precondition_times.tex}
+\subsubsection{Rate of convergence using preconditioners}
+\input{figures/number_of_iterations_preconditioners.tex}
+\input{figures/low_rank_preconditioned.tex}
+%\input{figures/precondition_times.tex}
+
+\subsubsection{Local minimas}

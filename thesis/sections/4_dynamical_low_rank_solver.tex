@@ -1,4 +1,4 @@
-\section{Dynamical low-rank approximation}
+\section{Dynamical low-rank approximation}\label{sec:dynamical_low_rank_approximation}
 \input{figures/low_rank_manifold.tex}
 Consider the problem of finding a rank-$r$ solution $X$ via the update scheme $X^{(i+1)} = X^{(i)} + \alpha_i D^{(i)}$, where $D^{(i)}$ is a search direction and $\alpha_i > 0$ a step size. Starting from a rank-$r$ matrix $X^{(0)}$, there is in general no guarantee that $D^{(i)}$ preserves low rank, so that $X^{(i)}$ may leave the space $\mathcal{M}_r$ of rank-$r$ matrices after a single step.
 
@@ -108,7 +108,7 @@ These modifications are equivalent to standard preconditioned conjugate gradient
 \input{algorithms/DLRA-PCG.tex}
 
 
-\subsubsection{Choice of preconditioner}
+\subsubsection{Choice of preconditioner}\label{sec:choice_of_preconditioner}
 The effectiveness of PCG depends on the choice of $P$. A good preconditioner must approximate $H$ well, but must be cheap to apply at each iteration. We consider four preconditioners: Jacobi scaling, incomplete Cholesky (IC), IC with a Woodbury correction, and a ``perfect'' preconditioner based on a sparse Cholesky factorization.
 
 \paragraph{Jacobi scaling.} A Jacobi preconditioner $P = \operatorname{diag}(H)$ approximates $H$ by its diagonal (Section~11.5, \cite{golubMatrixComputations4th2013}). The approximation is cheap to compute, as $P^{-1}$ is the inverse of a diagonal matrix. It is most effective when $H$ is diagonally dominant.

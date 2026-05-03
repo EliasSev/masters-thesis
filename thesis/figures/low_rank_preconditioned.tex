@@ -1,0 +1,31 @@
+\begin{figure*}[htbp]
+\centering
+
+\begin{subfigure}{0.65\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{low_rank_ic.png}
+    \caption{Reconstructions using the IC preconditioner. Left: Problem~I, rank 1. Right: Problem~II, rank 2.}
+    \label{fig:low_rank_ic}
+\end{subfigure}
+
+\vspace{0.5cm}
+
+\begin{subfigure}{0.65\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{low_rank_perfect.png}
+    \caption{Reconstructions using a perfect preconditioner. Left: Problem~I, rank 1. Right: Problem~II, rank 2.}
+    \label{fig:low_rank_perfect}
+\end{subfigure}
+
+\vspace{0.5cm}
+
+\begin{subfigure}{1.0\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{low_rank_ic_first_iters.png}
+    \caption{The first 4 iterations of DLRA-PCG with incomplete Cholesky preconditioner.}
+    \label{fig:low_rank_ic_first_iters}
+\end{subfigure}
+
+\caption{Reconstructions and iterates using DLRA-PCG (algorithm~\ref{alg:DLRA-PCG}).}
+\label{fig:low_rank_preconditioned}
+\end{figure*}

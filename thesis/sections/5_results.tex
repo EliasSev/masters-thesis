@@ -51,7 +51,7 @@ Figure~\ref{fig:rsvd_over_k} shows the reconstruction error for target ranks $k 
 The rSVD reconstruction error approaches the exact reconstruction error as $k$ increases, for all three error metrics. Larger oversampling $p$ yields a small but consistent reduction in error across all three metrics, most visible in the EMD curves. At $k = 50$ and $p = 5$, the Euclidean relative difference is 0.56\%, 2.44\%, and 2.92\% for Problems~I, II, and III; the AUC-IoU gives 1.97\%, 2.87\%, and 4.07\%; and the EMD gives 4.74\%, 6.44\%, and 39.13\%. The EMD is more sensitive to low-amplitude noise in the reconstruction, which increases its relative error even though the noise is difficult to see in Figure~\ref{fig:test_problems_selected}. At $k = 199$ (the largest rank considered), Euclidean and AUC-IoU are within fractions of a percent of the exact Tikhonov values. The EMD ranges from 0.12\% to 7.85\%, which indicates its sensitivity to small noise or small differences shape or position compared to the exact Tikhonov solution.
 
 
-\subsubsection{Test vector distribution effect on error}
+\subsubsection{Test vector distribution effect on error}\label{sec:test_vector_distribution_effect_on_error}
 \input{figures/random_test_vectors.tex}
 Three test vector distributions are compared: standard Gaussian ($\psi_{ij} \sim \mathcal{N}(0,1)$), Rademacher ($\psi_{ij} \in \{-\tfrac{1}{2}, \tfrac{1}{2}\}$ with equal probability, see \cite{montgomery-smithDistributionRademacherSums1990}), and a spatially localized Gaussian peak
 \begin{equation*}

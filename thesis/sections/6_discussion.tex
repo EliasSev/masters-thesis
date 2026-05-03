@@ -5,7 +5,7 @@ To explain the computational times and asymptotic behavior in Sections~\ref{sec:
 
 For a 2D elliptic problem, the Cholesky factorization of $A$ and $M_\partial$ can be done in $\mathcal{O}(N^{3/2})$ and $\mathcal{O}(N_b^{3/2})$ computations, respectively (Section~\ref{sec:initial_matrix_factorizations}). The resulting triangular systems can be solved at the respective costs $\mathcal{O}(N \log N)$ and $\mathcal{O}(N_b \log N_b)$. Since $N_b \ll N$, we may disregard the factorization and triangular solves using $M_\partial$. 
 
-The cost of computing $K = T A^{-1} M$ involves solving $N_b$ linear systems $A v_i = T^T e_i$ (Section~\ref{sec:approximating}), each system costing $\mathcal{O}(N \log N)$ using a sparse Cholesky factorization of $A$. With $N_b \sim \sqrt{N}$, the cost therefore scales as $\mathcal{O}(N^{3/2} \log N)$, explaining the scaling of $t_K$ observed in the left panel of Figure~\ref{fig:rsvd_computational_time_comp}.
+The cost of computing $K = T A^{-1} M$ involves solving $N_b$ linear systems $A v_i = T^T e_i$ (Section~\ref{sec:approximating}), each system costing $\mathcal{O}(N \log N)$ using a sparse Cholesky factorization of $A$. With $N_b \sim \sqrt{N}$, the cost therefore scales as $\mathcal{O}(N^{3/2} \log N)$, explaining the scaling of $t_K$ observed in the left panel of Figure~\ref{fig:rsvd_computational_time_comp}. The SVD of dense matrix $K \in \mathbb{R}^{N_b \times N}$ costs $\mathcal{O}(N_b^2 N) = \mathcal{O}(N^2)$ \cite{golubMatrixComputations4th2013}, which is larger than $\mathcal{O}(N^{3/2} \log N)$, explaining $t_{\text{SVD}}$ in Figure~\ref{fig:rsvd_computational_time_comp}.
 
 For the matrix-free rSVD (Algorithm~\ref{alg:discrete_rsvd}), factorizing $A$ costs $\mathcal{O}(N^{3/2})$, and is done once. Each application of $K$ and $K^*$ costs $\mathcal{O}(N \log N)$, for a total of $\mathcal{O}(l N \log N)$. The SVD of the $l \times N$ matrix $B$ costs $\mathcal{O}(l^2 N)$ \cite{golubMatrixComputations4th2013}, and the cost of the QR factorization of the small $N_b \times l$ matrix $Y$ is $\mathcal{O}(l^2 N_b)$ \cite{golubMatrixComputations4th2013}, and may be disregarded. Hence, assuming two dimensions and an efficient sparse Cholesky factorization of $A$, Algorithm~\ref{alg:discrete_rsvd} costs
 \begin{equation}\label{eq:rsvd_cost}
@@ -14,53 +14,143 @@ For the matrix-free rSVD (Algorithm~\ref{alg:discrete_rsvd}), factorizing $A$ co
     + \underbrace{\mathcal{O}(l^2 N)}_{\text{SVD of } B}.
 \end{equation}
 
-This is consistent with the results in the right panel of Figure~\ref{fig:rsvd_computational_time_comp}: $t_{\text{rSVD}}$ scales near-linearly on the observed range, matching the near-linear scaling of $\mathcal{O}(N \log N)$. Even if $\mathcal{O}(N^{3/2})$ dominates $\mathcal{O}(N \log N)$ at large $N$, the hidden constant of the big-O notation makes the scaling be more similar to $\mathcal{O}(N \log N)$, which is confirmed by Figure~\ref{fig:rsvd_computational_breakdown}, where the relative cost of the setup stays constant for larger $N$.
+This is consistent with the results in the right panel of Figure~\ref{fig:rsvd_computational_time_comp}: $t_{\text{rSVD}}$ scales near-linearly on the observed range, matching the near-linear scaling of $\mathcal{O}(N \log N)$. Even if $\mathcal{O}(N^{3/2})$ dominates $\mathcal{O}(N \log N)$ at large $N$, the hidden constant of the big-O notation makes the scaling be more similar to $\mathcal{O}(N \log N)$ (see Figure~\ref{fig:rsvd_computational_breakdown}), explaining the near-linear scaling in Figure~\ref{fig:rsvd_computational_time_comp}.
 
 Equation~\eqref{eq:rsvd_cost} also explains the cost breakdown in Figure~\ref{fig:rsvd_computational_breakdown}. For larger $k$, a larger share is taken up by the SVD stage, as predicted by $\mathcal{O}(l^2 N)$. For $k = 200$ ($l = k + p$), the largest considered target rank, we observed that as $N$ increases, the forward and adjoint solves start taking up a larger share of the time compared to the SVD of $B$, also consistent with Equation~\eqref{eq:rsvd_cost}. The cost $\mathcal{O}(l^2 N_b)$ of the QR-factorization $QR = Y$ is negligible, matching the results for all $k$ and $N$.
 
 
 \subsubsection{Overhead of the adjoint formulation}
+The adjoint formulation of Algorithm~\ref{alg:discrete_rsvd_Kstar} has some computational overhead compared to Algorithm~\ref{alg:discrete_rsvd}. The setup stage requires an additional Cholesky factorization of the $N \times N$ matrix $M$, which costs $\mathcal{O}(N^{3/2})$. For the QR factorization, $Y$ is now $N \times l$, so this costs $\mathcal{O}(l^2 N)$, compared to $\mathcal{O}(l^2 \sqrt{N})$ for rSVD on $K$. Computing $B = Q^T K^*$ requires solving $\tilde q_i M = q_i$ $l$ times, costing $\mathcal{O}(l N \log N)$ (compared to $\mathcal{O}(l \sqrt{N} \log \sqrt{N})$, which was negligible). The SVD of $B \in \mathbb{R}^{l \times N_b}$ costs $\mathcal{O}(l^2 \sqrt{N})$, which is cheaper than $\mathcal{O}(l^2 N)$ for rSVD on $K$. Overall, the asymptotic cost of Algorithm~\ref{alg:discrete_rsvd_Kstar} is the same as Algorithm~\ref{alg:discrete_rsvd}, which is given in Equation~\eqref{eq:rsvd_cost}.
+
+In Table~\ref{tab:computational_time_adjoint} ($t_1/t$), we see approximately 30\% computational overhead for $k = 10$, 20\% for $k = 50$, and 10\% for $k = 200$. This matches the theoretical overhead, which reduces for larger $k$ when the cost $\mathcal{O}(l^2 N)$ of the SVD in Algorithm~\ref{alg:discrete_rsvd} takes up a larger share.
+
+To recover the SVD of $K$ from the SVD of $K^*$ (Section~\ref{sec:reconvering_the_svd}), QR factorizations of $A \in \mathbb{R}^{N_b \times k}$ and $B \in \mathbb{R}^{N \times k}$ costs $\mathcal{O}(k^2 \sqrt{N}) + \mathcal{O}(k^2 N) = \mathcal{O}(k^2 N)$ \cite{golubMatrixComputations4th2013}. The SVD of $R_A \bar \Sigma R_b \in \mathbb{R}^{k \times k}$ is $\mathcal{O}(k^3)$ \cite{golubMatrixComputations4th2013}, which is negligible compared to $\mathcal{O}(k^2 N)$, since $k \ll N$. This is in correspondence with the reported computational overhead $t_2 / t$ in Table~\ref{tab:computational_time_adjoint}: as $k$ increases, the extra cost $\mathcal{O}(k^2 N)$ of the recovery procedure and the reduced cost $\mathcal{O}(l^2 \sqrt{N})$ of the SVD of $B$ balance out, leading to approximately 30\% extra computational time using rSVD on $K^*$ and recovery of the SVD, compared to the direct approach of rSVD on $K$.
 
 
-%\subsection{Reconstruction quality of rSVD on K}
-%    \subsubsection{Choosing the target rank}
-%    \subsubsection{Sensitivity of error metrics}      % the EMD-vs-Euclidean thread
-%    \subsubsection{Effect of the test vector distribution}
-%    \subsubsection{Independence from mesh resolution}
-%    \subsubsection{Behaviour under noisy data}
-%
-%\subsection{Comparison of rSVD on K and K*}
-%    \subsubsection{Approximation of the singular values}
-%    \subsubsection{Reconstruction quality}
-%    \subsubsection{When to prefer K* over K}           % synthesis: cost + accuracy + range/co-range argument
-%
-%\subsection{Limitations}                               % optional, one short paragraph
+\subsubsection{Analysis of reconstruction error}\label{sec:analysis_of_reconstruction_error}
+In Section~\ref{sec:target_rank_reconstruction} we found that using rSVD a target rank $k = 50$, the reconstruction error was between 0.5\% and 4\% higher compared to the exact Tikhonov reconstructions in terms of Euclidean and AUC-IoU, or between 4\% and 39\% higher in terms of EMD. Visually, the reconstructions were indistinguishable from the exact ones (Figure~\ref{fig:test_problems_selected}). At $k = 100$, Euclidean and AUC-IoU error was less than 1\% higher, and EMD between 2\% and 34\% higher.
 
 
-\subsection{Difference in approximation quality using the adjoint operator}
-\input{figures/true_singular_values.tex}
-The reconstruction error of using rSVD on $K$ gives a small improvement over using rSVD on $K^*$ (Table~\ref{tab:rsvd_adjoint_error}). To understand this, it is helpful to investigate the structure of $Y = K\Psi$ and $Y' = K^* \Psi'$, which form the sample matrix in Algorithm~\ref{alg:discrete_rsvd} and \ref{alg:discrete_rsvd_Kstar}, respectively.
-
-Let $K = U \Sigma V^T$ be the SVD of $K$, and partition $\Sigma$ as $\Sigma = \operatorname{diag}(\Sigma_1,\, \Sigma_2)$, where $\Sigma_1$ contains the $k + 1$ first values of $K$, and $\Sigma_2$ the remainder. Correspondingly, partition the right singular values as $V = [V_1\,\, V_2]$, and write $K$ as
-\begin{equation*}
+To understand the these results, it is useful to look at the structure of $Y = K \Psi$. Let $K = U \Sigma V^T$ be the SVD of $K$, and partition $\Sigma$ as $\Sigma = \operatorname{diag}(\Sigma_1,\, \Sigma_2)$, where $\Sigma_1$ contains the $k + 1$ first values of $K$, and $\Sigma_2$ the remainder. Correspondingly, partition the right singular values as $V = [V_1\,\, V_2]$, and write $K$ as
+\begin{equation}\label{eq:rsvd_partitioned_1}
     K = U \begin{bmatrix}
     \Sigma_1 & \\ & \Sigma_2
     \end{bmatrix}
     \begin{bmatrix}
     V_1^T \\ V_2^T
     \end{bmatrix}.
-\end{equation*}
-Right-multiplying by $\Psi$ and setting $\Psi_1 = V_1^T \Omega$ and $\Psi_2 = V_2^T \Omega$ gives
-\begin{equation*}
+\end{equation}
+Right-multiplying by $\Psi$ and setting $\Psi_1 = V_1^T \Psi$ and $\Psi_2 = V_2^T \Psi$ gives
+\begin{equation*}\label{eq:rsvd_partitioned_2}
     K = U \begin{bmatrix}
     \Sigma_1 \Psi_1 \\
     \Sigma_2 \Psi_2
     \end{bmatrix}.
 \end{equation*}
 Intuitively, $\Sigma_1 \Psi_1$ represents the actions of $K$, while $\Sigma_2 \Psi_2$ is the perturbation. When the singular values of $K$ decays rapidly, the perturbation $\Sigma_2 \Psi_2$ remains low, resulting in a good rank-$k$ approximation.
+% TODO: refer to equations of Halko et al
+
+Since the forward operator $K$ has rapidly decaying singular values (Figure~\ref{fig:singular_values}), we can choose $k \ll \operatorname{rank}(K) = N_b$, and get a good rank-$k$ approximation: the main actions of $K$ are captured in $\Sigma_1 \Psi_1$. This transfers over to the weighted Tikhonov problem in Equation~\eqref{eq:discrete_inverse_problem}. Both $K$ and $W$ are approximated well, yielding good reconstruction. Since the random sampling introduces some noise, the EMD shows a higher error, as it is more sensitive to low-amplitude noise.
+
+
+\subsubsection{Effect of the test vector distribution}
+\input{figures/singular_vectors_of_K.tex}
+In Section~\ref{sec:test_vector_distribution_effect_on_error}, we saw that some choices of test vector $\psi_i$ slightly improved reconstruction error, in particularly, a reduction of low-amplitude noise. Choosing Peaks test vectors led to some error improvement in terms of EMD compared to Gaussian or Rademacher test vectors.
+
+To understand this, we look at a single sample $y = K \psi$. Using the SVD $K = U \Sigma V^T$, we have $K = U \Sigma V^T \psi$. If we choose $\psi = v_1$ (the first right singular vector), we have that $V^T v_1 = e_1$, so
+\begin{equation*}
+    K v_1 = \sigma_1 u_1. 
+\end{equation*}
+Then, the QR factorization gives that $y = u_1$. This is the best case scenario, and we understand that the closer the test vectors $\psi_1,\dots,\psi_k$ are to $v_1,\dots,v_k$, the better the rank-$k$ reconstruction.
+
+Figure~\ref{fig:singular_vectors_of_K} plots the 4 first right singular vectors of $K$. We see that they are smooth looking, more closely matching the Peaks test vectors than the Gaussian or Rademacher test vectors, explaining the small improvement in error.
+
+
+\subsubsection{Independence from mesh resolution}
+\textcolor{red}{TODO:} Not done yet. Might drop this section (not much to discuss.) Practical work-around for finding $k$: find it on a small mesh, since reconstruction quality isn't dependent on $N$, then this $k$ can be used for a more fine mesh.
+
+
+\subsubsection{Reconstructions under noisy data}
+\textcolor{red}{TODO:} Section not done. Bring in the theory from Hansen on tSVD:
+The target rank $k$ acts as additional regularization in the same way as truncated SVD.
+
+
+\begin{equation*}
+    x = K^+ y = \sum_{i=1}^{N} \frac{u_i^T y}{\sigma_i} v_i
+\end{equation*}
+
+I can write the weighted and truncated Tikhonov solution as this (I think):
+
+\begin{equation*}
+    \begin{aligned}
+        x &= \sum_{i=1}^k c_i \frac{u_i^T y}
+                                   {\sigma_i} v_i \\
+        c_i &= \frac{w_i \sigma_i^2}
+                    {\sigma_i^2 + \lambda^2}
+    \end{aligned}
+\end{equation*}
+
+%\subsection{Limitations} (Optional)
+
+
+\subsection{Difference in approximation quality using the adjoint operator}
+\input{figures/true_singular_values.tex}
+The reconstruction error of using rSVD on $K$ gives a small improvement over using rSVD on $K^*$ (Table~\ref{tab:rsvd_adjoint_error}). To understand this, it is helpful to investigate the structure of $Y = K\Psi$ and $Y' = K^* \Psi'$, which form the sample matrix in Algorithm~\ref{alg:discrete_rsvd} and \ref{alg:discrete_rsvd_Kstar}, respectively.
 
 The quality of the random sampling $Y = K\Psi$ and $Y' = K^* \Psi'$ depends on the spectral decay of $K$ and $K^*$, which is shown in Theorem~10.5 in Halko et al. \cite{halkoFindingStructureRandomness2011}. This is confirmed by inspecting the singular values of $K$ and $K^*$, see Figure~\ref{fig:true_singular_values}. By Equation~\eqref{eq:K_star_def}, we have the relation
 \begin{equation*}
     K^* = M^{-1} K^T M_\partial.
 \end{equation*}
 So, the mass matrices $M$ and $M_\partial$ changes the spectral decay of $K^T$ to a slower kind, making sampling more difficult.
+
+
+\subsection{Dynamical low-rank approximation}
+
+
+\subsubsection{Convergence analysis of DLRA-CG}
+\textcolor{red}{TODO:} Not done yet. Some ideas I have:
+\begin{itemize}
+    \item Connect to CG theory: convergence depends on $\kappa(H)$.
+    \item $\Phi$ is quadratic, $H$ is SPD: CG is superior to steepest-descent/Adam (transfers to DLRA-CG, but $\Phi$ isn't quadratic on the manifold). First-order methods don't exploit curvature.
+    \item Riemannian GD theory / DLRA theory: difficult, maybe I can get help from Jonas (do we have any convergence guarantees on $\mathcal{M}_r$? Convergence rate?)
+    \item The observed gap (50 vs 20'000 iterations) is empirical evidence (I shouldn't over claim theory)
+\end{itemize}
+
+
+\subsubsection{Semi-convergence and restarting}
+\textcolor{red}{TODO:} Not done yet. I will discuss the loss of $H$-conjugacy. Some ideas:
+\begin{itemize}
+    \item Same theory as restarting CG: recover $H$-conjugacy.
+    \item If $N_r = 1$ we just have steepest descent.
+    \item If $N_r$ is small: smaller "safer" steps (less accumulated conjugacy)
+    \item Would be interesting to estimate how fast conjugacy is lost (open question).
+    \item Restarting: better recovers true amplitude of source(s), making restarting preferable
+\end{itemize}
+
+
+\subsubsection{Rank as a regularization parameter}
+\textcolor{red}{TODO:} Not done yet. We saw that low-rank solutions outperform the exact full-rank weighted Tikhonov. 
+
+Ideas: 
+\begin{itemize}
+    \item Manifold $\mathcal{M}_r$: forcing $X \in \mathcal{M}_r$ is natural since the true sparse solutions lives on/ near this manifold
+    \item If $r$ is chosen too small, it is mathematically impossible to represent some solutions
+    \item At rank 5, the solutions resembles the full-rank Tikhonov (a single Gaussian on a 2D mesh is approximately rank-1 as a matrix, a simple outer-product)
+    \item Elvetun and Nielsen already did sparsity regularization ($\ell_1$), mention? This method is arguably easier
+\end{itemize}
+
+
+\subsubsection{Preconditioning and local minimas}
+We saw precondition sped up convergence, but also drove error up. IC with restarting converged to a "local minima".
+
+\textcolor{red}{TODO:} Not done yet. Ideas:
+\begin{itemize}
+    \item Classical theory of preconditioning (lower $\kappa$, better convergence)
+    \item In the DLRA setting: larger steps on $\mathcal{M}_r$ aer "dangerous". If we get too close to the full-rank solution, we are just making truncations
+    \item If we walk directly to (or close to) the full-rank Tikhonov solution, we are in practice just performing a rank $r$ truncation on it
+    \item Hard to say why DLRA-PCG using IC and restarting converges to the wrong solution. Maybe just unlucky (this seems to be a local minima: when this solution is used as $X^{(0)}$ for DLRA-CG it also gets stuck here.)
+    \item $\mathcal{M}_r$ is non-convex (need reference)
+\end{itemize}
+
+
+%\subsection{Limitations} (Optional)

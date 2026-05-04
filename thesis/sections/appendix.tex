@@ -258,3 +258,28 @@ Another well-known modification is the Polak–Ribière formula \cite{polakNoteC
     \frac{r_{k+1}^T(r_{k+1} - r_k)}
          {r_k^T r_k}.
 \end{equation*}
+
+
+\subsection{Dynamical low-rank approximation}\label{appendix:dynamical_low_rank_approximation}
+In \cite{kochDynamicalLowrankApproximation2007}, Koch and Lubich study the problem of finding a rank-$r$ approximation $X(t)$ to a time-dependent data matrix $A(t)$,
+\begin{equation*}
+    \min_{X(t) \in \mathcal{M}_r} \| X(t) - A(t) \|_F,
+\end{equation*}
+where $\mathcal{M}_r = \{M \in \mathbb{R}^{m \times n} : \operatorname{rank}(M) = r \}$. Instead of computing a best approximation via SVD at every time $t$, they propose a dynamical approach. They seek a low-rank matrix $Y(t) \in \mathcal{M}_r$ such that its derivative $\dot{Y}(t)$ approximates $\dot{A}(t)$:
+\begin{equation}\label{eq:dlra1}
+    \min_{\dot{Y}(t) \in \mathcal{T}_{Y(t)}\mathcal{M}_r} \| \dot{Y}(t) - \dot{A}(t) \|_F.
+\end{equation}
+
+Let $Y = U \Sigma V^T$ be a factorization where $U \in \mathbb{R}^{m \times r}$ and $V \in \mathbb{R}^{n \times r}$ have orthonormal columns, and $\Sigma \in \mathbb{R}^{r \times r}$ is non-singular (using the SVD yields a diagonal $\Sigma$, but this not a necessary assumption). Koch and Lubich show that Equation~\eqref{eq:dlra1} is equivalent to the Galerkin condition: find $\dot{Y} \in \mathcal{T}_{Y}\mathcal{M}_r$ such that
+\begin{equation*}
+    \langle \dot{Y} - \dot{A},\, \delta Y \rangle_F = 0,\quad \text{for all } \delta Y \in \mathcal{T}_{Y}\mathcal{M}_r.
+\end{equation*}
+By defining the orthogonal projectors $P_U = UU^T$ and $P_V = VV^T$, and their complements $P_U^{\perp} = I_m - P_U$ and $P_V^{\perp} = I_n - P_V$, they prove (Proposition~2.1) that this condition yields the following system of matrix differential equations:
+\begin{equation*}
+    \begin{aligned}
+    \dot{\Sigma} &= U^T \dot{A} V, \\
+    \dot{U} &= P_U^{\perp} \dot{A} V \Sigma^{-1}, \\
+    \dot{V} &= P_V^{\perp} \dot{A}^T U \Sigma^{-T}.
+    \end{aligned}
+\end{equation*}
+These equations allow for evolution of the low-rank factors using numerical integration techniques.

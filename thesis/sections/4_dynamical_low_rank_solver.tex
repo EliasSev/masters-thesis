@@ -7,7 +7,7 @@ One can replace $D^{(i)}$ by its projection onto the tangent space $\mathcal{T}_
     X^{(i+1)} = X^{(i)} 
     + \alpha_i \mathcal{P}_{X^{(i)}}(D^{(i)}).
 \end{equation*}
-This is illustrated in Figure~\ref{fig:low_rank_manifold}. Rather than updating $X^{(i)}$ directly, the DLRA algorithm operates on its SVD factorization $X^{(i)} = U_x \Sigma_x V_x^T$, updating the factors $U_x$, $\Sigma_x$, and $V_x$ at each iteration (we use the subscript ``$x$'' to
+This is illustrated in Figure~\ref{fig:low_rank_manifold}. Rather than updating $X^{(i)}$ directly, the DLRA algorithm operates on its SVD factorization $X^{(i)} = U_x \Sigma_x V_x^T$, updating the factors $U_x$, $\Sigma_x$, and $V_x$ at each iteration, see Appendix~\ref{appendix:dynamical_low_rank_approximation} for details (we use the subscript ``$x$'' to
 distinguish these factors from those of the forward operator
 $K = U \Sigma V^T$).
 

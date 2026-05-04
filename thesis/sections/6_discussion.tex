@@ -95,7 +95,7 @@ I can write the weighted and truncated Tikhonov solution as this (I think):
 
 \subsection{Difference in approximation quality using the adjoint operator}
 \input{figures/true_singular_values.tex}
-The reconstruction error of using rSVD on $K$ gives a small improvement over using rSVD on $K^*$ (Table~\ref{tab:rsvd_adjoint_error}). To understand this, it is helpful to investigate the structure of $Y = K\Psi$ and $Y' = K^* \Psi'$, which form the sample matrix in Algorithm~\ref{alg:discrete_rsvd} and \ref{alg:discrete_rsvd_Kstar}, respectively.
+\textcolor{red}{TODO: This section is not done}. The reconstruction error of using rSVD on $K$ gives a small improvement over using rSVD on $K^*$ (Table~\ref{tab:rsvd_adjoint_error}).
 
 The quality of the random sampling $Y = K\Psi$ and $Y' = K^* \Psi'$ depends on the spectral decay of $K$ and $K^*$, which is shown in Theorem~10.5 in Halko et al. \cite{halkoFindingStructureRandomness2011}. This is confirmed by inspecting the singular values of $K$ and $K^*$, see Figure~\ref{fig:true_singular_values}. By Equation~\eqref{eq:K_star_def}, we have the relation
 \begin{equation*}

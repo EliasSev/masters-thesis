@@ -159,7 +159,15 @@ As shown in Section~\ref{sec:target_rank_reconstruction}, full-rank rSVD solutio
 
 \subsubsection{Rate of convergence using preconditioners}
 \input{figures/number_of_iterations_preconditioners.tex}
+Figure~\ref{fig:number_of_iterations_preconditioners} shows that, except for the Jacobi case, using preconditioners speeds up the convergence significant, but at the cost of higher error. Using the Jacobi preconditioner gives similar convergence as no preconditioning. On both Problems~I and II, using IC, IC with Woodbury, and a perfect preconditioner has superior initial convergence compared to no preconditioning, but the final error is higher: 0.86, 0.84 and 0.84 relative error for IC, IC with Woodbury, and a perfect preconditioner, compared to 0.81 for Jacobi and no preconditioning, on Problem~I (left panel). Similar errors were obtained for Problem~II (right panel).
+
+Both the perfect and the IC preconditioner converged in a single iteration. For the perfect case, this is too be expected, since the the first step moves directly to the full-rank weighted Tikhonov solution before effectively getting truncated (projected to the tangent plane, then a SVD truncation). It is likely that something similar is happening for the IC + Woodbury preconditioner: the sparse part of the Hessian does not have suffer from much full-in (Appendix~\ref{appendix:triangular}), and the IC factorization approximates the sparse part well.
+
 \input{figures/low_rank_preconditioned.tex}
-%\input{figures/precondition_times.tex}
+In Figure~\ref{fig:low_rank_ic} the reconstructions using DLRA-PCG with IC is shown. The IC preconditioner converged to the highest error solution (Figure~\ref{fig:number_of_iterations_preconditioners}), and from the reconstruction we see that the sources are slightly shifted towards the interior. For Problem~II (right), the top left source is particularly blurry.
+
+In the right panel of Figure~\ref{fig:number_of_iterations_preconditioners}, the IC preconditioner shows an initial increase in relative error. However, inspecting the first 4 iterates (Figure~\ref{fig:low_rank_ic_first_iters}) shows that the iterates are not necessarily moving in the wrong direction.
+
+
 
 \subsubsection{Local minimas}

@@ -91,9 +91,9 @@ $G^{(i)} = \nabla\Phi(X^{(i)})$ and resetting the search direction to $D^{(i)} =
 
 
 \subsection{DLRA using preconditioned CG}
-Preconditioning is a standard technique for accelerating CG methods, referred to as preconditioned CG (PCG). The system $H x = y$ is replaced by the equivalent system $P^{-1} H x = P^{-1} y$, where $P \approx H$ is the preconditioner matrix. The convergence of CG depends on $\kappa(H)$ (see Sec.~6.11.3 in Saad) \cite{saadIterativeMethodsSparse2003}, so $P$ is chosen such that $\kappa(P^{-1} H) \ll \kappa(H)$. For elliptic PDE-based forward operators $K$, the Hessian $H = K^T M_\partial K + \lambda^2 W^T M W$ typically has a large condition number, making preconditioning effective.
+Preconditioning is a standard technique for accelerating CG methods, referred to as preconditioned CG (PCG). The system $H x = K^T M_\partial y$ is replaced by the equivalent system $P^{-1} H x = P^{-1} K^T M_\partial y$, where $P \approx H$ is the preconditioner matrix. The convergence of CG depends on $\kappa(H)$ (see Sec.~6.11.3 in Saad) \cite{saadIterativeMethodsSparse2003}, so $P$ is chosen such that $\kappa(P^{-1} H) \ll \kappa(H)$. For elliptic PDE-based forward operators $K$, the Hessian $H = K^T M_\partial K + \lambda^2 W^T M W$ typically has a large condition number, making preconditioning effective.
 
-In the DLRA-CG scheme, the preconditioned system $P^{-1} H x = P^{-1} y$ leads to the following adjustments in Algorithm \ref{alg:DLRA-CG}:
+In the DLRA-CG scheme, the preconditioned system $P^{-1} H x = P^{-1} K^T M_\partial y$ leads to the following adjustments in Algorithm \ref{alg:DLRA-CG}:
 \begin{equation*}
     \alpha_i = \frac
     {\langle G^{(i)}, Z^{(i)} \rangle_F}
@@ -101,9 +101,9 @@ In the DLRA-CG scheme, the preconditioned system $P^{-1} H x = P^{-1} y$ leads t
     \beta_i = \frac
     {\langle G^{(i+1)}, Z^{(i+1)} \rangle_F}
     {\langle G^{(i)}, Z^{(i)} \rangle_F}, \quad
-    D^{(i+1)} = -Z^{(i+1)} + \beta_i D^{(i)}.
+    D^{(i+1)} = -Z^{(i+1)} + \beta_i D^{(i)},
 \end{equation*}
-These modifications are equivalent to standard preconditioned conjugate gradient, as originally described by Concus et al. \cite{concusGeneralizedConjugateGradient1976}. The resulting scheme summarized in Algorithm \ref{alg:DLRA-PCG}, which we refer to as DLRA-PCG.
+with $Z^{(i)} = P^{-1} G^{(i)}$. These modifications are equivalent to standard preconditioned conjugate gradient, as originally described by Concus et al. \cite{concusGeneralizedConjugateGradient1976}. The resulting scheme is summarized in Algorithm \ref{alg:DLRA-PCG}, which we refer to as DLRA-PCG.
 \nomenclature[H]{$P$}{Preconditioner matrix}%
 \input{algorithms/DLRA-PCG.tex}
 

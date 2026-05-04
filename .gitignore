@@ -27,6 +27,7 @@ wheels/
 *.ilg
 *.nls
 *.bbl-SAVE-ERROR
+*.xdv
 thesis/*.pdf
 
 .vscode

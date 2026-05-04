@@ -65,6 +65,50 @@ $A$, $M$ and $M_\partial$ are sparse matrices, since $A_{ij}$, $M_{ij}$ and $(
 The assembly of stiffness matrices and mass matrices in two dimensions can be done through methods of numerical integration, as described in Section~3.5 in Larson and Bengzon \cite{larsonFiniteElementMethod2013}.
 
 
+\subsection{Derivation of the adjoint formulation}\label{appendix:adjoint_derivation}
+Consider the forward operator $\mathcal{K} = \mathcal{S} \circ \mathcal{T}$ given by Equation~\eqref{eq:K}, and the variational formulation of $\mathcal{S}$ by Equation~\eqref{eq:S_cont}. Define the bilinear form
+\begin{equation*}
+    a(u,\, v) =
+    \int_\Omega (\sigma \nabla u \cdot \nabla v + c u v) \, dx,
+\end{equation*}
+then, the variational formulation of $\mathcal{S}$ reads as follows: find $u \in H^1(\Omega)$ such that
+\begin{equation}\label{eq:bilinear_form}
+    a(u,\, v) = \int_\Omega f v \, dx.
+\end{equation}
+
+For some $g \in L^2(\partial\Omega)$, we seek $w = \mathcal{K}^* g$. By the definition of $K^*$,
+\begin{equation*}
+    \langle \mathcal{K} f,\, g \rangle_{L^2(\partial\Omega)} =
+    \langle f,\, \mathcal{K}^* g \rangle_{L^2(\Omega)}.
+\end{equation*}
+and since $\mathcal{K} f = u|_{\partial\Omega}$, we have that
+\begin{equation}\label{eq:adjoint_identity_1}
+    \langle \mathcal{K} f,\, g \rangle_{L^2(\partial\Omega)} =
+    \int_{\partial\Omega} u g \, ds.
+\end{equation}
+In Equation~\eqref{eq:bilinear_form}, choose $v = w = \mathcal{K}^* g$. We see that
+\begin{equation}\label{eq:adjoint_identity_2}
+    a(u, w) = \int_{\Omega} f w \, dx = \langle f,\, \mathcal{K}^* g \rangle_{L^2(\Omega)}.
+\end{equation}
+Insert Equation~\eqref{eq:adjoint_identity_1} and \eqref{eq:adjoint_identity_2} into the definition of $\mathcal{K}^*$, and using the identity $a^*(v,\, u) = a(u,\, v)$ (by the definition of $a^*$ \cite{kreyszigIntroductoryFunctionalAnalysis1989}),
+\begin{equation}\label{eq:adjoint_identity_3}
+    a^*(w,\, u) = \int_{\partial\Omega} g u \, ds.
+\end{equation}
+Since Equation~\eqref{eq:adjoint_identity_3} must hold for all $u \in H^1(\Omega)$, it defines a variational problem for $w$. And since $a$ is symmetric ($\sigma$ is symmetric),
+$a^*(w,\, u) = a(u,\, w) = a(w,\, u)$, we get that Equation~\eqref{eq:adjoint_identity_3} reduces to:
+find $w \in H^1(\Omega)$ such that
+\begin{equation*}
+    a(w,\, u) = \int_{\partial\Omega} g u \, ds
+    \quad \text{for all } u \in H^1(\Omega).
+\end{equation*}
+where
+\begin{equation*}
+    a(w, u) = \int_{\partial\Omega}
+    (\sigma \nabla w \cdot \nabla u + c w u)\, dx.
+\end{equation*}
+This is the variational formulation of Equation~\eqref{eq:variational_formulation_adjoint} with $u := v$.
+
+
 \subsection{Linear algebra and matrix decompositions}
 
 \paragraph{Symmetric positive definiteness}\label{sec:positive_definiteness}
@@ -129,90 +173,29 @@ For sparse systems $A x = y$, computing the $LU$ factorization comes with additi
 For sparse SPD matrices arising from 2D elliptic PDEs (mass matrices, stiffness matrix), the structure of the matrices can be exploited. Alan George proposed the nested dissection method in 1973 \cite{georgeNestedDissectionRegular1973}, a divide and conquer approach, that computes Cholesky factorization in $\mathcal{O}(N^{3/2})$ flops. The resulting triangular matrix $L$ contains $\mathcal{O}(N \log N)$ non-zero elements, so solving $L x = y$ costs $\mathcal{O}(\operatorname{nnz}(L)) = \mathcal{O}(N \log N)$.
 
 
-\subsection{Performance metrics}\label{appendix:performance_metrics}
-Let $x \in \mathbb{R}^N$ denote the true source (it's coefficient vector) and $\hat x \in \mathbb{R}^N$ it's corresponding reconstruction.
-
-To evaluate reconstruction quality, we consider three performance metrics: Euclidean error, Earth mover’s distance (EMD), and the integrated (area under curve) intersection over union (AUC-IoU). These metrics emphasize the localization and spatial shape of the reconstructed source, rather than just the amplitude.
-
-
-\paragraph{Earth mover’s distance}
-The earth mover's distance measures the dissimilarity between two distributions, which in our case refers to $x$ and $\hat x$. Let $x_d$ and $\hat x_d$ be the normalized distributions of $x$ and $\hat x$, respectively, computed as
+\subsection{Dynamical low-rank approximation}\label{appendix:dynamical_low_rank_approximation}
+In \cite{kochDynamicalLowrankApproximation2007}, Koch and Lubich study the problem of finding a rank-$r$ approximation $X(t)$ to a time-dependent data matrix $A(t)$,
 \begin{equation*}
-    (x_d)_i = \frac{|x_i|}{\sum_{j=1}^N |x_j|}, \quad
-    (\hat x_d)_i = \frac{|\hat x_i|}{\sum_{j=1}^N |\hat x_j|}.
+    \min_{X(t) \in \mathcal{M}_r} \| X(t) - A(t) \|_F,
 \end{equation*}
-The EDM between them is
-\begin{equation*}
-    \operatorname{EDM} =
-    \inf_{\gamma_{ij} \in \Pi}
-    \gamma_{ij} \sum_{ij}^N d(p_i, p_j)
-\end{equation*}
-where $\Pi$ is the set of all joint distributions with marginals $x_d$ and $\hat x_d$ \cite{rubnerMetricDistributionsApplications1998}.
-
-
-\paragraph{AUC-IoU}
-The IoU, known as the Jaccard index in statistics, measures the similarity between two sets. It is defined as the size of intersection divided by the size of the union \cite{raschkaPythonMachineLearning}.
-
-We define the binary mask of $x$ at threshold $\tau \in (0, 1)$ as the set
-\begin{equation*}
-    S_{\tau}(x) = \{ i : x_i \ge \tau \operatorname{max}(x) \}.
-\end{equation*}
-Then, the IoU of $x$ and $\hat x$ at threshold $\tau$ is then the IoU of their binary masks,
-\begin{equation*}
-    \operatorname{IoU}(\tau) =
-    \frac{|S_\tau(x) \cap S_\tau(\hat x)|}{|S_\tau(x) \cup S_\tau(\hat x)|}.
-\end{equation*}
-Here, $| \cdot |$ denotes the number of elements of a set (its cardinality).
-
-The AUC-IoU is then the integration of the $\operatorname{IoU}(\tau)$ curve,
-\begin{equation*}
-    \operatorname{AUC-IoU} = \int_{0}^{1} \operatorname{IoU}(\tau) \, d\tau.
-\end{equation*}
-This can be approximated using the Trapezoidal rule. The AUC-IoU lies in $[0, 1]$, with 1 being a perfect score.
-
-
-\subsection{Derivation of the adjoint formulation}\label{appendix:adjoint_derivation}
-Consider the forward operator $\mathcal{K} = \mathcal{S} \circ \mathcal{T}$ given by Equation~\eqref{eq:K}, and the variational formulation of $\mathcal{S}$ by Equation~\eqref{eq:S_cont}. Define the bilinear form
-\begin{equation*}
-    a(u,\, v) =
-    \int_\Omega (\sigma \nabla u \cdot \nabla v + c u v) \, dx,
-\end{equation*}
-then, the variational formulation of $\mathcal{S}$ reads as follows: find $u \in H^1(\Omega)$ such that
-\begin{equation}\label{eq:bilinear_form}
-    a(u,\, v) = \int_\Omega f v \, dx.
+where $\mathcal{M}_r = \{M \in \mathbb{R}^{m \times n} : \operatorname{rank}(M) = r \}$. Instead of computing a best approximation via SVD at every time $t$, they propose a dynamical approach. They seek a low-rank matrix $Y(t) \in \mathcal{M}_r$ such that its derivative $\dot{Y}(t)$ approximates $\dot{A}(t)$:
+\begin{equation}\label{eq:dlra1}
+    \min_{\dot{Y}(t) \in \mathcal{T}_{Y(t)}\mathcal{M}_r} \| \dot{Y}(t) - \dot{A}(t) \|_F.
 \end{equation}
 
-For some $g \in L^2(\partial\Omega)$, we seek $w = \mathcal{K}^* g$. By the definition of $K^*$,
+Let $Y = U \Sigma V^T$ be a factorization where $U \in \mathbb{R}^{m \times r}$ and $V \in \mathbb{R}^{n \times r}$ have orthonormal columns, and $\Sigma \in \mathbb{R}^{r \times r}$ is non-singular (using the SVD yields a diagonal $\Sigma$, but this not a necessary assumption). Koch and Lubich show that Equation~\eqref{eq:dlra1} is equivalent to the Galerkin condition: find $\dot{Y} \in \mathcal{T}_{Y}\mathcal{M}_r$ such that
 \begin{equation*}
-    \langle \mathcal{K} f,\, g \rangle_{L^2(\partial\Omega)} =
-    \langle f,\, \mathcal{K}^* g \rangle_{L^2(\Omega)}.
+    \langle \dot{Y} - \dot{A},\, \delta Y \rangle_F = 0,\quad \text{for all } \delta Y \in \mathcal{T}_{Y}\mathcal{M}_r.
 \end{equation*}
-and since $\mathcal{K} f = u|_{\partial\Omega}$, we have that
-\begin{equation}\label{eq:adjoint_identity_1}
-    \langle \mathcal{K} f,\, g \rangle_{L^2(\partial\Omega)} =
-    \int_{\partial\Omega} u g \, ds.
-\end{equation}
-In Equation~\eqref{eq:bilinear_form}, choose $v = w = \mathcal{K}^* g$. We see that
-\begin{equation}\label{eq:adjoint_identity_2}
-    a(u, w) = \int_{\Omega} f w \, dx = \langle f,\, \mathcal{K}^* g \rangle_{L^2(\Omega)}.
-\end{equation}
-Insert Equation~\eqref{eq:adjoint_identity_1} and \eqref{eq:adjoint_identity_2} into the definition of $\mathcal{K}^*$, and using the identity $a^*(v,\, u) = a(u,\, v)$ (by the definition of $a^*$ \cite{kreyszigIntroductoryFunctionalAnalysis1989}),
-\begin{equation}\label{eq:adjoint_identity_3}
-    a^*(w,\, u) = \int_{\partial\Omega} g u \, ds.
-\end{equation}
-Since Equation~\eqref{eq:adjoint_identity_3} must hold for all $u \in H^1(\Omega)$, it defines a variational problem for $w$. And since $a$ is symmetric ($\sigma$ is symmetric),
-$a^*(w,\, u) = a(u,\, w) = a(w,\, u)$, we get that Equation~\eqref{eq:adjoint_identity_3} reduces to:
-find $w \in H^1(\Omega)$ such that
+By defining the orthogonal projectors $P_U = UU^T$ and $P_V = VV^T$, and their complements $P_U^{\perp} = I_m - P_U$ and $P_V^{\perp} = I_n - P_V$, they prove (Proposition~2.1) that this condition yields the following system of matrix differential equations:
 \begin{equation*}
-    a(w,\, u) = \int_{\partial\Omega} g u \, ds
-    \quad \text{for all } u \in H^1(\Omega).
+    \begin{aligned}
+    \dot{\Sigma} &= U^T \dot{A} V, \\
+    \dot{U} &= P_U^{\perp} \dot{A} V \Sigma^{-1}, \\
+    \dot{V} &= P_V^{\perp} \dot{A}^T U \Sigma^{-T}.
+    \end{aligned}
 \end{equation*}
-where
-\begin{equation*}
-    a(w, u) = \int_{\partial\Omega}
-    (\sigma \nabla w \cdot \nabla u + c w u)\, dx.
-\end{equation*}
-This is the variational formulation of Equation~\eqref{eq:variational_formulation_adjoint} with $u := v$.
+These equations allow for evolution of the low-rank factors using numerical integration techniques.
 
 
 \subsection{Conjugate gradient algorithm}\label{appendix:conjugate_gradient_algorithm}
@@ -260,26 +243,43 @@ Another well-known modification is the Polak–Ribière formula \cite{polakNoteC
 \end{equation*}
 
 
-\subsection{Dynamical low-rank approximation}\label{appendix:dynamical_low_rank_approximation}
-In \cite{kochDynamicalLowrankApproximation2007}, Koch and Lubich study the problem of finding a rank-$r$ approximation $X(t)$ to a time-dependent data matrix $A(t)$,
-\begin{equation*}
-    \min_{X(t) \in \mathcal{M}_r} \| X(t) - A(t) \|_F,
-\end{equation*}
-where $\mathcal{M}_r = \{M \in \mathbb{R}^{m \times n} : \operatorname{rank}(M) = r \}$. Instead of computing a best approximation via SVD at every time $t$, they propose a dynamical approach. They seek a low-rank matrix $Y(t) \in \mathcal{M}_r$ such that its derivative $\dot{Y}(t)$ approximates $\dot{A}(t)$:
-\begin{equation}\label{eq:dlra1}
-    \min_{\dot{Y}(t) \in \mathcal{T}_{Y(t)}\mathcal{M}_r} \| \dot{Y}(t) - \dot{A}(t) \|_F.
-\end{equation}
+\subsection{Performance metrics}\label{appendix:performance_metrics}
+Let $x \in \mathbb{R}^N$ denote the true source (it's coefficient vector) and $\hat x \in \mathbb{R}^N$ it's corresponding reconstruction.
 
-Let $Y = U \Sigma V^T$ be a factorization where $U \in \mathbb{R}^{m \times r}$ and $V \in \mathbb{R}^{n \times r}$ have orthonormal columns, and $\Sigma \in \mathbb{R}^{r \times r}$ is non-singular (using the SVD yields a diagonal $\Sigma$, but this not a necessary assumption). Koch and Lubich show that Equation~\eqref{eq:dlra1} is equivalent to the Galerkin condition: find $\dot{Y} \in \mathcal{T}_{Y}\mathcal{M}_r$ such that
+To evaluate reconstruction quality, we consider three performance metrics: Euclidean error, Earth mover’s distance (EMD), and the integrated (area under curve) intersection over union (AUC-IoU). These metrics emphasize the localization and spatial shape of the reconstructed source, rather than just the amplitude.
+
+
+\paragraph{Earth mover’s distance}
+The earth mover's distance measures the dissimilarity between two distributions, which in our case refers to $x$ and $\hat x$. Let $x_d$ and $\hat x_d$ be the normalized distributions of $x$ and $\hat x$, respectively, computed as
 \begin{equation*}
-    \langle \dot{Y} - \dot{A},\, \delta Y \rangle_F = 0,\quad \text{for all } \delta Y \in \mathcal{T}_{Y}\mathcal{M}_r.
+    (x_d)_i = \frac{|x_i|}{\sum_{j=1}^N |x_j|}, \quad
+    (\hat x_d)_i = \frac{|\hat x_i|}{\sum_{j=1}^N |\hat x_j|}.
 \end{equation*}
-By defining the orthogonal projectors $P_U = UU^T$ and $P_V = VV^T$, and their complements $P_U^{\perp} = I_m - P_U$ and $P_V^{\perp} = I_n - P_V$, they prove (Proposition~2.1) that this condition yields the following system of matrix differential equations:
+The EDM between them is
 \begin{equation*}
-    \begin{aligned}
-    \dot{\Sigma} &= U^T \dot{A} V, \\
-    \dot{U} &= P_U^{\perp} \dot{A} V \Sigma^{-1}, \\
-    \dot{V} &= P_V^{\perp} \dot{A}^T U \Sigma^{-T}.
-    \end{aligned}
+    \operatorname{EDM} =
+    \inf_{\gamma_{ij} \in \Pi}
+    \gamma_{ij} \sum_{ij}^N d(p_i, p_j)
 \end{equation*}
-These equations allow for evolution of the low-rank factors using numerical integration techniques.
+where $\Pi$ is the set of all joint distributions with marginals $x_d$ and $\hat x_d$ \cite{rubnerMetricDistributionsApplications1998}.
+
+
+\paragraph{AUC-IoU}
+The IoU, known as the Jaccard index in statistics, measures the similarity between two sets. It is defined as the size of intersection divided by the size of the union \cite{raschkaPythonMachineLearning}.
+
+We define the binary mask of $x$ at threshold $\tau \in (0, 1)$ as the set
+\begin{equation*}
+    S_{\tau}(x) = \{ i : x_i \ge \tau \operatorname{max}(x) \}.
+\end{equation*}
+Then, the IoU of $x$ and $\hat x$ at threshold $\tau$ is then the IoU of their binary masks,
+\begin{equation*}
+    \operatorname{IoU}(\tau) =
+    \frac{|S_\tau(x) \cap S_\tau(\hat x)|}{|S_\tau(x) \cup S_\tau(\hat x)|}.
+\end{equation*}
+Here, $| \cdot |$ denotes the number of elements of a set (its cardinality).
+
+The AUC-IoU is then the integration of the $\operatorname{IoU}(\tau)$ curve,
+\begin{equation*}
+    \operatorname{AUC-IoU} = \int_{0}^{1} \operatorname{IoU}(\tau) \, d\tau.
+\end{equation*}
+This can be approximated using the Trapezoidal rule. The AUC-IoU lies in $[0, 1]$, with 1 being a perfect score.

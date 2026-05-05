@@ -1,0 +1,28 @@
+\begin{table}[!ht]
+\centering
+\begin{tabular}{llrrrr}
+\hline
+Preconditioner & $N_r$ & $< 0.90$ & $< 0.85$ & $< 0.80$ & $< 0.75$ \\
+\hline
+\multirow{3}{*}{None}  
+& $\infty$ & 48 & 100 & 184 & \texttt{-} \\
+& 25 & 54 & 249 & 958 & \texttt{-} \\
+& 10 & 35 & 165 & 816 & 5941 \\
+\hline
+\multirow{3}{*}{Jacobi}
+& $\infty$ & 43 & 112 & 204 & \texttt{-} \\
+& 25 & 50 & 250 & 1042 & \texttt{-} \\
+& 10 & 34 & 145 & 776 & 6518 \\
+\hline
+\multirow{3}{*}{IC}
+& $\infty$ & 4 & \texttt{-} & \texttt{-} & \texttt{-} \\
+& 25 & 4 & 28 & 57 & \texttt{-} \\
+& 10 & 4 & 14 & 30 & 680 \\
+\hline
+IC+Woodbury & $\infty$ & 1 & 1 & \texttt{-} & \texttt{-} \\
+Perfect     & $\infty$ & 1 & 1 & \texttt{-} & \texttt{-} \\
+\hline
+\end{tabular}
+\caption{Number of iterations to reach a given relative reconstruction error $E^{(i)}$ using DLRA-PCG with different preconditioners and restart periods $N_r$, where \texttt{-} indicates the threshold was not reached. Problem~I was used.}
+\label{tab:convergence_iterations_precond}
+\end{table}

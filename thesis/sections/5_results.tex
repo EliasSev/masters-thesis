@@ -1,4 +1,4 @@
-\section{Results}\label{sec:results}
+s\section{Results}\label{sec:results}
 \subsection{Experimental setup}\label{sec:problems}
 \input{figures/problem_illustration.tex}
 Figure~\ref{fig:problem_illustration} shows the three meshes and source functions used throughout the results. Problem I is a square mesh with a single source, used as a baseline. Problem II uses the same geometry with three sources to assess reconstruction under multiple sources. Problem III replaces the square domain with an ``L''-shaped mesh and two sources, introducing a non-convex geometry.
@@ -124,7 +124,11 @@ At their respective optimal ranks, rSVD and tSVD give nearly identical Euclidean
 \subsection{Dynamical low-rank approximation solvers}
 Unless stated otherwise, all experiments use a rank-$50$ rSVD approximation of $K$ and $W$ (Algorithm~\ref{alg:discrete_rsvd}, $p = 5$, standard Gaussian test vectors $\psi_i$) to form $\Phi$, its gradient, and its Hessian (Section~\ref{sec:application_to_inverse_problem}), on which Algorithm~\ref{alg:DLRA-CG} is applied to find a low-rank solution.
 
-We write $X^* \in \mathbb{R}^{n \times n}$ for the matrix form of the true source, i.e., $x^* = \operatorname{vec}(X^*)$, and $N_r$ for the restart period of restarted DLRA-CG (Section~\ref{sec:restarted_cg}).
+We write $X^* \in \mathbb{R}^{n \times n}$ for the matrix form of the true source, and $N_r$ for the restart period of restarted DLRA-CG (Section~\ref{sec:restarted_cg}). Convergence is measured by the relative reconstruction error
+\begin{equation*}
+    e^{(i)} = \frac{\|X^{(i)} - X^*\|_F}{\|X^{(0)} - X^*\|_F},
+\end{equation*}
+which equals 1 at initialization and decreases toward 0 as the iterates approach $X^*$. Unless stated otherwise, $X^{(0)}$ has entries drawn uniformly from $[0,\,10^{-3}]$.
 
 
 \subsubsection{Rate of convergence}
@@ -132,9 +136,11 @@ We write $X^* \in \mathbb{R}^{n \times n}$ for the matrix form of the true sourc
 \input{tables/convergence_iterations.tex}
 Figure~\ref{fig:number_of_iterations} compares the reconstruction error per iteration for three DLRA step-size rules (Algorithm~\ref{alg:dlra}) and DLRA-CG (Algorithm~\ref{alg:DLRA-CG}), with and without restarting. The right panel shows the effect of the restart period $N_r$ on the convergence of DLRA-CG.
 
-DLRA-CG reaches the lowest error fastest but then rises, a consequence of the loss of $H$-conjugacy described in Section~\ref{sec:restarted_cg}, illustrating a form of semi-convergence. Restarted DLRA-CG (with $N_r = 10$) avoids this rise, at the cost of slower convergence, but convergences faster than the three DLRA step-size rules, which all fail to converge within $25{,}000$ iterations (and the Adam rule gets stuck).
+DLRA-CG reaches the lowest error fastest but then rises, a consequence of the loss of $H$-conjugacy described in Section~\ref{sec:restarted_cg}, illustrating a form of semi-convergence. Restarted DLRA-CG (with $N_r = 10$) avoids this rise, at the cost of slower convergence, but converges faster than the three DLRA step-size rules, which all fail to converge within $25{,}000$ iterations (and the Adam rule gets stuck).
 
-A smaller $N_r$ slows convergence but drives the error lower, and for larger $N_r$, the semi-convergent behavior of DLRA-CG re-appears. Table~\ref{tab:convergence_iterations} shows the iteration count to reach selected error thresholds. DLRA-CG reaches a relative error of $0.9$ in 49 iterations, and restarted DLRA-CG takes 36 iterations. The step-size rules Adam, fixed, and steepest descent reaches this threshold in 1757, 21532, and 1532 iterations. To reach a threshold of $0.75$, it takes DLRA-CG without and with restarting 100 and 160 iterations respectively, the three other methods fail to reach this error within the iteration budget of $25{,}000$. Only restarted DLRA-CG reaches the relative error threshold of $0.70$.
+A smaller $N_r$ slows convergence but drives the error lower, and for larger $N_r$, the semi-convergent behavior of DLRA-CG re-appears. Table~\ref{tab:convergence_iterations} shows the iteration count to reach selected error thresholds. DLRA-CG reaches a relative error of $0.9$ in 49 iterations, and restarted DLRA-CG takes 36 iterations. The step-size rules Adam, fixed, and steepest descent reach this threshold in 1657, 21532, and 1534 iterations. To reach a threshold of $0.85$, DLRA-CG takes 100 iterations and restarted DLRA-CG takes 160. At $0.75$, only restarted DLRA-CG succeeds, requiring 3976 iterations.
+
+Per-iteration compute times are similar across all methods ($0.5$-$0.7$ ms), so the iteration counts in Table~\ref{tab:convergence_iterations} translate directly to runtime. At $e^{(i)} < 0.85$, DLRA-CG is approximately $220$ times faster than steepest descent.
 
 
 \subsubsection{Quality of the low-rank solutions}
@@ -142,7 +148,7 @@ A smaller $N_r$ slows convergence but drives the error lower, and for larger $N_
 \input{figures/low_rank_restarted_cg.tex}
 DLRA-CG shows semi-convergence: the iterates initially approach the true source, but start to drift away from the optimal solution when $H$-conjugacy is lost (Section~\ref{sec:restarted_cg}). Figure~\ref{fig:low_rank_convergence} shows the difference between the minimum reconstruction iterate and the converged iterate. In both Problems~I and II, the positions of the sources are slightly shifted away from the boundary for the converged solutions (right panels), while the optimal iterate is correctly located (middle panels). In both Problems~I and II, the late-stage iterate (right panels) shows a slight inward shift of the source positions, while the minimum-error iterate (middle panels) correctly reproduces the source locations. The early iterate (left panels) has not yet localized the sources.
 
-Compared to the full-rank solutions of Section~\ref{sec:target_rank_reconstruction}, which have smoothing pulled toward the interior, the low-rank solutions are more uniformly smoothed with no such tail. For Problem~I, this creates a circular source, and for Problem~II, this results in cleanly separated sources (in Figure~\ref{fig:test_problem_II} they were connected). Additionally, at $k = 50$, the peak amplitudes are $0.28$ (rank-1 DLRA-CG) versus $0.26$ (full-rank rSVD) for ProblemI, and $0.64$ versus $0.48$ for Problem~II, where the upper-left source is weaker in the rank-2 solution. The true source amplitude is 1.0 (Figure~\ref{fig:problem_illustration}). The low-amplitude noise in the full-rank rSVD solution is replaced by a checker-like pattern of similar amplitude.
+Compared to the full-rank solutions of Section~\ref{sec:target_rank_reconstruction}, which have smoothing pulled toward the interior, the low-rank solutions are more uniformly smoothed with no such tail. For Problem~I, this creates a circular source, and for Problem~II, this results in cleanly separated sources (in Figure~\ref{fig:test_problem_II} they were connected). Additionally, at $k = 50$, the peak amplitudes are $0.28$ (rank-1 DLRA-CG) versus $0.26$ (full-rank rSVD) for Problem~I, and $0.64$ versus $0.48$ for Problem~II, where the upper-left source is weaker in the rank-2 solution. The true source amplitude is 1.0 (Figure~\ref{fig:problem_illustration}). The low-amplitude noise in the full-rank rSVD solution is replaced by a checker-like pattern of similar amplitude.
 
 Restarted DLRA-CG ($N_r = 10$) achieves a lower relative error than DLRA-CG without restarting (Figure~\ref{fig:number_of_iterations}, left). The converged solutions in Figure~\ref{fig:low_rank_restarted_cg} are correctly located and less diffuse, with peak amplitudes of $0.40$ and $0.80$ for Problems~I and II, closer to the true amplitude of $1.0$ than both the full-rank rSVD Tikhonov solutions and the solutions without restarting.
 
@@ -152,22 +158,20 @@ Restarted DLRA-CG ($N_r = 10$) achieves a lower relative error than DLRA-CG with
 \input{figures/low_rank_solution_error.tex}
 Figure~\ref{fig:low_rank_different_r} shows DLRA-CG solutions for Problems~I and II at ranks $r = 1, 2, 5$. For Problem~I, the reconstruction error increases with rank, and at rank 5 the solution resembles the full-rank Tikhonov reconstruction (Figure~\ref{fig:test_problem_I}). For Problem~II, rank 2 is optimal; at rank 5 the reconstruction similarly resembles the full-rank case (Figure~\ref{fig:test_problem_II}).
 
-Figure~\ref{fig:low_rank_solution_error} shows that for Problem~I, the rank 1 DLRA-CG solution achieves lower Euclidean and AUC-IoU error than the full rank rSVD solution. For EMD, the full-rank solution is better, possibly because the focused distribution of the rank-1 solution differs more from the flat true source than the smoother full-rank reconstruction. For ProblemII, the rank-2 solution outperforms rank-1, rank-5, and full-rank solutions across all metrics for $k > 10$. Reconstructions of rank 5 achieves approximately the same error as full-rank rSVD reconstructions.
+Figure~\ref{fig:low_rank_solution_error} shows that for Problem~I, the rank 1 DLRA-CG solution achieves lower Euclidean and AUC-IoU error than the full rank rSVD solution. For EMD, the full-rank solution is better, possibly because the focused distribution of the rank-1 solution differs more from the flat true source than the smoother full-rank reconstruction. For Problem~II, the rank-2 solution outperforms rank-1, rank-5, and full-rank solutions across all metrics for $k > 10$. Reconstructions of rank 5 achieves approximately the same error as full-rank rSVD reconstructions.
 
 As shown in Section~\ref{sec:target_rank_reconstruction}, full-rank rSVD solutions approach but do not outperform the exact Tikhonov solution in the range $k \in [5,\,100]$ (Figure~\ref{fig:rsvd_over_k_II}). The low-rank solutions do: for Problem~I, the rank-1 solution achieves lower Euclidean and AUC-IoU error than the exact Tikhonov solution, and for Problem~II, the rank-2 solution outperforms it across all metrics \textcolor{red}{[TODO: at which $k$ does this happen?]}.
 
 
 \subsubsection{Rate of convergence using preconditioners}
 \input{figures/number_of_iterations_preconditioners.tex}
-Figure~\ref{fig:number_of_iterations_preconditioners} shows that, except for the Jacobi case, using preconditioners speeds up the convergence significant, but at the cost of higher error. Using the Jacobi preconditioner gives similar convergence as no preconditioning. On both Problems~I and II, using IC, IC with Woodbury, and a perfect preconditioner has superior initial convergence compared to no preconditioning, but the final error is higher: 0.86, 0.84 and 0.84 relative error for IC, IC with Woodbury, and a perfect preconditioner, compared to 0.81 for Jacobi and no preconditioning, on Problem~I (left panel). Similar errors were obtained for Problem~II (right panel).
+\input{tables/convergence_iterations_precond.tex}
+The left panel of Figure~\ref{fig:number_of_iterations_preconditioners} shows that, except for Jacobi, using preconditioners speeds up the convergence significantly at the cost of higher error. Using the Jacobi preconditioner gives similar convergence as no preconditioning. Using IC, IC + Woodbury, and a perfect preconditioner shows faster convergence compared to no preconditioning, but the final error is higher: 0.86, 0.84 and 0.84 relative error for IC, IC + Woodbury, and a perfect preconditioner, compared to 0.81 for Jacobi and no preconditioning. Similar results were seen for Problem~II. 
 
-Both the perfect and the IC preconditioner converged in a single iteration. For the perfect case, this is too be expected, since the the first step moves directly to the full-rank weighted Tikhonov solution before effectively getting truncated (projected to the tangent plane, then a SVD truncation). It is likely that something similar is happening for the IC + Woodbury preconditioner: the sparse part of the Hessian does not have suffer from much full-in (Appendix~\ref{appendix:triangular}), and the IC factorization approximates the sparse part well.
+The right panel shows DLRA-PCG combined with restarting. For Jacobi, this gives a similar effect as restarted DLRA-CG: slower convergence but better final error. For the IC preconditioner, the high final error when using no restarting is resolved, with the relative error steadily reducing. The IC + Woodbury preconditioner shows worse results when combined with restarting, driving the error up and the iterates diverging. A perfect preconditioner is not affected by restarting.
 
-\input{figures/low_rank_preconditioned.tex}
-In Figure~\ref{fig:low_rank_ic} the reconstructions using DLRA-PCG with IC is shown. The IC preconditioner converged to the highest error solution (Figure~\ref{fig:number_of_iterations_preconditioners}), and from the reconstruction we see that the sources are slightly shifted towards the interior. For Problem~II (right), the top left source is particularly blurry.
-
-In the right panel of Figure~\ref{fig:number_of_iterations_preconditioners}, the IC preconditioner shows an initial increase in relative error. However, inspecting the first 4 iterates (Figure~\ref{fig:low_rank_ic_first_iters}) shows that the iterates are not necessarily moving in the wrong direction.
-
+Table~\ref{tab:convergence_iterations_precond} shows that an IC preconditioner together with $N_r = 10$ reaches a relative error threshold of 0.80 and 0.75 fastest out of the tested preconditioner and restart periods. Compared to using no preconditioning, the IC preconditioner approximately reached a threshold of 0.75 with 10 times fever iterations. Both the IC + Woodbury and the perfect preconditioner converges in a single step.
 
 
 \subsubsection{Local minimas}
+\input{figures/low_rank_diverged_solutions.tex}

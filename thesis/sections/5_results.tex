@@ -121,7 +121,7 @@ At their respective optimal ranks, rSVD and tSVD give nearly identical Euclidean
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Dynamical Low-Rank Approximation using (Preconditioned) Conjugate Gradient Part 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Dynamical low-rank approximation solvers}
+\subsection{Dynamical low-rank approximation}
 Unless stated otherwise, all experiments use a rank-$50$ rSVD approximation of $K$ and $W$ (Algorithm~\ref{alg:discrete_rsvd}, $p = 5$, standard Gaussian test vectors $\psi_i$) to form $\Phi$, its gradient, and its Hessian (Section~\ref{sec:application_to_inverse_problem}), on which Algorithm~\ref{alg:DLRA-CG} is applied to find a low-rank solution.
 
 We write $X^* \in \mathbb{R}^{n \times n}$ for the matrix form of the true source, and $N_r$ for the restart period of restarted DLRA-CG (Section~\ref{sec:restarted_cg}). Convergence is measured by the relative reconstruction error
@@ -175,3 +175,6 @@ Table~\ref{tab:convergence_iterations_precond} shows that an IC preconditioner t
 
 \subsubsection{Local minimas}
 \input{figures/low_rank_diverged_solutions.tex}
+From Figure~\ref{fig:number_of_iterations_preconditioners} we saw that using DLRA-PCG with IC + Woodbury preconditioning and $N_r = 10$, the iterates diverged. Figure~\ref{fig:low_rank_diverged_solutions} shows these solutions after $500$ iterations. For Problem~I, the reconstruction is slightly shifted, with $e^{(i)} = 0.85$. For Problem~II, an incorrect source is seen in the lower right, and the relative error is $e^{(i)} = 0.76$.
+
+For Problem~II, when using the suboptimal solution from the left panel of Figure~\ref{fig:low_rank_diverged_solutions} as the initial iterate $X^{(0)}$ for DLRA-CG and DLRA-PCG, the solvers were not able to escape this suboptimal solution (except when using a perfect preconditioner). This suggest that this point is a local minima on the manifold of rank-$2$ matrices. Using restarting resolved the problem. This issue was not observed for Problem~I. 

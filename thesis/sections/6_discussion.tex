@@ -69,6 +69,11 @@ Figure~\ref{fig:singular_vectors_of_K} plots the 4 first right singular vectors 
 \subsubsection{Independence from mesh resolution}
 \textcolor{red}{TODO:} Not done yet. Might drop this section (not much to discuss.) Practical work-around for finding $k$: find it on a small mesh, since reconstruction quality isn't dependent on $N$, then this $k$ can be used for a more fine mesh.
 
+\subsubsection{Estimation of singular values}
+Let $\hat P = QQ^T$ with $Q$ produced by Algorithm~\ref{alg:discrete_rsvd}. This is an orthogonal projection onto $\operatorname{span}(Q)$, and $\hat P K$ is the projected matrix from which the rSVD approximation is obtained. The projector satisfies $\| \hat P z \| \le \| z \|$, meaning it shrinks vectors, so $\| \hat P K x  \| \le \|K x \|$ for every $x$. So $\hat P K$ stretches every vector at most as much as $K$ does, and singular values measure exactly this stretching. This is indeed the case, as we saw in the results of  Section~\ref{sec:approximation_of_singular_values}. By choosing a higher oversampling parameter $p$, $\operatorname{span}(Q)$ more closely matches $\operatorname{span}(K)$ (in particular, the $k$ first left singular vectors), and the under-estimation reduces. Algorithm~\ref{alg:discrete_rsvd_Kstar} gave a worse approximation (Section~\ref{sec:reconstruction_error_using_the_adjoint_operator}), so the underestimation increases.
+
+The captured subspace $\operatorname{span}(Q)$ depends on the random test vectors $\psi_i$, and so does the degree of under-estimation. This is an active area of research. Lemma~4.2 and Theorem~4.3 of Gu \cite{guSubspaceIterationRandomization2015} provide lower bounds for the power-iteration method, which reduces to the plain rSVD used in Algorithm~\ref{alg:discrete_rsvd} when $q = 0$.
+
 
 \subsubsection{Reconstructions under noisy data}
 \textcolor{red}{TODO:} Section not done. Bring in the theory from Hansen on tSVD:

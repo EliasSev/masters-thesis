@@ -67,7 +67,12 @@ Figure~\ref{fig:singular_vectors_of_K} plots the 4 first right singular vectors 
 
 
 \subsubsection{Independence from mesh resolution}
-\textcolor{red}{TODO:} Not done yet. Might drop this section (not much to discuss.) Practical work-around for finding $k$: find it on a small mesh, since reconstruction quality isn't dependent on $N$, then this $k$ can be used for a more fine mesh.
+The reconstruction error is independent of the mesh resolution $N$ for fixed $k$ (Section~\ref{sec:mesh_resolution_effect_on_reconstruction_error}). The PDE solution at the boundary is smooth, so finer discretization produces more samples of the same smooth function without introducing new information about the source.
+
+The continuous forward operator $\mathcal{K}$ has rapidly decaying singular values (Section~\ref{sec:ill_posedness}), and the discrete $K$ inherits this decay. As $N$ increases and $\operatorname{rank}(K) = N_b$ grows, the addition singular values are small with little new information.
+
+The target rank $k$ can therefore be selected on a coarse mesh, where rSVD is inexpensive to run, and reused unchanged as the mesh is refined. This is a practical method for tuning $k$ when the final computation on a fine mesh is expensive.
+
 
 \subsubsection{Estimation of singular values}
 Let $\hat P = QQ^T$ with $Q$ produced by Algorithm~\ref{alg:discrete_rsvd}. This is an orthogonal projection onto $\operatorname{span}(Q)$, and $\hat P K$ is the projected matrix from which the rSVD approximation is obtained. The projector satisfies $\| \hat P z \| \le \| z \|$, meaning it shrinks vectors, so $\| \hat P K x  \| \le \|K x \|$ for every $x$. So $\hat P K$ stretches every vector at most as much as $K$ does, and singular values measure exactly this stretching. This is indeed the case, as we saw in the results of  Section~\ref{sec:approximation_of_singular_values}. By choosing a higher oversampling parameter $p$, $\operatorname{span}(Q)$ more closely matches $\operatorname{span}(K)$ (in particular, the $k$ first left singular vectors), and the under-estimation reduces. Algorithm~\ref{alg:discrete_rsvd_Kstar} gave a worse approximation (Section~\ref{sec:reconstruction_error_using_the_adjoint_operator}), so the underestimation increases.

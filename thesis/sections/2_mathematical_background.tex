@@ -39,7 +39,7 @@ The associated inverse problem can now be formulated as follows: given boundary 
 Solving this problem computationally requires discretizing $\mathcal{K}$, understanding the ill-posedness of the resulting system, and regularizing it to obtain stable solutions, which we address in the following sections.
 
 
-\subsubsection{Ill-posedness}
+\subsubsection{Ill-posedness}\label{sec:ill_posedness}
 A problem is said to be well-posed if its solution exists, is unique, and is stable in the sense that it depends continuously on the data, as formulated by Hadamard \cite{hansen2010discrete}. The inverse problem $\mathcal{K}f = y$ is ill-posed.
 
 The null space of $\mathcal{K}$ is non-trivial: any $f_0$ satisfying $\mathcal{K}f_0 = 0$ can be added to a solution without changing the boundary data $y$. The solution is therefore not unique.

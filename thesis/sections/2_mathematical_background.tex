@@ -218,9 +218,9 @@ The best rank-$k$ approximation of $A$ given by the Eckart--Young theorem, $A_k 
 
 \subsubsection{The pseudoinverse}
 For a matrix $A \in \mathbb{R}^{m \times n}$, the Moore-Penrose inverse $A^+$, often referred to as the pseudoinverse, is a generalization of the inverse of a matrix. If $A = U \Sigma V^T$ is the SVD of $A$, then the pseudoinverse is
-\begin{equation*}
+\begin{equation}\label{eq:pseudoinverse}
     A^+ = V \Sigma^+ U^T,
-\end{equation*}
+\end{equation}
 where $\Sigma^+$ is the pseudoinverse of $\Sigma$. The pseudoinverse of $\Sigma$ can be computed by transposing the matrix and replacing each non-zero diagonal entry with its reciprocal \cite{golubMatrixComputations4th2013}. The pseudoinverse $A^+$ is unique and always exists, and for invertible $A$, $A^+ = A^{-1}$.
 
 For the least-squares problem $\min \|Ax - y \|$, the pseudo-inverse provides the least-squares solution $x = A^+ y$. If the least-squares solution is not unique, then $A^+ y$ is the solution with the smallest Euclidean norm. For details, see Section~5.5 in Golub and Van Loan \cite{golubMatrixComputations4th2013}.
@@ -245,15 +245,15 @@ Replacing $\mathcal{K}$ by its discretization $K \in \mathbb{R}^{N_b \times N}$ 
     \| K x - y \|_{M_\partial}^2
     + \lambda^2 \| W x \|_M^2,
 \end{equation}
-where $x \in \mathbb{R}^N$ is the coefficient vector of $f_h \in V_h$, $y \in \mathbb{R}^{N_b}$ is the observed boundary data, and $\lambda \ge 0$ is the regularization parameter.
+where $x \in \mathbb{R}^N$ is the coefficient vector of $f_h \in V_h$, $y \in \mathbb{R}^{N_b}$ is the observed boundary data, $\lambda \ge 0$ is the regularization parameter, and $W$ the regularization weight matrix.
 
 Standard Tikhonov ($W = I$) does not work here. Because $K$ has a large null space, the solutions it produces concentrate near the domain boundary regardless of where the true source is located \cite{elvetunRegularizationOperatorSource2020}. This is illustrated in Figure~\ref{fig:standard_tikhonov_solution}.
 
 
-\subsection{Regularization weights}
-Assume that $\{ \phi_i \}$ is an orthonormal basis of $V_h$, let $\operatorname{Nul}(\mathcal{K})$ denote the null space of $\mathcal{K}$ and $\operatorname{Nul}(\mathcal{K})^\perp$ its orthogonal complement. Any source $f \in V_h$ can be written as $f = f_\perp + f_0$, where $f_\perp \in \operatorname{Nul}(\mathcal{K})^\perp$ and $f_0 \in \operatorname{Nul}(\mathcal{K})$. As Elvetun and Nielsen points out, sources $f$ located near the domain boundary have a larger $f_\perp$ component, and sources deep within the domain have a larger $f_0$ component. If $f^* = \mathcal{K}^+ y$ denotes the least-squares minimum-norm solution, they show that for the case when $f = \phi_j$, we have that
+\subsubsection{Regularization weights}
+Assume that $\{ \phi_i \}$ is an orthonormal basis of $V_h$, let $\operatorname{Nul}(\mathcal{K})$ denote the null space of $\mathcal{K}$ and $\operatorname{Nul}(\mathcal{K})^\perp$ its orthogonal complement. Any source $f \in V_h$ can be written as $f = f_\perp + f_0$, where $f_\perp \in \operatorname{Nul}(\mathcal{K})^\perp$ and $f_0 \in \operatorname{Nul}(\mathcal{K})$. As Elvetun and Nielsen points out in \cite{elvetunRegularizationOperatorSource2020}, sources $f$ located near the domain boundary have a larger $f_\perp$ component, and sources deep within the domain have a larger $f_0$ component. If $f^* = \mathcal{K}^+ y$ denotes the least-squares minimum-norm solution, they show that for the case when $f = \phi_j$, we have that
 \begin{equation*}
-f^* = \sum_{i} \langle \hat P f, \phi_i \rangle \phi_i,    
+    f^* = \sum_{i} \langle \hat P f, \phi_i \rangle \phi_i,    
 \end{equation*}
 where $\hat P: V_h \to \operatorname{Nul}(K)^\perp$ is the orthogonal projection onto $\operatorname{Nul}(K)^\perp$. Since $\hat{P}\phi_i = \phi_{i,\perp}$, basis functions deep in the interior have small $\|\hat{P}\phi_i \|$. By the Cauchy-Schwarz inequality, if $\| \hat P \phi_i \|$ is small, then $\langle \hat Pf, \phi_i \rangle$ is small, and the corresponding component of $f^*$ is small. This means that for any $\phi_i$ far away from $\partial \Omega$, the corresponding component of $f^*$ is forced to be small, introducing bias to the solution. This issue transfers to the standard Tikhonov solution $f_\lambda$ since $f_\lambda \to f^*$ as $\lambda \to 0$ \cite{engl1996regularization}.
 
@@ -271,18 +271,12 @@ In our setting, the basis of the element space $V_h$ given in Equation~\eqref{eq
 and $W = \operatorname{diag}(w_1, \dots, w_N)$.
 
 
-\subsection{A weighted formulation}
-Assume that $x^*$ solves the linear system $A x = y$ where $A \in \mathbb{R}^{m \times n}$. Then, clearly, $x^*$ solves $B A x = B y$ for a matrix $B \in \mathbb{R}^{q \times m}$. This motivates modifying the Tikhonov formulation in Equation~\eqref{eq:tikhonov},
-\begin{equation*}
-    \min_{x \in \mathbb{R}^n} \| B A x - B y \|^2 + \lambda^2 \| W x \|^2.
-\end{equation*}
-
-We are interested in finding a $B$ which improves reconstructions of the Tikhonov problem. This is what Elvetun and Nielsen analyzed in a series of paper, in particular, if the choice $B = A^+$ improves inverse solutions. In the setting of the discrete inverse problem in Equation~\eqref{eq:discrete_inverse_problem}, they analyze the problem
+\subsubsection{A transformed formulation}
+The weights in Equation~\eqref{eq:weights} are defined by measuring length in the subspace $\operatorname{Nul}(K)^\perp \subset \mathbb{R}^N$. However, the residual vector $K x - y$ in Equation \eqref{eq:discrete_inverse_problem} is measured in the boundary space $\mathbb{R}^{N_b}$. Following Elvetun and Nielsen in \cite{elvetunWeightedSparsityRegularization2023}, we can reformulate the equation $K x = y$ as the equivalent problem $K^+ K x = K^+ y$ (since $K$ and $K^+K$ share the same nullspace). Now, the residual $K^+ K x - K^+ y$ lives in the subspace $\operatorname{Nul}(K)^\perp$, the same space where the weights $w_i$ are defined. Motivated by this, we replace the original residual by the transformed one, giving
 \begin{equation}\label{eq:transformed_discrete_inverse_problem}
     \min_{x \in \mathbb{R}^N}
     \| K^+ K x - K^+ y \|_{M}^2
     + \lambda^2 \| W x \|_M^2.
 \end{equation}
-In this instance, $K^+ K = \hat P$, which is the orthogonal projection onto the complement of the null space $\operatorname{Nul}(K)$ of $K$.
 
-\textcolor{red}{TODO: This subsection is not done}
+In practice, the pseudoinverse $K^+$ amplifies errors associated with small singular values of $K$, and must therefore be approximated by the truncated pseudoinverse $K_k^+$, defined using the $k$ largest singular vector in Equation~\eqref{eq:pseudoinverse}. The weights are correspondingly approximated using $P_k = K_k^+ K$.

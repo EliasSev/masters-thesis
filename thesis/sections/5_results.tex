@@ -69,22 +69,17 @@ generates less low-amplitude noise than Gaussian or Rademacher.
 
 \subsubsection{Mesh resolution effect on reconstruction error}
 \input{figures/mesh_resolution_effect.tex}
-Figure~\ref{fig:mesh_resolution_effect} shows the relative Euclidean, EMD, and AUC-IoU errors for rSVD (Algorithm~\ref{alg:discrete_rsvd}) at fixed target ranks $k = 10,\, 25,\, 50$ as the mesh resolution $N$ increases, averaged over 5 repetitions
-
-For fixed $k$, the Euclidean error and AUC-IoU remain constant across mesh resolutions; reconstruction quality does not depend on $N$. A higher target rank gives lower error throughout. The EMD shows a slight decrease with $N$, likely because finer meshes produce smoother spatial transitions between neighboring mesh elements.
+In Figure~\ref{fig:mesh_resolution_effect}, we see that as fixing the target rank $k$ and refining the mesh resolution $N$ does not decrease the error Euclidean or AUC-IoU error.
+The EMD shows a slight decrease with $N$, likely because finer meshes produce smoother spatial transitions between neighboring mesh elements.
 
 Although $\operatorname{rank}(K) = N_b$ grows with $N$, the target rank $k$ need not be adjusted: refining the mesh adds no new information about the source $f$.
 
 
 \subsubsection{Approximation of singular values}\label{sec:approximation_of_singular_values}
-\input{figures/approximation_of_singular_values.tex}
 \input{tables/singular_values_comparison.tex}
-Figure~\ref{fig:approximation_of_singular_values} shows $\sigma_i / \sigma_i^{\text{(true)}}$ for the 100 largest singular values of $K$ (Problem~I), with $\sigma_i$ computed by rSVD applied to $K$ or $K^*$ (Algorithms~\ref{alg:discrete_rsvd} and~\ref{alg:discrete_rsvd_Kstar}) for $p \in \{0, 5, 10\}$. Each curve is the mean over 20 runs, with $\pm 1$ standard deviation. Table~\ref{tab:singular_values_comparison} lists selected values.
+Table~\ref{tab:singular_values_comparison} shows that both rSVD on $K$ and rSVD on $K^*$ underestimate the true singular values $\sigma_i$, with the bias increasing for higher-index values. Larger $p$ reduces the underestimation, and rSVD on $K^*$ underestimates more than rSVD on $K$ across all tested $p$.
 
-The singular values are under-estimated across all oversampling parameters, with the bias increasing for
-higher-index singular values. A larger $p$ reduces the underestimation. Applying rSVD on $K^*$, the quality of the singular values worsens the approximation quality.
-
-As was found in Section~\ref{sec:target_rank_reconstruction}, a target rank of $k = 50$ yields reconstruction errors within 1\% to 4\% (Euclidean and AUC-IoU) of the true Tikhonov solution, and visually indistinguishable reconstructions. At this rank with $p = 5$, the ratio $\sigma_{50}/\sigma_{50}^{(\text{true})}$ is $0.969$ for rSVD on $K$ and $0.929$ for rSVD on $K^*$.
+At $k = 50$, reconstruction errors were within 1\%--4\% of the exact Tikhonov solution in terms of Euclidean and AUC-IoU (Section~\ref{sec:target_rank_reconstruction}). At this rank with $p = 5$, the ratio $\tilde \sigma_{50}/\sigma_{50}$ is $0.969$ for rSVD on $K$ and $0.929$ for rSVD on $K^*$: the underestimation is small where reconstruction quality is already high. If $\tilde \sigma_i \ll \sigma_i$, the approximated forward operator is more ill-posed than the true one, and reconstruction quality degrades.
 
 
 \subsubsection{Computational time of adjoint operator}

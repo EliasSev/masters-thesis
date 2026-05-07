@@ -1,24 +1,30 @@
 \begin{table}[ht]
-\centering
-\caption{Ratio $\sigma_i / \sigma_i^{\text{(true)}}$ for selected singular values, approximated by rSVD on $K$ or $K^*$, across oversampling parameters $p$ (mean over 20 runs, Problem~I).}
-\label{tab:singular_values_comparison}
-\begin{tabular}{cc ccccc}
-\toprule
-$p$ & rSVD on & $\sigma_{10}$ & $\sigma_{25}$ & $\sigma_{50}$ &$\sigma_{100}$ \\
-\midrule
-\multirow{2}{*}{$0$}
-& $K$   & 1.000 & 0.993 & 0.962 & 0.566 \\
-& $K^*$ & 0.999 & 0.977 & 0.919 & 0.503 \\
- 
-\midrule
-\multirow{2}{*}{$5$}
-& $K$   & 1.000 & 0.995 & 0.969 & 0.668 \\
-& $K^*$ & 0.999 & 0.983 & 0.929 & 0.595 \\
+    \centering
+    \begin{tabular}{cc ccccc}
+    \toprule
+    $p$
+    & rSVD on
+    & $\tilde \sigma_{10}  / \sigma_{10}$
+    & $\tilde \sigma_{25}  / \sigma_{25}$
+    & $\tilde \sigma_{50}  / \sigma_{50}$
+    & $\tilde \sigma_{100} / \sigma_{100}$ \\
+    \midrule
+    \multirow{2}{*}{$0$}
+    & $K$   & 1.000 & 0.993 & 0.962 & 0.566 \\
+    & $K^*$ & 0.999 & 0.977 & 0.919 & 0.503 \\
+    
+    \midrule
+    \multirow{2}{*}{$5$}
+    & $K$   & 1.000 & 0.995 & 0.969 & 0.668 \\
+    & $K^*$ & 0.999 & 0.983 & 0.929 & 0.595 \\
 
-\midrule
-\multirow{2}{*}{$10$}
-& $K$   & 1.000 & 0.995 & 0.973 & 0.724 \\
-& $K^*$ & 0.999 & 0.986 & 0.939 & 0.642 \\
-\bottomrule
-\end{tabular}
+    \midrule
+    \multirow{2}{*}{$10$}
+    & $K$   & 1.000 & 0.995 & 0.973 & 0.724 \\
+    & $K^*$ & 0.999 & 0.986 & 0.939 & 0.642 \\
+    \bottomrule
+    \end{tabular}
+
+    \caption{Ratio $\tilde \sigma_i / \sigma_i$ for selected singular values, across oversampling parameters $p=0,\,5,\,10$ using rSVD on $K$ (Algorithm~\ref{alg:discrete_rsvd}) and rSVD on $K^*$ (Algorithm~\ref{alg:discrete_rsvd_Kstar}). Mean over 20 runs using Problem~I.}
+    \label{tab:singular_values_comparison}
 \end{table}

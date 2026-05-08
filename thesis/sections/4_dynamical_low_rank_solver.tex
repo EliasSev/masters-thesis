@@ -55,7 +55,7 @@ Using the product rule, we get the gradient $\nabla \Phi$ and Hessian $H$ of $\P
     H &= K^T M_\partial K + \lambda^2 W^T M W.
     \end{aligned}
 \end{equation*}
-The Hessian is SPD, since $K^T M_\partial K$ and $\lambda^2 W^T M W$ are SPD. By the optimality condition $\nabla \Phi (X) = 0$, the minimizer of $\Phi$ is the solution of $H x = K^T M_\partial y$, i.e., the normal equations of Equation~\eqref{eq:discrete_inverse_problem}.
+The Hessian is SPD, since $K^T M_\partial K$ and $\lambda^2 W^T M W$ are SPD. By the optimality condition $\nabla \Phi (X) = 0$, the minimizer of $\Phi$ is the solution of $H x = K^T M_\partial y$, i.e., the normal equations of Equation~\eqref{eq:discrete_inverse_problem}.
 \nomenclature[H]{$\Phi$}{Objective function}%
 \nomenclature[H]{$\nabla\Phi$}{Gradient of $\Phi$}%
 \nomenclature[H]{$H$}{Hessian of $\Phi$}%
@@ -111,7 +111,7 @@ with $Z^{(i)} = P^{-1} G^{(i)}$. These modifications are equivalent to standard 
 \subsubsection{Choice of preconditioner}\label{sec:choice_of_preconditioner}
 The effectiveness of PCG depends on the choice of $P$. A good preconditioner must approximate $H$ well, but must be cheap to apply at each iteration. We consider four preconditioners: Jacobi scaling, incomplete Cholesky (IC), IC with a Woodbury correction, and a ``perfect'' preconditioner based on a sparse Cholesky factorization.
 
-\paragraph{Jacobi scaling.} A Jacobi preconditioner $P = \operatorname{diag}(H)$ approximates $H$ by its diagonal (Section~11.5, \cite{golubMatrixComputations4th2013}). The approximation is cheap to compute, as $P^{-1}$ is the inverse of a diagonal matrix. It is most effective when $H$ is diagonally dominant.
+\paragraph{Jacobi scaling.} A Jacobi preconditioner $P = \operatorname{diag}(H)$ approximates $H$ by its diagonal (Section~11.5, \cite{golubMatrixComputations4th2013}). The approximation is cheap to compute, as $P^{-1}$ is the inverse of a diagonal matrix. It is most effective when $H$ is diagonally dominant.
  
 \paragraph{Incomplete Cholesky.} Under the assumption that $K$ is of rank $k$ (for example, obtained using Algorithm~\ref{alg:discrete_rsvd}), the Hessian consists of a low-rank plus a sparse term,
 \begin{equation*}

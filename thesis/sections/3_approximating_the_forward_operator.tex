@@ -31,7 +31,7 @@ If we choose $z = M_{\partial}^{-1} q_i$ and insert it into Equation~\eqref{eq:K
     = (M_{\partial}^{-1} q_i)^T M_{\partial} K
     = q_i^T K.
 \end{equation}
-Setting $b_i = (K^* (M_{\partial}^{-1} q_i))^T M$ for $i = 1, 2, \dots, l$, and defining the $l \times N$ matrix
+Setting $b_i = (K^* (M_{\partial}^{-1} q_i))^T M$ for $i = 1, 2, \dots, l$, and defining the $l \times N$ matrix
 \begin{equation*}
     B = \begin{bmatrix} b_1 \\ \vdots \\ b_l \end{bmatrix},
 \end{equation*}
@@ -52,7 +52,7 @@ The factorization in \eqref{eq:rsvd_approx} is of rank $l$, since $U \Sigma V^T 
 \subsection{Approximating the adjoint operator}
 An alternative is to apply the rSVD to the adjoint operator $K^*$. By Equation~\eqref{eq:K_star_def}, $K = M_\partial^{-1} (K^*)^T M$, so if $K^* \approx \bar U \bar \Sigma \bar V^T$ is an approximation obtained via the rSVD, then $K$ can be recovered via $K = M_\partial^{-1} \bar V \bar \Sigma \bar U^T M$. In practice, this variant may yield a better low-rank approximation, depending on the quality of the random sampling $K^* \psi_i$ compared to $K \psi_j$.
 
-Algorithm~\ref{alg:discrete_rsvd} extends directly to $K^*$ by replacing $K$ with $K^*$ and drawing random test vectors $\psi_i \in \mathbb{R}^{N_b}$, obtaining a sampling matrix $Y \in \mathbb{R}^{N \times l}$ and an orthonormal basis $Q = \operatorname{orth}(Y)$. For the projection step $B = Q^T K^*$, choosing $z = M^{-1}q_i$ in the adjoint identity gives $b_i = (K(M^{-1}q_i))^T M_\partial$, by the same argument as in Section~\ref{sec:approximating}. The procedure is summarized in Algorithm~\ref{alg:discrete_rsvd_Kstar}.
+Algorithm~\ref{alg:discrete_rsvd} extends directly to $K^*$ by replacing $K$ with $K^*$ and drawing random test vectors $\psi_i \in \mathbb{R}^{N_b}$, obtaining a sampling matrix $Y \in \mathbb{R}^{N \times l}$ and an orthonormal basis $Q = \operatorname{orth}(Y)$. For the projection step $B = Q^T K^*$, choosing $z = M^{-1}q_i$ in the adjoint identity gives $b_i = (K(M^{-1}q_i))^T M_\partial$, by the same argument as in Section~\ref{sec:approximating}. The procedure is summarized in Algorithm~\ref{alg:discrete_rsvd_Kstar}.
 \input{algorithms/matrix-free-rsvd-Kstar.tex}
 
 

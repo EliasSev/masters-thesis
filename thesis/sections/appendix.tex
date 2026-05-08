@@ -49,7 +49,7 @@ Both matrices are symmetric positive definite (Appendix~\ref{sec:positive_defini
 \end{equation*}
 where the indices $i, j$ tabulate over the boundary indices of the mesh. Like the mass matrix $M$, the boundary mass matrix $M_\partial$ is SPD \cite{larsonFiniteElementMethod2013}.
 
-$A$, $M$ and $M_\partial$ are sparse matrices, since $A_{ij}$, $M_{ij}$ and $(M_\partial)_{ij}$ are non-zero only if $\phi_i$ and $\phi_j$ share an element in the mesh.
+$A$, $M$ and $M_\partial$ are sparse matrices, since $A_{ij}$, $M_{ij}$ and $(M_\partial)_{ij}$ are non-zero only if $\phi_i$ and $\phi_j$ share an element in the mesh.
 
 The assembly of stiffness matrices and mass matrices in two dimensions can be done through methods of numerical integration, as described in Section~3.5 in Larson and Bengzon \cite{larsonFiniteElementMethod2013}.
 
@@ -65,7 +65,7 @@ then, the variational formulation of $\mathcal{S}$ reads as follows: find $u \in
     a(u,\, v) = \int_\Omega f v \, dx.
 \end{equation}
 
-For some $g \in L^2(\partial\Omega)$, we seek $w = \mathcal{K}^* g$. By the definition of $K^*$,
+For some $g \in L^2(\partial\Omega)$, we seek $w = \mathcal{K}^* g$. By the definition of $K^*$,
 \begin{equation*}
     \langle \mathcal{K} f,\, g \rangle_{L^2(\partial\Omega)} =
     \langle f,\, \mathcal{K}^* g \rangle_{L^2(\Omega)}.
@@ -79,11 +79,11 @@ In Equation~\eqref{eq:bilinear_form}, choose $v = w = \mathcal{K}^* g$. We see t
 \begin{equation}\label{eq:adjoint_identity_2}
     a(u, w) = \int_{\Omega} f w \, dx = \langle f,\, \mathcal{K}^* g \rangle_{L^2(\Omega)}.
 \end{equation}
-Insert Equation~\eqref{eq:adjoint_identity_1} and \eqref{eq:adjoint_identity_2} into the definition of $\mathcal{K}^*$, and using the identity $a^*(v,\, u) = a(u,\, v)$ (by the definition of $a^*$ \cite{kreyszigIntroductoryFunctionalAnalysis1989}),
+Insert Equation~\eqref{eq:adjoint_identity_1} and \eqref{eq:adjoint_identity_2} into the definition of $\mathcal{K}^*$, and using the identity $a^*(v,\, u) = a(u,\, v)$ (by the definition of $a^*$ \cite{kreyszigIntroductoryFunctionalAnalysis1989}),
 \begin{equation}\label{eq:adjoint_identity_3}
     a^*(w,\, u) = \int_{\partial\Omega} g u \, ds.
 \end{equation}
-Since Equation~\eqref{eq:adjoint_identity_3} must hold for all $u \in H^1(\Omega)$, it defines a variational problem for $w$. And since $a$ is symmetric ($\sigma$ is symmetric),
+Since Equation~\eqref{eq:adjoint_identity_3} must hold for all $u \in H^1(\Omega)$, it defines a variational problem for $w$. And since $a$ is symmetric ($\sigma$ is symmetric),
 $a^*(w,\, u) = a(u,\, w) = a(w,\, u)$, we get that Equation~\eqref{eq:adjoint_identity_3} reduces to:
 find $w \in H^1(\Omega)$ such that
 \begin{equation*}
@@ -101,7 +101,7 @@ This is the variational formulation of Equation~\eqref{eq:variational_formulatio
 \subsection{Linear algebra and matrix decompositions}
 
 \paragraph{Symmetric positive definiteness.}\label{sec:positive_definiteness}
-Let $A \in \mathbb{R}^{n \times n}$. $A$ is said to be symmetric if $A = A^T$. If $A$ is symmetric and if 
+Let $A \in \mathbb{R}^{n \times n}$. $A$ is said to be symmetric if $A = A^T$. If $A$ is symmetric and if 
 \begin{equation*}
     x^T A x > 0
 \end{equation*}
@@ -120,7 +120,7 @@ where $Q\in\mathbb R^{m\times n}$ has orthonormal columns and $R\in\mathbb R^{n\
 \begin{equation*}
     A = L U,
 \end{equation*}
-where $L$ is a lower triangular matrix and $U$ an upper triangular matrix. $A$ has an LU decomposition under the condition that $\operatorname{det}(A[1:k, 1:k]) \neq 0$ for $k=1,\dots, n-1$ (see Theorem~3.2.1 in Golub and Van Loan \cite{golubMatrixComputations4th2013}). More generally, any square matrix $A$ has a LU decomposition with partial pivoting (LUP), $PA = LU$. Computing the LU decomposition costs $\mathcal{O}(n^3)$ flops, specifically, $\tfrac{2}{3}n^3$.
+where $L$ is a lower triangular matrix and $U$ an upper triangular matrix. $A$ has an LU decomposition under the condition that $\operatorname{det}(A[1:k, 1:k]) \neq 0$ for $k=1,\dots, n-1$ (see Theorem~3.2.1 in Golub and Van Loan \cite{golubMatrixComputations4th2013}). More generally, any square matrix $A$ has a LU decomposition with partial pivoting (LUP), $PA = LU$. Computing the LU decomposition costs $\mathcal{O}(n^3)$ flops, specifically, $\tfrac{2}{3}n^3$.
 
 Given the LU decomposition $A = LU$, the system $Ax = y$ can be solved by solving $Lz = y$ and $Ux = z$ with $z = Ux$. The two triangular systems are easily solved in $\mathcal{O}(n^2)$ flops.
 
@@ -132,7 +132,7 @@ Given the LU decomposition $A = LU$, the system $Ax = y$ can be solved by solvin
 where $L$ is a lower triangular matrix with positive diagonal elements. This is a special case of the LU decomposition, ith $U = L^T$. The cost of this procedure is $\mathcal{O}(n^3)$, specifically, $\tfrac{1}{3}n^3$ flops, making it faster than standard LU decomposition. For details, see Section~4.2 in Golub and Van Loan \cite{golubMatrixComputations4th2013}.
 
 
-\paragraph{Incomplete Cholesky factorization.} If $A \in \mathbb{R}^{n\times n}$ is SPD with Cholesky factorization $A = L L^T$, then the incomplete Cholesky factorization is an approximation
+\paragraph{Incomplete Cholesky factorization.} If $A \in \mathbb{R}^{n\times n}$ is SPD with Cholesky factorization $A = L L^T$, then the incomplete Cholesky factorization is an approximation
 \begin{equation*}
     A \approx \tilde L \tilde L^T,
 \end{equation*}
@@ -150,7 +150,7 @@ Let $T \in \mathbb{R}^{n \times n}$ be triangular. Solving $T x = y$ is done by 
 Each triangular system can be solved by forward and backward substitution at $\mathcal{O}(n^2)$. The factorization itself costs $\tfrac{2}{3}n^3$ flops, so the problem scales as $\mathcal{O}(n^3)$. If $A$ is symmetric positive definite, $U = L^T$ and the Cholesky factorization $A = LL^T$ halves the cost to $\tfrac{1}{3}n^3$.
 
 
-\paragraph{Sparse linear systems.} For sparse systems $A x = y$, computing the $LU$ factorization comes with additional challenges. Matrix entries which are zero in $A$ but non-zero in $L$ or $U$, so called fill-ins, require more memory and result in a more expensive factorization \cite{larsonFiniteElementMethod2013}. Additionally, the cost of solving the resulting triangular systems is reduced. Much research has gone into the development algorithms which avoid fill-ins, for instance, see Davis \cite{davisDirectMethodsSparse2006}.
+\paragraph{Sparse linear systems.} For sparse systems $A x = y$, computing the $LU$ factorization comes with additional challenges. Matrix entries which are zero in $A$ but non-zero in $L$ or $U$, so called fill-ins, require more memory and result in a more expensive factorization \cite{larsonFiniteElementMethod2013}. Additionally, the cost of solving the resulting triangular systems is reduced. Much research has gone into the development algorithms which avoid fill-ins, for instance, see Davis \cite{davisDirectMethodsSparse2006}.
 
 
 \paragraph{The nested dissection method.} For sparse SPD matrices arising from 2D elliptic PDEs (mass matrices, stiffness matrix), the structure of the matrices can be exploited. Alan George proposed the nested dissection method in 1973 \cite{georgeNestedDissectionRegular1973}, a divide and conquer approach, that computes Cholesky factorization in $\mathcal{O}(N^{3/2})$ flops. The resulting triangular matrix $L$ contains $\mathcal{O}(N \log N)$ non-zero elements, so solving $L x = y$ costs $\mathcal{O}(\operatorname{nnz}(L)) = \mathcal{O}(N \log N)$.
@@ -184,11 +184,11 @@ These equations allow for evolution of the low-rank factors using numerical inte
 \subsection{Conjugate gradient algorithm}\label{appendix:conjugate_gradient_algorithm}
 Consider the quadratic function $f(x) = \tfrac 1 2 x^T A x - y^T x$ where $A$ is SPD, which has the gradient $\nabla f(x) = A x - y$. By the optimality condition $\nabla f(x) = 0$, the minimum of the function is the solution of $A x = y$.
 
-Consider the update rule $x_{k+1} = x_k + \alpha_k d_k$, where $\alpha_k$ is a step-size and $d_k$ some search direction. The optimal $\alpha_k$ is the minimizer of  the function $h(\alpha) = f(x_{k} + \alpha d_k)$, and setting $h'(\alpha) = 0$ yields the step-size
+Consider the update rule $x_{k+1} = x_k + \alpha_k d_k$, where $\alpha_k$ is a step-size and $d_k$ some search direction. The optimal $\alpha_k$ is the minimizer of  the function $h(\alpha) = f(x_{k} + \alpha d_k)$, and setting $h'(\alpha) = 0$ yields the step-size
 \begin{equation*}
     \alpha_k = \frac{r_k^Tr_k}{d_k^TAd_k}, \quad r_k = y - Ax_k.
 \end{equation*}
-Choosing $d_k = -\nabla f(x_k)$ gives the steepest descent method \cite{chong2023introduction}. However, if the condition number of $A$ is high, then the contours of $f$ gets stretched out, giving an elliptic landscape. Using the steepest descent rule, we have that $d_{k+1}^T d_k = 0$ \cite{chong2023introduction}, so the search directions will zig-zag across the landscape.
+Choosing $d_k = -\nabla f(x_k)$ gives the steepest descent method \cite{chong2023introduction}. However, if the condition number of $A$ is high, then the contours of $f$ gets stretched out, giving an elliptic landscape. Using the steepest descent rule, we have that $d_{k+1}^T d_k = 0$ \cite{chong2023introduction}, so the search directions will zig-zag across the landscape.
 
 Instead, if we seek search directions that are $A$-orthogonal, $d_{k+1}^T A d_k = 0$, we are moving within a transformed landscape where the contours of $f$ are perfectly circular. Choosing $d_{k+1}$ as a linear combination of $-\nabla f(x_{k+1}) = r_{k+1}$ and the previous direction $d_k$,
 \begin{equation*}
@@ -232,7 +232,7 @@ Let $x \in \mathbb{R}^N$ denote the true source (it's coefficient vector) and $\
 To evaluate reconstruction quality, we consider three performance metrics: Euclidean error, Earth mover’s distance (EMD), and the integrated (area under curve) intersection over union (AUC-IoU). These metrics emphasize the localization and spatial shape of the reconstructed source, rather than just the amplitude.
 
 
-\paragraph{Earth mover’s distance.} The earth mover's distance measures the dissimilarity between two distributions, which in our case refers to $x$ and $\hat x$. Let $x_d$ and $\hat x_d$ be the normalized distributions of $x$ and $\hat x$, respectively, computed as
+\paragraph{Earth mover’s distance.} The earth mover's distance measures the dissimilarity between two distributions, which in our case refers to $x$ and $\hat x$. Let $x_d$ and $\hat x_d$ be the normalized distributions of $x$ and $\hat x$, respectively, computed as
 \begin{equation*}
     (x_d)_i = \frac{|x_i|}{\sum_{j=1}^N |x_j|}, \quad
     (\hat x_d)_i = \frac{|\hat x_i|}{\sum_{j=1}^N |\hat x_j|}.
@@ -243,7 +243,7 @@ The EDM between them is
     \inf_{\gamma_{ij} \in \Pi}
     \gamma_{ij} \sum_{ij}^N d(p_i, p_j)
 \end{equation*}
-where $\Pi$ is the set of all joint distributions with marginals $x_d$ and $\hat x_d$ \cite{rubnerMetricDistributionsApplications1998}.
+where $\Pi$ is the set of all joint distributions with marginals $x_d$ and $\hat x_d$ \cite{rubnerMetricDistributionsApplications1998}.
 
 
 \paragraph{AUC-IoU.} The IoU, known as the Jaccard index in statistics, measures the similarity between two sets. It is defined as the size of intersection divided by the size of the union \cite{raschkaPythonMachineLearning}.

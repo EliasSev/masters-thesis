@@ -205,7 +205,7 @@ The singular value decomposition of a matrix $A\in\mathbb R^{m\times n}$ is a fa
 \end{equation*}
 where $U$ is an $m \times m$ orthogonal matrix, $\Sigma$ is an $m\times n$ diagonal matrix with non-negative entries, called the singular values of $A$, and $V$ is an $n \times n$ orthogonal matrix. The singular values are ordered such that $\sigma_1\ge\sigma_2\ge\dots\ge\sigma_n$. Every matrix has such a factorization, where $\Sigma$ is uniquely determined, but $U$ and $V$ are not \cite{layLinearAlgebraIts2022}. The columns of $U$ and $V$ are called the left and right singular vectors of $A$, respectively.
 
-In 1936, C. Eckart and G. Young showed that the solution to Equation~\eqref{eq:low_rank_problem} is $A_k = U_k\Sigma_k V_k^T$, where $U_k$ and $V_k$ consist of the first $k$ left and right singular vectors of $A$, respectively, and $\Sigma_k$ contains the first $k$ singular values of $A$ \cite{eckartApproximationOneMatrix1936}. This is known as the Eckart–Young–Mirsky theorem. This implies that
+In 1936, C. Eckart and G. Young showed that the solution to Equation~\eqref{eq:low_rank_problem} is $A_k = U_k\Sigma_k V_k^T$, where $U_k$ and $V_k$ consist of the first $k$ left and right singular vectors of $A$, respectively, and $\Sigma_k$ contains the first $k$ singular values of $A$ \cite{eckartApproximationOneMatrix1936}. This is known as the Eckart-Young-Mirsky theorem. This implies that
 \begin{equation}\label{eq:svd_error}
     \min_{\operatorname{rank}(X)\le k} \|A - X \|_2 = \sigma_{k+1},
 \end{equation}

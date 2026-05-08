@@ -212,13 +212,13 @@ The $A$-term in the formula of $\beta_k$ can be computationally expensive to com
     \frac{r_{k+1}^T r_{k+1}}
 	     {r_k^T r_k}.
 \end{equation*}
-Alternatively, the Hestenes–Stiefel formula \cite{hestenesMethodsConjugateGradients1952} computes $\beta_k$ as
+Alternatively, the Hestenes-Stiefel formula \cite{hestenesMethodsConjugateGradients1952} computes $\beta_k$ as
 \begin{equation*}
     \beta_k = 
     \frac{r_{k+1}^T (r_{k+1} - r_k)}
 	     {d_k^T(r_{k+1} - r_k)}.
 \end{equation*}
-Another well-known modification is the Polak–Ribière formula \cite{polakNoteConvergenceMethodes1969},
+Another well-known modification is the Polak-Ribière formula \cite{polakNoteConvergenceMethodes1969},
 \begin{equation*}
     \beta_k = 
     \frac{r_{k+1}^T(r_{k+1} - r_k)}
@@ -229,10 +229,10 @@ Another well-known modification is the Polak–Ribière formula \cite{polakNoteC
 \subsection{Performance metrics}\label{appendix:performance_metrics}
 Let $x \in \mathbb{R}^N$ denote the true source (it's coefficient vector) and $\hat x \in \mathbb{R}^N$ it's corresponding reconstruction.
 
-To evaluate reconstruction quality, we consider three performance metrics: Euclidean error, Earth mover’s distance (EMD), and the integrated (area under curve) intersection over union (AUC-IoU). These metrics emphasize the localization and spatial shape of the reconstructed source, rather than just the amplitude.
+To evaluate reconstruction quality, we consider three performance metrics: Euclidean error, Earth mover's distance (EMD), and the integrated (area under curve) intersection over union (AUC-IoU). These metrics emphasize the localization and spatial shape of the reconstructed source, rather than just the amplitude.
 
 
-\paragraph{Earth mover’s distance.} The earth mover's distance measures the dissimilarity between two distributions, which in our case refers to $x$ and $\hat x$. Let $x_d$ and $\hat x_d$ be the normalized distributions of $x$ and $\hat x$, respectively, computed as
+\paragraph{Earth mover's distance.} The earth mover's distance measures the dissimilarity between two distributions, which in our case refers to $x$ and $\hat x$. Let $x_d$ and $\hat x_d$ be the normalized distributions of $x$ and $\hat x$, respectively, computed as
 \begin{equation*}
     (x_d)_i = \frac{|x_i|}{\sum_{j=1}^N |x_j|}, \quad
     (\hat x_d)_i = \frac{|\hat x_i|}{\sum_{j=1}^N |\hat x_j|}.

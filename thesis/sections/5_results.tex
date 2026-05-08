@@ -100,7 +100,7 @@ In terms of Euclidean norm, both methods give practically the same error, within
 The EMD shows that at $k = 10$, rSVD on $K$ gives 10\% to 19\% worse reconstructions than rSVD on $K^*$, though at this rank the smoothing and positional shift of the reconstruction are already significant (Section~\ref{sec:target_rank_reconstruction}). In the range $k \approx 20$ to $k \approx 50$, rSVD on $K^*$ performs worse: at $k=25$, Algorithm~\ref{alg:discrete_rsvd} performs 9\% to 31\% better across all three problems. The difference is a result of noise: at $k=25$, reconstructions from rSVD on $K^*$ contain more low-amplitude noise than those from rSVD on $K$ (Figures~\ref{fig:clipped_solution_K_star} and~\ref{fig:clipped_solution_K}), to which the EMD is particularly sensitive.
 
 
-\subsubsection{Accuracy on noisy data}
+\subsubsection{Accuracy on noisy data}\label{sec:accuracy_on_noisy_data}
 \input{figures/noisy_problem.tex}
 \input{tables/noisy_problem.tex}
 \input{figures/reconstruction_noisy_problem.tex}

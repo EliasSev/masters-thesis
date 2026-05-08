@@ -81,26 +81,18 @@ The captured subspace $\operatorname{span}(Q)$ depends on the random test vector
 
 
 \subsubsection{Reconstructions under noisy data}
-\textcolor{red}{TODO:} Section not done. Bring in the theory from Hansen on tSVD:
-The target rank $k$ acts as additional regularization in the same way as truncated SVD.
+Choosing $k$ too large worsens reconstruction quality on noisy data (Section~\ref{sec:accuracy_on_noisy_data}), and the target rank acts as a regularization parameter in the same manner as the truncation rank of tSVD.
 
-
+For a noisy measurement $\tilde y = y + \epsilon$, $y = K x$, we can write the minimum-norm least-squares solution as $x^* = K^+ \tilde y = K^+ y + K^+ \epsilon$ (Section~\ref{sec:the_pseudoinverse}). Expanding in terms of the SVD components,
 \begin{equation*}
-    x = K^+ y = \sum_{i=1}^{N} \frac{u_i^T y}{\sigma_i} v_i
+    x^* = \sum_{i=1}^{N_b}
+    \left(\frac{u_i^T y + u_i^T \epsilon}{\sigma_i}\right) v_i,
 \end{equation*}
+we see that the $i$'th component depends on the exact term $u_i^T y$ and the noise term $u_i^T \epsilon$. Components where $|u_i^T y| \le |u_i^T \epsilon|$ are dominated by noise, and the $\tfrac{1}{\sigma_i}$ factor amplifies this contribution. By the Picard condition \cite{hansen2010discrete}, $u_i^T y$ decays to zero as $i$ increases while $u_i^T \epsilon$ stays approximately constant, so for large $i$ every component is noise-dominated and amplified by a growing $\tfrac{1}{\sigma_i}$.
 
-I can write the weighted and truncated Tikhonov solution as this (I think):
+By truncating the $N_b - k$ terms of the solution, we remove the noisy SVD components. We wish to choose $k$ such that $|u_k^T y| > |u_k^T \epsilon|$ while $|u_{k+1}^T y| < |u_{k+1}^T \epsilon|$, removing only the noise-dominated SVD components $k+1,\, k+2,\dots,\, N_b$.
 
-\begin{equation*}
-    \begin{aligned}
-        x &= \sum_{i=1}^k c_i \frac{u_i^T y}
-                                   {\sigma_i} v_i \\
-        c_i &= \frac{w_i \sigma_i^2}
-                    {\sigma_i^2 + \lambda^2}
-    \end{aligned}
-\end{equation*}
-
-%\subsection{Limitations} (Optional)
+For the weighted Tikhonov solution, the reconstruction already has some regularization through $\lambda$, but the argument transfers. We found that the optimal $k$ values are approximately equal for both the rSVD and the tSVD. The rank is problem-dependent, and for our problems ranged from $k = 45$ to $k = 85$ by Euclidean norm. The EMD preferred a smaller $k$ ($20$ to $30$), since it is more sensitive to unwanted noise in the reconstruction, while the AUC-IoU generally preferred larger $k$ ($\ge 60$), since it focuses on segmentation overlap, which is less affected by noise.
 
 
 \subsubsection{Difference in approximation quality using the adjoint operator}

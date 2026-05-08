@@ -28,10 +28,9 @@ To recover the SVD of $K$ from the SVD of $K^*$ (Section~\ref{sec:reconvering_th
 
 
 \subsubsection{Analysis of reconstruction error}\label{sec:analysis_of_reconstruction_error}
-In Section~\ref{sec:target_rank_reconstruction} we found that using rSVD a target rank $k = 50$, the reconstruction error was between 0.5\% and 4\% higher compared to the exact Tikhonov reconstructions in terms of Euclidean and AUC-IoU, or between 4\% and 39\% higher in terms of EMD. Visually, the reconstructions were indistinguishable from the exact ones (Figure~\ref{fig:test_problems_selected}). At $k = 100$, Euclidean and AUC-IoU error was less than 1\% higher, and EMD between 2\% and 34\% higher.
+At target rank $k = 50$, rSVD reconstruction errors were within 0.5\% to 4\% of the exact Tikhonov solution in Euclidean norm and AUC-IoU (4\% to 39\% in EMD), with visually indistinguishable reconstructions (Section~\ref{sec:target_rank_reconstruction}, Figure~\ref{fig:test_problems_selected}).
 
-
-To understand the these results, it is useful to look at the structure of $Y = K \Psi$. Following the setup of Halko et al. \cite[Sec.~9]{halkoFindingStructureRandomness2011}, let $K = U \Sigma V^T$ be the SVD of $K$, and partition $\Sigma$ as $\Sigma = \operatorname{diag}(\Sigma_1,\, \Sigma_2)$, where $\Sigma_1$ contains the $k$ first singular values of $K$, and $\Sigma_2$ the remainder. Correspondingly, partition the right singular values as $V = [V_1\,\, V_2]$, and write $K$ as
+To understand these results, we inspect the structure of $Y = K \Psi$. Following the setup of Halko et al. \cite[Sec.~9]{halkoFindingStructureRandomness2011}, let $K = U \Sigma V^T$ be the SVD of $K$, and partition $\Sigma$ as $\Sigma = \operatorname{diag}(\Sigma_1,\, \Sigma_2)$, where $\Sigma_1$ contains the $k$ first singular values of $K$, and $\Sigma_2$ the remainder. Correspondingly, partition the right singular values as $V = [V_1\,\, V_2]$, and write $K$ as
 \begin{equation}\label{eq:rsvd_partitioned_1}
     K = U \begin{bmatrix}
     \Sigma_1 & \\ & \Sigma_2
@@ -47,29 +46,33 @@ Right-multiplying by $\Psi$ and setting $\Psi_1 = V_1^T \Psi$ and $\Psi_2 = V_2^
     \Sigma_2 \Psi_2
     \end{bmatrix}.
 \end{equation*}
-Intuitively, $\Sigma_1 \Psi_1$ represents the actions of $K$, while $\Sigma_2 \Psi_2$ the perturbation. By Theorem~10.5 in \cite{halkoFindingStructureRandomness2011}, if $\Psi \in \mathbb{R}^{N \times l}$ is a random Gaussian matrix, then
+Intuitively, $\Sigma_1 \Psi_1$ represents the actions of $K$, while $\Sigma_2 \Psi_2$ represents the perturbation. By Theorem~10.5 in \cite{halkoFindingStructureRandomness2011}, if $\Psi \in \mathbb{R}^{N \times l}$ is a random Gaussian matrix, then
 \begin{equation}\label{eq:rsvd_error_bound}
     \mathbb{E}\| K - K_k \|_F \le
     \gamma_k \sqrt{\sum_{i = k+1}^{N_b} \sigma_i^2},
 \end{equation}
 where $\mathbb{E}$ denotes the expected value, $\gamma_k = \sqrt{1 + k / (p - 1)}$, and $K_k$ is the rank-$k$ approximation obtained from Algorithm~\ref{alg:discrete_rsvd}.
 
-When the singular values of $K$ decays rapidly, the perturbation $\Sigma_2 \Psi_2$ remains low and the sum in Equation~\eqref{eq:rsvd_error_bound} is small, resulting in a good rank-$k$ approximation. If the singular values decay slower, $\sum_{i=k+1}^{N_b} \sigma_i^2$ will be larger, and the expected error increases.
+When the singular values of $K$ decay rapidly, the perturbation $\Sigma_2 \Psi_2$ remains low and the sum in Equation~\eqref{eq:rsvd_error_bound} is small, resulting in a good rank-$k$ approximation. If the singular values decay more slowly, $\sum_{i=k+1}^{N_b} \sigma_i^2$ will be larger, and the expected error increases.
 
-Since the forward operator $K$ has rapidly decaying singular values (Figure~\ref{fig:singular_values}), we can choose $k \ll \operatorname{rank}(K) = N_b$, and get a good rank-$k$ approximation: the main actions of $K$ are captured in $\Sigma_1 \Psi_1$. This transfers over to the weighted Tikhonov problem in Equation~\eqref{eq:discrete_inverse_problem}. Both $K$ and $W$ are approximated well, yielding good reconstruction. Since the random sampling introduces some noise, the EMD shows a higher error, as it is more sensitive to low-amplitude noise.
+Since $K$ has rapidly decaying singular values
+(Figure~\ref{fig:singular_values}), a target rank
+$k \ll \operatorname{rank}(K) = N_b$ yields an accurate rank-$k$
+approximation: the main actions of $K$ are captured in $\Sigma_1 \Psi_1$. This argument transfers to the weighted Tikhonov problem in Equation~\eqref{eq:discrete_inverse_problem}. Both $K$ and $W$ are approximated accurately at $k = 50$, keeping the reconstruction error within 4\% (Euclidean, AUC-IoU). Since the random sampling introduces some noise, the EMD shows a higher error, as it is more sensitive to low-amplitude noise.
+
+
+\subsubsection{Reconstruction error using the adjoint operator}
+\input{figures/true_singular_values.tex}
+Using rSVD on $K$ gives slightly lower reconstruction error than rSVD on $K^*$ (Section~\ref{sec:reconstruction_error_using_the_adjoint_operator}). The quality of the random sampling $Y = K\Psi$ versus $Y' = K^* \Psi'$ depends on the spectral decay of the operators. Figure~\ref{fig:true_singular_values} shows that the singular values of $K^*$ have a slower decay than those of $K$, and we therefore expect a higher approximation error by Equation~\eqref{eq:rsvd_error_bound}. The difference originates in the mass matrix factors of the relation $K^* = M^{-1} K^T M_\partial$ (Equation~\eqref{eq:K_star_def}).
 
 
 \subsubsection{Effect of the test vector distribution}
 \input{figures/singular_vectors_of_K.tex}
-In Section~\ref{sec:test_vector_distribution_effect_on_error}, we saw that some choices of test vector $\psi_i$ slightly improved reconstruction error, in particularly, a reduction of low-amplitude noise. Choosing Peaks test vectors led to some error improvement in terms of EMD compared to Gaussian or Rademacher test vectors.
+Some test vector distributions slightly reduce reconstruction error, with the ``Peak'' test vectors giving lower EMD than Gaussian or Rademacher (Section~\ref{sec:test_vector_distribution_effect_on_error}).
 
-To understand this, we look at a single sample $y = K \psi$. Using the SVD $K = U \Sigma V^T$, we have $K = U \Sigma V^T \psi$. If we choose $\psi = v_1$ (the first right singular vector), we have that $V^T v_1 = e_1$, so
-\begin{equation*}
-    K v_1 = \sigma_1 u_1. 
-\end{equation*}
-Then, the QR factorization gives that $y = u_1$. This is the best case scenario, and we understand that the closer the test vectors $\psi_1,\dots,\psi_k$ are to $v_1,\dots,v_k$, the better the rank-$k$ reconstruction.
+Consider a single sample $y = K \psi = U \Sigma V^T \psi$. In the best case, $\psi = a v_1$ with $a \neq 0$: then $V^T(a v_1) = a e_1$, $K(a v_1) = a \sigma_1 u_1$, and the QR factorization gives $Q = u_1$. More generally, choosing $k$ linearly independent $\psi_i \in \operatorname{span}\{ v_1,\dots,v_k \}$ gives $\operatorname{span}(Q) = \operatorname{span}\{u_1,\dots,u_k\}$ and the rank-$k$ projection $QQ^T K$ recovers the exact rank-$k$ SVD of $K$.
 
-Figure~\ref{fig:singular_vectors_of_K} plots the 4 first right singular vectors of $K$. We see that they are smooth looking, more closely matching the Peaks test vectors than the Gaussian or Rademacher test vectors, explaining the small improvement in error.
+Figure~\ref{fig:singular_vectors_of_K} plots the first four right singular vectors of $K$. We see that they are smooth, more closely matching the ``Peak'' test vectors than the Gaussian or Rade\-macher test vectors, explaining the small improvement in error.
 
 
 \subsubsection{Independence from mesh resolution}
@@ -81,9 +84,9 @@ The target rank $k$ can therefore be selected on a coarse mesh, where rSVD is in
 
 
 \subsubsection{Estimation of singular values}
-Let $\hat P = QQ^T$ with $Q$ produced by Algorithm~\ref{alg:discrete_rsvd}. This is an orthogonal projection onto $\operatorname{span}(Q)$, and $\hat P K$ is the projected matrix from which the rSVD approximation is obtained. The projector satisfies $\| \hat P z \| \le \| z \|$, meaning it shrinks vectors, so $\| \hat P K x  \| \le \|K x \|$ for every $x$. So $\hat P K$ stretches every vector at most as much as $K$ does, and singular values measure exactly this stretching. This is indeed the case, as we saw in the results of  Section~\ref{sec:approximation_of_singular_values}. By choosing a higher oversampling parameter $p$, $\operatorname{span}(Q)$ more closely matches $\operatorname{span}(K)$ (in particular, the $k$ first left singular vectors), and the under-estimation reduces. Algorithm~\ref{alg:discrete_rsvd_Kstar} gave a worse approximation (Section~\ref{sec:reconstruction_error_using_the_adjoint_operator}), so the underestimation increases.
+Let $\hat P = QQ^T$ with $Q$ produced by Algorithm~\ref{alg:discrete_rsvd}. This is an orthogonal projection onto $\operatorname{span}(Q)$, and $\hat P K$ is the projected matrix from which the rSVD approximation is obtained. The projector satisfies $\| \hat P z \| \le \| z \|$, meaning it shrinks vectors, so $\| \hat P K x  \| \le \|K x \|$ for every $x$. Consequently, $\hat P K$ stretches every vector at most as much as $K$ does, and singular values measure exactly this stretching. This is what we saw in Section~\ref{sec:approximation_of_singular_values}. By choosing a higher oversampling parameter $p$, $\operatorname{span}(Q)$ more closely matches $\operatorname{span}(K)$ (in particular, the $k$ first left singular vectors), and the underestimation reduces. Algorithm~\ref{alg:discrete_rsvd_Kstar} gave a worse approximation (Section~\ref{sec:reconstruction_error_using_the_adjoint_operator}), so the underestimation increases.
 
-The captured subspace $\operatorname{span}(Q)$ depends on the random test vectors $\psi_i$, and so does the degree of under-estimation. This is an active area of research. Lemma~4.2 and Theorem~4.3 of Gu \cite{guSubspaceIterationRandomization2015} provide lower bounds for the power-iteration method, which reduces to the plain rSVD used in Algorithm~\ref{alg:discrete_rsvd} when $q = 0$.
+The captured subspace $\operatorname{span}(Q)$ depends on the random test vectors $\psi_i$, and so does the degree of underestimation. This is an active area of research. Lemma~4.2 and Theorem~4.3 of Gu \cite{guSubspaceIterationRandomization2015} provide lower bounds for the power-iteration method, which reduces to the plain rSVD used in Algorithm~\ref{alg:discrete_rsvd} when $q = 0$.
 
 
 \subsubsection{Reconstructions under noisy data}
@@ -99,17 +102,6 @@ we see that the $i$'th component depends on the exact term $u_i^T y$ and the noi
 By truncating the $N_b - k$ terms of the solution, we remove the noisy SVD components. We wish to choose $k$ such that $|u_k^T y| > |u_k^T \epsilon|$ while $|u_{k+1}^T y| < |u_{k+1}^T \epsilon|$, removing only the noise-dominated SVD components $k+1,\, k+2,\dots,\, N_b$.
 
 For the weighted Tikhonov solution, the reconstruction already has some regularization through $\lambda$, but the argument transfers. We found that the optimal $k$ values are approximately equal for both the rSVD and the tSVD. The rank is problem-dependent, and for our problems ranged from $k = 45$ to $k = 85$ by Euclidean norm. The EMD preferred a smaller $k$ ($20$ to $30$), since it is more sensitive to unwanted noise in the reconstruction, while the AUC-IoU generally preferred larger $k$ ($\ge 60$), since it focuses on segmentation overlap, which is less affected by noise.
-
-
-\subsubsection{Difference in approximation quality using the adjoint operator}
-\input{figures/true_singular_values.tex}
-\textcolor{red}{TODO: This section is not done}. The reconstruction error of using rSVD on $K$ gives a small improvement over using rSVD on $K^*$ (Table~\ref{tab:rsvd_adjoint_error}).
-
-The quality of the random sampling $Y = K\Psi$ and $Y' = K^* \Psi'$ depends on the spectral decay of $K$ and $K^*$, which is shown in Theorem~10.5 in Halko et al. \cite{halkoFindingStructureRandomness2011}. This is confirmed by inspecting the singular values of $K$ and $K^*$, see Figure~\ref{fig:true_singular_values}. By Equation~\eqref{eq:K_star_def}, we have the relation
-\begin{equation*}
-    K^* = M^{-1} K^T M_\partial.
-\end{equation*}
-So, the mass matrices $M$ and $M_\partial$ changes the spectral decay of $K^T$ to a slower kind, making sampling more difficult.
 
 
 \subsection{Dynamical low-rank approximation}

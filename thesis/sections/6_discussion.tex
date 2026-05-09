@@ -97,7 +97,7 @@ For a noisy measurement $\tilde y = y + \epsilon$, $y = K x$, we can write the m
     x^* = \sum_{i=1}^{N_b}
     \left(\frac{u_i^T y + u_i^T \epsilon}{\sigma_i}\right) v_i,
 \end{equation*}
-we see that the $i$'th component depends on the exact term $u_i^T y$ and the noise term $u_i^T \epsilon$. Components where $|u_i^T y| \le |u_i^T \epsilon|$ are dominated by noise, and the $\tfrac{1}{\sigma_i}$ factor amplifies this contribution. By the Picard condition \cite{hansen2010discrete}, $u_i^T y$ decays to zero as $i$ increases while $u_i^T \epsilon$ stays approximately constant, so for large $i$ every component is noise-dominated and amplified by a growing $\tfrac{1}{\sigma_i}$.
+we see that the $i$-th component depends on the exact term $u_i^T y$ and the noise term $u_i^T \epsilon$. Components where $|u_i^T y| \le |u_i^T \epsilon|$ are dominated by noise, and the $\tfrac{1}{\sigma_i}$ factor amplifies this contribution. By the Picard condition \cite{hansen2010discrete}, $u_i^T y$ decays to zero as $i$ increases while $u_i^T \epsilon$ stays approximately constant, so for large $i$ every component is noise-dominated and amplified by a growing $\tfrac{1}{\sigma_i}$.
 
 By truncating the $N_b - k$ terms of the solution, we remove the noisy SVD components. We wish to choose $k$ such that $|u_k^T y| > |u_k^T \epsilon|$ while $|u_{k+1}^T y| < |u_{k+1}^T \epsilon|$, removing only the noise-dominated SVD components $k+1,\, k+2,\dots,\, N_b$.
 

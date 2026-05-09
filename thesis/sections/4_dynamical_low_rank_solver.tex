@@ -1,6 +1,7 @@
 \section{Dynamical low-rank approximation}\label{sec:dynamical_low_rank_approximation}
 \input{figures/low_rank_manifold.tex}
 Consider the problem of finding a rank-$r$ solution $X$ via the update scheme $X^{(i+1)} = X^{(i)} + \alpha_i D^{(i)}$, where $D^{(i)}$ is a search direction and $\alpha_i > 0$ a step size. Starting from a rank-$r$ matrix $X^{(0)}$, there is in general no guarantee that $D^{(i)}$ preserves low rank, so that $X^{(i)}$ may leave the space $\mathcal{M}_r$ of rank-$r$ matrices after a single step.
+\nomenclature[HA]{$r$}{Solution rank}%
 
 One can replace $D^{(i)}$ by its projection onto the tangent space $\mathcal{T}_{X^{(i)}}(\mathcal{M}_r)$, a classical concept from Riemannian geometry \cite{docarmoRiemannianGeometry1992,absilOptimizationAlgorithmsMatrix2008}. This is the idea behind the Dynamical Low-Rank Approximation (DLRA) of Koch and Lubich \cite{kochDynamicalLowrankApproximation2007}. They proposed, in a continuous-time setting, evolving an approximation on $\mathcal{M}_r$ by projecting the derivative of the matrix onto the tangent space at the current approximation. Using this concept in our discrete setting, we replace $D^{(i)}$ by its tangent-space projection $\mathcal{P}_{X^{(i)}}[D^{(i)}]$, yielding the update
 \begin{equation*}
@@ -56,9 +57,9 @@ Using the product rule, we get the gradient $\nabla \Phi$ and Hessian $H$ of $\P
     \end{aligned}
 \end{equation*}
 The Hessian is SPD, since $K^T M_\partial K$ and $\lambda^2 W^T M W$ are SPD. By the optimality condition $\nabla \Phi (X) = 0$, the minimizer of $\Phi$ is the solution of $H x = K^T M_\partial y$, i.e., the normal equations of Equation~\eqref{eq:discrete_inverse_problem}.
-\nomenclature[H]{$\Phi$}{Objective function}%
-\nomenclature[H]{$\nabla\Phi$}{Gradient of $\Phi$}%
-\nomenclature[H]{$H$}{Hessian of $\Phi$}%
+\nomenclature[HC]{$\Phi$}{Objective function}%
+\nomenclature[HD]{$\nabla\Phi$}{Gradient of $\Phi$}%
+\nomenclature[HE]{$H$}{Hessian of $\Phi$}%
 
 
 \subsection{DLRA with conjugate search directions}
@@ -104,7 +105,7 @@ In the DLRA-CG scheme, the preconditioned system $P^{-1} H x = P^{-1} K^T M_\par
     D^{(i+1)} = -Z^{(i+1)} + \beta_i D^{(i)},
 \end{equation*}
 with $Z^{(i)} = P^{-1} G^{(i)}$. These modifications are equivalent to standard preconditioned conjugate gradient, as originally described by Concus et al. \cite{concusGeneralizedConjugateGradient1976}. The resulting scheme is summarized in Algorithm \ref{alg:DLRA-PCG}, which we refer to as DLRA-PCG.
-\nomenclature[H]{$P$}{Preconditioner matrix}%
+\nomenclature[HF]{$P$}{Preconditioner matrix}%
 \input{algorithms/DLRA-PCG.tex}
 
 

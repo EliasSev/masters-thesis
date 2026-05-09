@@ -12,15 +12,15 @@
 
 \makenomenclature
 \renewcommand{\nomname}{List of symbols}
-\renewcommand{\pagedeclaration}[1]{\dotfill #1}
+\renewcommand{\pagedeclaration}[1]{\dotfill \hyperpage{#1}}
 \setlength{\nomitemsep}{0pt}
 \newcommand{\nomgroupname}[1]{%
   \ifstrequal{#1}{A}{Geometry}{}%
-  \ifstrequal{#1}{B}{PDE coefficients}{}%
+  \ifstrequal{#1}{B}{PDE notation}{}%
   \ifstrequal{#1}{C}{Continuous operators}{}%
   \ifstrequal{#1}{D}{Function spaces}{}%
   \ifstrequal{#1}{E}{Discrete operators \& matrices}{}%
-  \ifstrequal{#1}{F}{Regularization parameters}{}%
+  \ifstrequal{#1}{F}{Singular value decomposition}{}%
   \ifstrequal{#1}{G}{Randomized SVD}{}%
   \ifstrequal{#1}{H}{Dynamical low-rank approximation}{}%
 }

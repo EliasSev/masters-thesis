@@ -14,17 +14,17 @@ Equation~\eqref{eq:pde} is a linear diffusion-reaction problem with Neumann boun
 \begin{equation}\label{eq:S_cont}
     \mathcal S: L^2(\Omega) \rightarrow H^1(\Omega), \quad \mathcal{S} f = u.
 \end{equation}
-Here, $L^2(\Omega)$ is the space of square integrable functions and $H^1(\Omega) \subset L^2(\Omega)$ the first-order Sobolev space, see Appendix~\ref{appendix:functional_analysis_and_the_fem}
+Here, $L^2(\Omega)$ is the space of square integrable functions and $H^1(\Omega) \subset L^2(\Omega)$ a first-order Sobolev space, see Appendix~\ref{appendix:functional_analysis_and_the_fem}
 \nomenclature[CA]{$\mathcal{S}$}{PDE operator}
 \nomenclature[D]{$L^2(\Omega)$}{Space of square integrable functions}
 \nomenclature[D]{$H^1(\Omega)$}{First-order Sobolev space}
 
 To model boundary observations, we introduce the trace operator
 \begin{equation}\label{eq:trace}
-    \mathcal T: H^1(\Omega) \rightarrow L^2(\partial\Omega), \quad \mathcal{T} u = u|_{\partial\Omega}
+    \mathcal T: H^1(\Omega) \rightarrow L^2(\partial\Omega), \quad \mathcal{T} u = u|_{\partial\Omega}.
 \end{equation}
 \nomenclature[CB]{$\mathcal{T}$}{Trace operator}
-The term $\mathcal T u$ represents the observed values of $u$ on the boundary of $\Omega$.
+The term $\mathcal{T} u$ represents the the boundary observations of the solution $u$.
 
 The forward operator is then defined as the composition
 \begin{equation}\label{eq:K}
@@ -41,7 +41,7 @@ Solving this problem computationally requires discretizing $\mathcal{K}$, unders
 
 
 \subsubsection{Ill-posedness}\label{sec:ill_posedness}
-A problem is said to be well-posed if its solution exists, is unique, and is stable in the sense that it depends continuously on the data, as formulated by Hadamard \cite{hansen2010discrete}. The inverse problem $\mathcal{K}f = y$ is ill-posed.
+A problem is said to be well-posed if its solution exists, is unique, and is stable in the sense that it depends continuously on the data, as formulated by Hadamard \cite{hansen2010discrete}. Denoting $y = u|_{\partial\Omega}$, the inverse problem $\mathcal{K}f = y$ is ill-posed.
 
 The null space of $\mathcal{K}$ is non-trivial: any $f_0$ satisfying $\mathcal{K}f_0 = 0$ can be added to a solution without changing the boundary data $y$. The solution is therefore not unique.
 
@@ -98,12 +98,12 @@ $\{\phi_i\}_{i=1}^N$ yields the linear system
 \begin{equation}\label{eq:matrix_system}
     A_h u = M x,
 \end{equation}
-where $A_h \in \mathbb{R}^{N \times N}$ is the stiffness matrix and $M \in \mathbb{R}^{N \times N}$ the mass matrix, see Appendix~\ref{appendix:stiffness}.
+where $A_h \in \mathbb{R}^{N \times N}$ is the stiffness matrix and $M \in \mathbb{R}^{N \times N}$ the mass matrix, both symmetric positive definite, see Appendix~\ref{appendix:stiffness}.
 \nomenclature[EA]{$A_h$}{Stiffness matrix}%
 \nomenclature[EB]{$M$}{Volume mass matrix}%
-Equation~\eqref{eq:matrix_system} implies the discrete PDE operator $S$ takes the form
+Equation~\eqref{eq:matrix_system} implies that the discrete PDE operator $S$ takes the form
 \begin{equation*}
-    S = A_h^{-1} M \in \mathbb{R}^{N \times N}
+    S = A_h^{-1} M \in \mathbb{R}^{N \times N}.
 \end{equation*}
 Note that $S$ is a mapping of coefficients vectors: mapping $x$ to $u$.
 
@@ -173,9 +173,9 @@ In the discrete case, under the inner products and norms defined in Equation~\eq
 for all $x \in \mathbb R^N$ and all $y \in \mathbb R^{N_b}$.
 \nomenclature[EH]{$K^*$}{Discrete adjoint operator}%
 
-Inserting the explicit representation of $K$ given in Equation~\eqref{eq:discrete_K} yields the matrix representation of $K^*$,
+Inserting the explicit representation of $K$ given in Equation~\eqref{eq:discrete_K} and using the symmetry of $A_h$ yields the matrix representation of $K^*$,
 \begin{equation}\label{eq:discrete_K_star}
-    K^* = A_h^{-T} T^T M_\partial,
+    K^* = A_h^{-1} T^T M_\partial,
 \end{equation}
 where $A_h$ is the stiffness matrix, $T$ the discrete trace operator, and $M_\partial$ the boundary mass matrix.
 
@@ -220,8 +220,18 @@ In 1936, C. Eckart and G. Young showed that the solution to Equation~\eqref{eq:l
 where $\sigma_{k+1}$ is the $(k+1)$th singular value of $A$. Equation \eqref{eq:svd_error} says that no rank-$k$ approximation of $A$ can have an error smaller than $\sigma_{k+1}$.
 
 
+\subsubsection{Condition number}\label{sec:condition_number}
+The condition number $\kappa = \kappa(A)$ of a matrix $A \in \mathbb{R}^{n \times n}$ measures the sensitivity of the solution $x = A^{-1} y$ to perturbations in $y$ \cite{hansen2010discrete}. It is computed as
+\begin{equation*}
+    \kappa(A) =
+    \frac{\sigma_1}{\sigma_n},
+\end{equation*}
+assuming $A^{-1}$ exists. If $A$ is singular, then $\kappa(A) = \infty$. When $\kappa(A)$ is large, then a small change in $y$ results in a large change in the solution $x = A^{-1} y$, a typical property of ill-conditioned problems.
+\nomenclature[FG]{$\kappa(A)$}{Condition number}%
+
+
 \subsubsection{Truncated SVD}\label{sec:tsvd}
-The best rank-$k$ approximation of $A$ given by the Eckart--Young theorem, $A_k = U_k \Sigma_k V_k^T$, is known as the truncated SVD (tSVD). Since it truncates the small singular values of $A$, it serves as a regularization technique \cite{hansen2010discrete}. The tSVD also provides a natural reference for the approximate methods developed in this thesis.
+The best rank-$k$ approximation of $A$ given by the Eckart-Young-Mirsky theorem, $A_k = U_k \Sigma_k V_k^T$, is known as the truncated SVD (tSVD). Since it truncates the small singular values of $A$, it serves as a regularization technique \cite{hansen2010discrete}. The tSVD also provides a natural reference for the approximate methods developed in this thesis.
 
 
 \subsubsection{The pseudoinverse}\label{sec:the_pseudoinverse}
@@ -232,11 +242,11 @@ For a matrix $A \in \mathbb{R}^{m \times n}$, the Moore-Penrose inverse $A^+$, o
 where $\Sigma^+$ is the pseudoinverse of $\Sigma$. The pseudoinverse of $\Sigma$ can be computed by transposing the matrix and replacing each non-zero diagonal entry with its reciprocal \cite{golubMatrixComputations4th2013}. The pseudoinverse $A^+$ is unique and always exists, and for invertible $A$, $A^+ = A^{-1}$.
 
 For the least-squares problem $\min \|Ax - y \|$, the pseudo-inverse provides the least-squares solution $x = A^+ y$. If the least-squares solution is not unique, then $A^+ y$ is the solution with the smallest Euclidean norm. For details, see Section~5.5 in Golub and Van Loan \cite{golubMatrixComputations4th2013}.
-\nomenclature[FG]{$A^+$}{Pseudoinverse}%
+\nomenclature[FH]{$A^+$}{Pseudoinverse}%
 
 
 \subsubsection{Randomized SVD}
-The rSVD is a technique used to compute a rank-$k$ approximation of an $m\times n$ matrix without computing the SVD. The core idea is to use random sampling to find a low-rank matrix $Q$ which approximates the range of $A$, project $A$ onto $\operatorname{span}(Q)$, and compute the SVD of the projection. The projection $B=Q^TA$ will, with high probability, capture the dominant actions of $A$, and the SVD of $B$ will yield a good approximation \cite{halkoFindingStructureRandomness2011}. This procedure is summarized in Algorithm \ref{alg:rsvd}. The construction of an orthonormal basis $Q$ of $Y$ is done through a QR factorization.
+The randomized SVD (rSVD) is a technique used to compute a rank-$k$ approximation of an $m\times n$ matrix without computing the SVD. The core idea is to use random sampling to find a low-rank matrix $Q$ which approximates the range of $A$, project $A$ onto $\operatorname{span}(Q)$, and compute the SVD of the projection. The projection $B=Q^TA$ will, with high probability, capture the dominant actions of $A$, and the SVD of $B$ will yield a good approximation \cite{halkoFindingStructureRandomness2011}. This procedure is summarized in Algorithm \ref{alg:rsvd}. The construction of an orthonormal basis $Q$ of $Y$ is done through a QR factorization.
 
 Let $A_k$ denote a rank-$k$ approximation of $A$ obtained using rSVD with a random test matrix $\Psi$. Error analysis of rSVD is an active area of research. Halko et al. derived initial reference error analysis in terms of expectation \cite{halkoFindingStructureRandomness2011}, which was later improved upon by Gu \cite{guSubspaceIterationRandomization2015}. Diouane et al. have recently derived further improvements \cite{diouaneGeneralErrorAnalysis2022}.
 

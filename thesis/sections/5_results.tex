@@ -126,12 +126,13 @@ We write $X^* \in \mathbb{R}^{n \times n}$ for the matrix form of the true sourc
 which equals 1 at initialization and decreases toward 0 as the iterates approach $X^*$. Unless stated otherwise, $X^{(0)}$ has entries drawn uniformly from $[0,\,10^{-3}]$.
 
 
-\subsubsection{Rate of convergence}
+\subsubsection{Rate of convergence}\label{sec:rate_of_convergence}
 \input{figures/number_of_iterations.tex}
 \input{tables/convergence_iterations.tex}
 Figure~\ref{fig:number_of_iterations} compares the reconstruction error per iteration for three DLRA step-size rules (Algorithm~\ref{alg:dlra}) and DLRA-CG (Algorithm~\ref{alg:DLRA-CG}), with and without restarting. The right panel shows the effect of the restart period $N_r$ on the convergence of DLRA-CG.
 
-DLRA-CG reaches the lowest error fastest but then rises, a consequence of the loss of $H$-conjugacy described in Section~\ref{sec:restarted_cg}, illustrating a form of semi-convergence. Restarted DLRA-CG (with $N_r = 10$) avoids this rise, at the cost of slower convergence, but converges faster than the three DLRA step-size rules, which all fail to converge within $25{,}000$ iterations (and the Adam rule gets stuck).
+DLRA-CG reaches the lowest error fastest but then the error raises, showing a form of semi-convergence, as the full-rank trajectory $Y^{(i)}$ drifts away from $X^{(i)}$ (Section~\ref{sec:restarted_cg}). Restarted DLRA-CG (with $N_r = 10$) avoids this by periodically correcting the CG recurrence to $X^{(i)}$, at the cost of slower convergence, but converges faster than the three DLRA step-size rules, which all fail to converge within $25{,}000$ iterations (and the Adam
+rule gets stuck).
 
 A smaller $N_r$ slows convergence but drives the error lower, and for larger $N_r$, the semi-convergent behavior of DLRA-CG re-appears. Table~\ref{tab:convergence_iterations} shows the iteration count to reach selected error thresholds. DLRA-CG reaches a relative error of $0.9$ in 48 iterations, and restarted DLRA-CG takes 35 iterations. The step-size rules Adam, fixed, and steepest descent reach this threshold in 1665, 21751, and 1449 iterations. To reach a threshold of $0.85$, DLRA-CG takes 100 iterations and restarted DLRA-CG takes 165. At $0.75$, only restarted DLRA-CG succeeds, requiring 5941 iterations.
 
@@ -141,7 +142,7 @@ Per-iteration compute times are similar across all methods ($0.5$-$0.7$ ms), so 
 \subsubsection{Quality of the low-rank solutions}
 \input{figures/low_rank_convergence.tex}
 \input{figures/low_rank_restarted_cg.tex}
-DLRA-CG shows semi-convergence: the iterates initially approach the true source, but start to drift away from the optimal solution when $H$-conjugacy is lost (Section~\ref{sec:restarted_cg}). Figure~\ref{fig:low_rank_convergence} shows the difference between the minimum reconstruction iterate and the converged iterate. In both Problems~I and II, the positions of the sources are slightly shifted away from the boundary for the converged solutions (right panels), while the optimal iterate is correctly located (middle panels). In both Problems~I and II, the late-stage iterate (right panels) shows a slight inward shift of the source positions, while the minimum-error iterate (middle panels) correctly reproduces the source locations. The early iterate (left panels) has not yet localized the sources.
+DLRA-CG shows semi-convergence: the iterates initially approach the true source, but start to move away from the optimal solution when $X^{(i)}$ and $Y^{(i)}$ drift apart (Section~\ref{sec:restarted_cg}). Figure~\ref{fig:low_rank_convergence} shows the difference between the minimum reconstruction iterate and the converged iterate. In both Problems~I and II, the positions of the sources are slightly shifted away from the boundary for the converged solutions (right panels), while the optimal iterate is correctly located (middle panels). In both Problems~I and II, the late-stage iterate (right panels) shows a slight inward shift of the source positions, while the minimum-error iterate (middle panels) correctly reproduces the source locations. The early iterate (left panels) has not yet localized the sources.
 
 Compared to the full-rank solutions of Section~\ref{sec:target_rank_reconstruction}, which have smoothing pulled toward the interior, the low-rank solutions are more uniformly smoothed with no such tail. For Problem~I, this creates a circular source, and for Problem~II, this results in cleanly separated sources (in Figure~\ref{fig:test_problem_II} they were connected). Additionally, at $k = 50$, the peak amplitudes are $0.28$ (rank-1 DLRA-CG) versus $0.26$ (full-rank rSVD) for Problem~I, and $0.64$ versus $0.48$ for Problem~II, where the upper-left source is weaker in the rank-2 solution. The true source amplitude is 1.0 (Figure~\ref{fig:problem_illustration}). The low-amplitude noise in the full-rank rSVD solution is replaced by a checker-like pattern of similar amplitude.
 
@@ -156,6 +157,10 @@ Figure~\ref{fig:low_rank_different_r} shows DLRA-CG solutions for Problems~I and
 Figure~\ref{fig:low_rank_solution_error} shows that for Problem~I, the rank 1 DLRA-CG solution achieves lower Euclidean and AUC-IoU error than the full rank rSVD solution. For EMD, the full-rank solution is better, possibly because the focused distribution of the rank-1 solution differs more from the flat true source than the smoother full-rank reconstruction. For Problem~II, the rank-2 solution outperforms rank-1, rank-5, and full-rank solutions across all metrics for $k > 10$. Reconstructions of rank 5 achieves approximately the same error as full-rank rSVD reconstructions.
 
 As shown in Section~\ref{sec:target_rank_reconstruction}, full-rank rSVD solutions approach but do not outperform the exact Tikhonov solution in the range $k \in [5,\,100]$ (Figure~\ref{fig:rsvd_over_k_II}). The low-rank solutions do: for Problem~I, the rank-1 solution achieves lower Euclidean and AUC-IoU error than the exact Tikhonov solution, and for Problem~II, the rank-2 solution outperforms it across all metrics \textcolor{red}{[TODO: at which $k$ does this happen?]}.
+
+
+\subsubsection{Residuals of low-rank solutions}
+\input{figures/low_rank_residual.tex}
 
 
 \subsubsection{Rate of convergence using preconditioners}

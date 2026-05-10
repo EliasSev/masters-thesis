@@ -81,14 +81,17 @@ In our low-rank setting, we propose replacing the descent directions used in the
 
 
 \subsubsection{Restarted CG}\label{sec:restarted_cg}
-During the construction of $H$-conjugate search directions $\{D^{(i)}\}$, numerical round-off errors accumulate, so that 
-\begin{equation*}
-    \langle D^{(i)},\, HD^{(j)} \rangle_F = 0, \quad i \neq j,
-\end{equation*}
-will not be exactly satisfied \cite{hestenesMethodsConjugateGradients1952}. As $|i - j|$ increases, the violation of $H$-conjugacy may grow, so that the final iterate $X^{(i)}$ is not a satisfactory approximation of the solution \cite{hestenesMethodsConjugateGradients1952}. For the DLRA-CG scheme, the loss of $H$-conjugacy is accelerated by the truncation step: the update in Equation~\eqref{eq:fletcher-reeves} is derived under the assumption that $X^{(i+1)} = X^{(i)} + \alpha_i D^{(i)}$, which is not generally true after truncation.
+In Algorithm~\ref{alg:DLRA-CG}, the sequence $\{D^{(i)}\}$ is generated 
+independently of the manifold iterates $X^{(i)}$. After the first step, $G^{(i)}$ no longer equals $\nabla\Phi(X^{(i)})$: the recurrence $G^{(i+1)} = G^{(i)} + \alpha_i HD^{(i)}$ tracks the gradient along the full-rank trajectory
+\begin{equation}\label{eq:full_rank_iterate}
+    Y^{(i)} = X^{(0)} + \sum_{j<i} \alpha_j D^{(j)},
+\end{equation}
+not along the manifold iterates. As $Y^{(i)}$ and $X^{(i)}$ drift apart, 
+$G^{(i)} = \nabla\Phi(Y^{(i)}) \to 0$ as plain CG converges along $Y^{(i)}$, so $\alpha_i \to 0$ and $X^{(i)}$ may stall at a sub-optimal solution.
 
-Restarted CG \cite{powellRestartProceduresConjugate1977} addresses this by re-computing the true gradient
-$G^{(i)} = \nabla\Phi(X^{(i)})$ and resetting the search direction to $D^{(i)} = -G^{(i)}$ every $N_r$ iterations, discarding the previous search directions that have lost $H$-conjugacy. In Algorithm~\ref{alg:DLRA-CG}, this replaces the recurrence $G^{(i+1)} = G^{(i)} + \alpha_i HD^{(i)}$ with a fresh gradient evaluation $G^{(i+1)} = \nabla\Phi(X^{(i+1)})$, and sets $D^{(i+1)} = -G^{(i+1)}$, skipping the $\beta_i$ step.
+Restarted CG \cite{powellRestartProceduresConjugate1977} re-computes the true gradient $G^{(i)} = \nabla\Phi(X^{(i)})$ and resets the search direction to $D^{(i)} = -G^{(i)}$ every $N_r$ iterations, discarding the previous search directions. This was originally proposed as a method to counteract the loss of $H$-conjugacy in the construction of $\{D^{(i)}\}$ because of numerical round-off errors \cite{hestenesMethodsConjugateGradients1952, powellRestartProceduresConjugate1977}. In the DLRA-CG setting, restart serves a second purpose beyond correcting round-off: it resets the full-rank trajectory to $Y^{(i)} = X^{(i)}$, restoring $G^{(i)} = \nabla\Phi(X^{(i)})$ and giving the CG recurrence a fresh start from the true iterate position $X^{(i)}$
+
+In Algorithm~\ref{alg:DLRA-CG}, this replaces the recurrence $G^{(i+1)} = G^{(i)} + \alpha_i HD^{(i)}$ with a fresh gradient evaluation $G^{(i+1)} = \nabla\Phi(X^{(i+1)})$, and sets $D^{(i+1)} = -G^{(i+1)}$, skipping the $\beta_i$ step.
 
 
 \subsection{DLRA using preconditioned CG}

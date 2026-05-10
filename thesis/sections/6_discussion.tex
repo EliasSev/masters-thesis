@@ -1,4 +1,7 @@
 \section{Discussion}\label{sec:discussion}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Matrix-free Randomized SVD Part 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Matrix-free rSVD}
 \subsubsection{Asymptotic analysis}
 To explain the computational times and asymptotic behavior in Sections~\ref{sec:computational_time} and \ref{sec:computational_breakdown}, we examine the cost of forming $K$ and of Algorithm~\ref{alg:discrete_rsvd} in more detail.
@@ -20,7 +23,7 @@ Equation~\eqref{eq:rsvd_cost} also explains the cost breakdown in Figure~\ref{fi
 
 
 \subsubsection{Overhead of the adjoint formulation}
-The adjoint formulation of Algorithm~\ref{alg:discrete_rsvd_Kstar} has some computational overhead compared to Algorithm~\ref{alg:discrete_rsvd}. The setup stage requires an additional Cholesky factorization of the $N \times N$ matrix $M$, which costs $\mathcal{O}(N^{3/2})$. For the QR factorization, $Y$ is now $N \times l$, so this costs $\mathcal{O}(l^2 N)$, compared to $\mathcal{O}(l^2 \sqrt{N})$ for rSVD on $K$. Computing $B = Q^T K^*$ requires solving $\tilde q_i M = q_i$ $l$ times, costing $\mathcal{O}(l N \log N)$ (compared to $\mathcal{O}(l \sqrt{N} \log \sqrt{N})$, which was negligible). The SVD of $B \in \mathbb{R}^{l \times N_b}$ costs $\mathcal{O}(l^2 \sqrt{N})$, which is cheaper than $\mathcal{O}(l^2 N)$ for rSVD on $K$. Overall, the asymptotic cost of Algorithm~\ref{alg:discrete_rsvd_Kstar} is the same as Algorithm~\ref{alg:discrete_rsvd}, which is given in Equation~\eqref{eq:rsvd_cost}.
+The adjoint formulation of Algorithm~\ref{alg:discrete_rsvd_Kstar} has some computational overhead compared to Algorithm~\ref{alg:discrete_rsvd}. The setup stage requires an additional Cholesky factorization of the $N \times N$ matrix $M$, which costs $\mathcal{O}(N^{3/2})$. For the QR factorization, $Y$ is now $N \times l$, so this costs $\mathcal{O}(l^2 N)$, compared to $\mathcal{O}(l^2 \sqrt{N})$ for rSVD on $K$. Computing $B = Q^T K^*$ requires solving $M \tilde q_i = q_i$ $l$ times, costing $\mathcal{O}(l N \log N)$ (compared to $\mathcal{O}(l \sqrt{N} \log \sqrt{N})$, which was negligible). The SVD of $B \in \mathbb{R}^{l \times N_b}$ costs $\mathcal{O}(l^2 \sqrt{N})$, which is cheaper than $\mathcal{O}(l^2 N)$ for rSVD on $K$. Overall, the asymptotic cost of Algorithm~\ref{alg:discrete_rsvd_Kstar} is the same as Algorithm~\ref{alg:discrete_rsvd}, which is given in Equation~\eqref{eq:rsvd_cost}.
 
 In Table~\ref{tab:computational_time_adjoint} ($t_1/t$), we see approximately 30\% computational overhead for $k = 10$, 20\% for $k = 50$, and 10\% for $k = 200$. This matches the theoretical overhead, which reduces for larger $k$ when the cost $\mathcal{O}(l^2 N)$ of the SVD in Algorithm~\ref{alg:discrete_rsvd} takes up a larger share.
 
@@ -104,17 +107,25 @@ By truncating the $N_b - k$ terms of the solution, we remove the noisy SVD compo
 For the weighted Tikhonov solution, the reconstruction already has some regularization through $\lambda$, but the argument transfers. We found that the optimal $k$ values are approximately equal for both the rSVD and the tSVD. The rank is problem-dependent, and for our problems ranged from $k = 45$ to $k = 85$ by Euclidean norm. The EMD preferred a smaller $k$ ($20$ to $30$), since it is more sensitive to unwanted noise in the reconstruction, while the AUC-IoU generally preferred larger $k$ ($\ge 60$), since it focuses on segmentation overlap, which is less affected by noise.
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Dynamical Low-Rank Approximation using Conjugate Gradient 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Dynamical low-rank approximation}
+\subsubsection{Convergence of DLRA-CG}
+Replacing the steepest descent search directions with directions $\{D^{(i)}\}$ from CG increased convergence significantly: DLRA-CG reached the relative error $e^{(i)} < 0.85$ approximately $210$ times faster than steepest descent (Section~\ref{sec:rate_of_convergence}).
 
+In an unconstrained setting, the convergence of CG and steepest-descent depends on the condition number $\kappa = \kappa(H)$, with larger $\kappa$ leading to slower convergence \cite{saadIterativeMethodsSparse2003}. If $x^*$ is the unconstrained minimizer of $\Phi(x)$ and $x^{(i)}$ the $i$-th iterate of CG, then by Theorem~6.29 in Saad \cite{saadIterativeMethodsSparse2003},
+\begin{equation*}
+    \| x^* - x^{(i)} \|_H \le 2 \left(
+        \frac{\sqrt{\kappa} - 1}{\sqrt{\kappa} + 1}
+    \right)^i
+    \| x^* - x^{(0)} \|_H.
+\end{equation*}
+If $\kappa$ is large, then $\tfrac{\sqrt{\kappa} - 1}{\sqrt{\kappa} + 1} \approx 1 - \tfrac{2}{\sqrt{\kappa}}$, compared to the slower convergence of steepest descent which converges as approximately $1 - \tfrac{2}{\kappa}$ \cite{saadIterativeMethodsSparse2003}.
 
-\subsubsection{Convergence analysis of DLRA-CG}
-\textcolor{red}{TODO:} Not done yet. Some ideas I have:
-\begin{itemize}
-    \item Connect to CG theory: convergence depends on $\kappa(H)$.
-    \item $\Phi$ is quadratic, $H$ is SPD: CG is superior to steepest-descent/Adam (transfers to DLRA-CG, but $\Phi$ isn't quadratic on the manifold). First-order methods don't exploit curvature.
-    \item Riemannian GD theory / DLRA theory: difficult, maybe I can get help from Jonas (do we have any convergence guarantees on $\mathcal{M}_r$? Convergence rate?)
-    \item The observed gap (50 vs 20'000 iterations) is empirical evidence (I shouldn't over claim theory)
-\end{itemize}
+The Hessian $H = F + S$ has a low-rank $F = K^T M_\partial K$ plus a sparse $S = \lambda^2 W^T M W$ structure (Section~\ref{sec:choice_of_preconditioner}). The rapid decay of singular values of $K$ makes $\kappa(H)$ depend on $\lambda$: the small eigenvalues of $H$ are mostly determined by $S$, whose eigenvalues are small when $\lambda$ is small. For example, at $\lambda = 0.1$, $\kappa(H) \approx 10^3$, and at  $\lambda = 10^{-4}$, $\kappa(H) \approx 10^9$.
+
+The same argument partially transfers to DLRA-CG, as demonstrated by Table~\ref{tab:convergence_iterations}, since $\{D^{(i)}\}$ is generated by the same CG recurrence as in the unconstrained case. A formal convergence analysis of DLRA-CG that accounts for the projection and truncation remains an open problem.
 
 
 \subsubsection{Semi-convergence and restarting}

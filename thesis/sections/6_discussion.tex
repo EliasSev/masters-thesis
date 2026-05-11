@@ -111,16 +111,16 @@ For the weighted Tikhonov solution, the reconstruction already has some regulari
 % Dynamical Low-Rank Approximation using Conjugate Gradient 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection{Dynamical low-rank approximation}
-\subsubsection{Convergence of DLRA-CG}
+\subsubsection{Convergence of DLRA-CG}\label{sec:convergence_of_DLRA_CG}
 Replacing the steepest descent search directions with directions $\{D^{(i)}\}$ from CG increased convergence significantly: DLRA-CG reached the relative error $e^{(i)} < 0.85$ approximately $210$ times faster than steepest descent (Section~\ref{sec:rate_of_convergence}).
 
 In an unconstrained setting, the convergence of CG and steepest-descent depends on the condition number $\kappa = \kappa(H)$, with larger $\kappa$ leading to slower convergence \cite{saadIterativeMethodsSparse2003}. If $x^*$ is the unconstrained minimizer of $\Phi(x)$ and $x^{(i)}$ the $i$-th iterate of CG, then by Theorem~6.29 in Saad \cite{saadIterativeMethodsSparse2003},
-\begin{equation*}
+\begin{equation}\label{eq:convergence_of_CG}
     \| x^* - x^{(i)} \|_H \le 2 \left(
         \frac{\sqrt{\kappa} - 1}{\sqrt{\kappa} + 1}
     \right)^i
     \| x^* - x^{(0)} \|_H.
-\end{equation*}
+\end{equation}
 If $\kappa$ is large, then $\tfrac{\sqrt{\kappa} - 1}{\sqrt{\kappa} + 1} \approx 1 - \tfrac{2}{\sqrt{\kappa}}$, compared to the slower convergence of steepest descent which converges as approximately $1 - \tfrac{2}{\kappa}$ \cite{saadIterativeMethodsSparse2003}.
 
 The Hessian $H = F + S$ has a low-rank $F = K^T M_\partial K$ plus a sparse $S = \lambda^2 W^T M W$ structure (Section~\ref{sec:choice_of_preconditioner}). The rapid decay of singular values of $K$ makes $\kappa(H)$ depend on $\lambda$: the small eigenvalues of $H$ are mostly determined by $S$, whose eigenvalues are small when $\lambda$ is small. For example, at $\lambda = 0.1$, $\kappa(H) \approx 10^3$, and at  $\lambda = 10^{-4}$, $\kappa(H) \approx 10^9$.
@@ -151,14 +151,11 @@ The low-rank solutions outperformed exact weighted Tikhonov reconstructions (Sec
 The sources in Problems~I and II are of low rank and already live on $\mathcal{M}_r$. Each square source factors as an outer product of two vectors, giving a rank-$1$ matrix. The single source of Problem~I is therefore of rank~$1$, and the three sources of Problem~II sum to a matrix of rank~$3$, see Figure~\ref{fig:outer_product_II}. However, we found that a rank-$2$ approximation of this source yielded better reconstruction error. We interpret this as rank truncation acting as additional regularization on top of Tikhonov, and dropping it suppresses smoothing more than it costs in bias.
 
 
-\subsubsection{Preconditioning and local minimas}
-We saw precondition sped up convergence, but also drove error up. IC with restarting converged to a "local minima".
+\subsubsection{Effect of preconditioning}
+We saw that precondition sped up convergence, but also raised the reconstruction error (Section~\ref{sec:rate_of_convergence_using_preconditioners}), and the iterates diverged when using an IC + Woodbury preconditioner together with restarting.
 
-\textcolor{red}{TODO:} Not done yet. Ideas:
-\begin{itemize}
-    \item Classical theory of preconditioning (lower $\kappa$, better convergence)
-    \item In the DLRA setting: larger steps on $\mathcal{M}_r$ aer "dangerous". If we get too close to the full-rank solution, we are just making truncations
-    \item If we walk directly to (or close to) the full-rank Tikhonov solution, we are in practice just performing a rank $r$ truncation on it
-    \item Hard to say why DLRA-PCG using IC and restarting converges to the wrong solution. Maybe just unlucky (this seems to be a local minima: when this solution is used as $X^{(0)}$ for DLRA-CG it also gets stuck here.)
-    \item $\mathcal{M}_r$ is non-convex (need reference)
-\end{itemize}
+The convergence of CG depends on the condition number $\kappa(H)$. By using a preconditioner $P \approx H$, the condition number $\kappa(P^{-1} H)$ is reduced, and the convergence is sped up by Equation~\eqref{eq:convergence_of_CG}. As discussed in Section~\ref{sec:convergence_of_DLRA_CG}, $H$ has a large condition number, which makes preconditioning effective.
+
+In the setting of DLRA-PCG, a stronger $P$ accelerates the convergence of the iterates $Y^{(i)}$ so that they reach the full-rank weighted Tikhonov solution in fewer iterations, leaving $X^{(i)}$ further behind on $\mathcal{M}_r$. This raises the error of the final $X^{(i)}$. In the case of the perfect preconditioner $P^{-1} = H^{-1}$, $Y^{(i)}$ reaches the full-rank solution in a single step, and $X^{(i)}$ is moved a single step in the projected direction and truncated to $\mathcal{M}_r$.
+
+When using the IC preconditioner, the higher final error was resolved by restarting. With the IC + Woodbury preconditioner and restarting, however, the iterates $X^{(i)}$ diverge. Since $\mathcal{M}_r$ is non-convex \cite{absilOptimizationAlgorithmsMatrix2008}, $X^{(i)}$ may converge to a local minimum, as demonstrated in Section~\ref{sec:local_minima}, but we have no complete explanation.

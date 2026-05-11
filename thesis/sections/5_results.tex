@@ -139,7 +139,7 @@ A smaller $N_r$ slows convergence but drives the error lower, and for larger $N_
 Per-iteration compute times are similar across all methods ($0.5$-$0.7$ ms), so the iteration counts in Table~\ref{tab:convergence_iterations} translate directly to runtime. At $e^{(i)} < 0.85$, DLRA-CG is approximately $210$ times faster than steepest descent.
 
 
-\subsubsection{Quality of the low-rank solutions}
+\subsubsection{Quality of the low-rank solutions}\label{sec:quality_of_the_low_rank_solutions}
 \input{figures/low_rank_convergence.tex}
 \input{figures/low_rank_restarted_cg.tex}
 DLRA-CG shows semi-convergence: the iterates initially approach the true source, but start to move away from the optimal solution when $X^{(i)}$ and $Y^{(i)}$ drift apart (Section~\ref{sec:restarted_cg}). Figure~\ref{fig:low_rank_convergence} shows the difference between the minimum reconstruction iterate and the converged iterate. In both Problems~I and II, the positions of the sources are slightly shifted away from the boundary for the converged solutions (right panels), while the optimal iterate is correctly located (middle panels). In both Problems~I and II, the late-stage iterate (right panels) shows a slight inward shift of the source positions, while the minimum-error iterate (middle panels) correctly reproduces the source locations. The early iterate (left panels) has not yet localized the sources.
@@ -149,7 +149,7 @@ Compared to the full-rank solutions of Section~\ref{sec:target_rank_reconstructi
 Restarted DLRA-CG ($N_r = 10$) achieves a lower relative error than DLRA-CG without restarting (Figure~\ref{fig:number_of_iterations}, left). The converged solutions in Figure~\ref{fig:low_rank_restarted_cg} are correctly located and less diffuse, with peak amplitudes of $0.40$ and $0.80$ for Problems~I and II, closer to the true amplitude of $1.0$ than both the full-rank rSVD Tikhonov solutions and the solutions without restarting.
 
 
-\subsubsection{Effect of rank on reconstructions}
+\subsubsection{Effect of rank on reconstructions}\label{sec:effect_of_rank_on_reconstructions}
 \input{figures/low_rank_different_r.tex}
 \input{figures/low_rank_solution_error.tex}
 Figure~\ref{fig:low_rank_different_r} shows DLRA-CG solutions for Problems~I and II at ranks $r = 1, 2, 5$. For Problem~I, the reconstruction error increases with rank, and at rank 5 the solution resembles the full-rank Tikhonov reconstruction (Figure~\ref{fig:test_problem_I}). For Problem~II, rank 2 is optimal; at rank 5 the reconstruction similarly resembles the full-rank case (Figure~\ref{fig:test_problem_II}).
@@ -158,7 +158,7 @@ Figure~\ref{fig:low_rank_solution_error} shows that for Problem~I, the rank 1 DL
 
 As shown in Section~\ref{sec:target_rank_reconstruction}, full-rank rSVD solutions approach but do not outperform the exact Tikhonov solution in the range $k \in [5,\,100]$ (Figure~\ref{fig:rsvd_over_k_II}). The low-rank solutions do: for Problem~I, the rank-1 solution achieves lower Euclidean and AUC-IoU error than the exact Tikhonov solution, and for Problem~II, the rank-2 solution outperforms it across all metrics \textcolor{red}{[TODO: at which $k$ does this happen?]}.
 
-
+% TODO: This section
 \subsubsection{Residuals of low-rank solutions}
 \input{figures/low_rank_residual.tex}
 

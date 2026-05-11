@@ -129,26 +129,26 @@ The same argument partially transfers to DLRA-CG, as demonstrated by Table~\ref{
 
 
 \subsubsection{Semi-convergence and restarting}
-\textcolor{red}{TODO:} Not done yet. I will discuss the loss of $H$-conjugacy. Some ideas:
-\begin{itemize}
-    \item Same theory as restarting CG: recover $H$-conjugacy.
-    \item If $N_r = 1$ we just have steepest descent.
-    \item If $N_r$ is small: smaller "safer" steps (less accumulated conjugacy)
-    \item Would be interesting to estimate how fast conjugacy is lost (open question).
-    \item Restarting: better recovers true amplitude of source(s), making restarting preferable
-\end{itemize}
+\input{figures/cg_direction_disagreement}
+DLRA-CG shows semi-convergence: initially the relative error reduces, and then it rises again before stalling (Section~\ref{sec:rate_of_convergence}). Restarted DLRA-CG avoids this, but shows slower convergence.
+
+As discussed in Section~\ref{sec:restarted_cg}, the DLRA-CG algorithm constructs $(\alpha_i,\, G^{(i)},\, D^{(i)})$ independent of $X^{(i)}$. The search directions $\{D^{(i)}\}$ follow the trajectory of the full-rank solution $Y^{(i)}$, meaning $G^{(i)} = \nabla \Phi(Y^{(i)})$. When $i$ increases, $X^{(i)}$ and $Y^{(i)}$ may drift apart, and $G^{(i)}$ starts disagreeing with the projected gradient 
+\begin{equation*}
+    \mathcal{P} G^{(i)} = \mathcal{P}_{X^{(i)}}(\nabla \Phi(X^{(i)})),
+\end{equation*}
+to such an extent that the relative error $e^{(i)}$ rises again, resulting in semi-convergence.
+
+Restarting sets $D^{(i)} = -\nabla\Phi(X^{(i)})$, so the projected step $\mathcal{P}_{X^{(i)}}(D^{(i)}) = -\mathcal{P}G^{(i)}$ is the descent direction at $X^{(i)}$. As the iterations continue and the CG directions $D^{(i)}$ away from $-\mathcal{P}G^{(i)}$, this alignment gradually breaks down until the next restart. When the restart period $N_r$ is too small, the convergence of DLRA-CG will approach the steepest descent (at $N_r = 1$ they are equal), but choosing $N_r$ too large gives $X^{(i)}$ and $Y^{(i)}$ time to drift apart, so that semi-convergence re-appears.
+
+An adaptive selection of $N_r$ could be considered, for example only restarting once the angle or relative difference between $G^{(i)}$ and the true projected gradient $\mathcal{P}G^{(i)}$ is above some threshold. 
 
 
 \subsubsection{Rank as a regularization parameter}
-\textcolor{red}{TODO:} Not done yet. We saw that low-rank solutions outperform the exact full-rank weighted Tikhonov. 
+\input{figures/outer_product_II.tex}
+The low-rank solutions outperformed exact weighted Tikhonov reconstructions (Section~\ref{sec:quality_of_the_low_rank_solutions}), but were sensitive to the choice of $r$: choosing $r$ slightly above optimal gave reconstructions resembling the full-rank case, while choosing $r$ too small introduced spurious sources for Problem~II
+(Section~\ref{sec:effect_of_rank_on_reconstructions}).
 
-Ideas: 
-\begin{itemize}
-    \item Manifold $\mathcal{M}_r$: forcing $X \in \mathcal{M}_r$ is natural since the true sparse solutions lives on/ near this manifold
-    \item If $r$ is chosen too small, it is mathematically impossible to represent some solutions
-    \item At rank 5, the solutions resembles the full-rank Tikhonov (a single Gaussian on a 2D mesh is approximately rank-1 as a matrix, a simple outer-product)
-    \item Elvetun and Nielsen already did sparsity regularization ($\ell_1$), mention? This method is arguably easier
-\end{itemize}
+The sources in Problems~I and II are of low rank and already live on $\mathcal{M}_r$. Each square source factors as an outer product of two vectors, giving a rank-$1$ matrix. The single source of Problem~I is therefore of rank~$1$, and the three sources of Problem~II sum to a matrix of rank~$3$, see Figure~\ref{fig:outer_product_II}. However, we found that a rank-$2$ approximation of this source yielded better reconstruction error. We interpret this as rank truncation acting as additional regularization on top of Tikhonov, and dropping it suppresses smoothing more than it costs in bias.
 
 
 \subsubsection{Preconditioning and local minimas}
@@ -162,6 +162,3 @@ We saw precondition sped up convergence, but also drove error up. IC with restar
     \item Hard to say why DLRA-PCG using IC and restarting converges to the wrong solution. Maybe just unlucky (this seems to be a local minima: when this solution is used as $X^{(0)}$ for DLRA-CG it also gets stuck here.)
     \item $\mathcal{M}_r$ is non-convex (need reference)
 \end{itemize}
-
-
-%\subsection{Limitations} (Optional)

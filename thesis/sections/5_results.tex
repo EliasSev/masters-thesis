@@ -1,7 +1,8 @@
 \section{Results}\label{sec:results}
 \subsection{Experimental setup}\label{sec:problems}
 \input{figures/problem_illustration.tex}
-Figure~\ref{fig:problem_illustration} shows the three meshes and source functions used throughout the results. Problem I is a square mesh with a single source, used as a baseline. Problem II uses the same geometry with three sources to assess reconstruction under multiple sources. Problem III replaces the square domain with an ``L''-shaped mesh and two sources, introducing a non-convex geometry.
+Figure~\ref{fig:problem_illustration} shows the three meshes and source functions used throughout the results. Problem I is a square mesh with a single source, used as a baseline. Problem II uses the same geometry with three sources to assess reconstruction under multiple sources. Problem III replaces the square domain with an ``L''-shaped mesh and two sources, introducing a non-convex geometry. Problems I 
+and II use a uniform grid, whereas Problem III uses a non-uniform grid.
 
 For all experiments, we set the diffusion coefficient $\sigma = 1$ and the reaction coefficient $c = 1$ in Equation~\eqref{eq:pde}. The finite element space $V_h$ (Equation~\eqref{eq:fem_space}) uses a basis of continuous piecewise-linear hat functions $\phi_i$ (continuous Galerkin, degree 1).
 
@@ -101,17 +102,17 @@ The EMD shows that at $k = 10$, rSVD on $K$ gives 10\% to 19\% worse reconstruct
 
 
 \subsubsection{Accuracy on noisy data}\label{sec:accuracy_on_noisy_data}
-\input{figures/noisy_problem.tex}
-\input{tables/noisy_problem.tex}
-\input{figures/reconstruction_noisy_problem.tex}
 We measure the reconstruction error for the transformed weighted Tikhonov problem of Equation~\eqref{eq:transformed_discrete_inverse_problem}. We replace $y = K x$ with $\tilde y = y + \epsilon$, where $\epsilon_i \sim \mathcal{N}(0, 1)$ and $\tfrac{\| \epsilon \|}{\| y \|} = \delta$ with $\delta = 0.01$. The regularization parameter is set to $\lambda = \lambda_{\text{dp}}$, found using the discrepancy principle with safety factor $\nu_{\text{dp}} = 10$ (see Section~5.2 in Hansen \cite{hansen2010discrete}), so that $\lambda$ is selected independently for each method and rank.
+\input{tables/noisy_problem.tex}
+\input{figures/noisy_problem.tex}
+\input{figures/reconstruction_noisy_problem.tex}
 
 Figure~\ref{fig:noisy_problem} shows reconstruction errors when $K$ and $W$ are approximated using rSVD (Algorithm~\ref{alg:discrete_rsvd}) and tSVD (Section~\ref{sec:tsvd}) at increasing ranks $k$. The error is measured in Euclidean norm, EMD and AUC-IoU. The optimal rank $k^*$ is marked with vertical lines, and listed in Table~\ref{tab:noisy}. Figure~\ref{fig:reconstruction_noisy_problem} shows reconstructions for Problem~II at selected ranks, illustrating how a target rank that is too high includes noise in the reconstruction.
 
 In terms of Euclidean error, the optimal rank is between 50 and 85 for rSVD, and 45 and 85 for tSVD. The EMD is more sensitive to higher ranks which include more noise (Figure~\ref{fig:reconstruction_noisy_problem}), and the optimal rank for EMD is between 20 and 30 for both methods. For AUC-IoU, optimal ranks are between 50 and 100 for rSVD, and between 65 and 95 for tSVD, except for Problem~III with rSVD where the optimal rank exceeds the tested range ($k \leq 100$).
 
 At their respective optimal ranks, rSVD and tSVD give nearly identical Euclidean errors and AUC-IoU scores across the three problems, with differences below 0.25\%. The largest gap is in EMD: tSVD achieves 2.35\% to 6.33\% lower EMD, with the largest difference on Problem~III.
-
+\FloatBarrier
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Dynamical Low-Rank Approximation using (Preconditioned) Conjugate Gradient Part 
@@ -156,8 +157,7 @@ Figure~\ref{fig:low_rank_different_r} shows DLRA-CG solutions for Problems~I and
 
 Figure~\ref{fig:low_rank_solution_error} shows that for Problem~I, the rank 1 DLRA-CG solution achieves lower Euclidean and AUC-IoU error than the full rank rSVD solution. For EMD, the full-rank solution is better, possibly because the focused distribution of the rank-1 solution differs more from the flat true source than the smoother full-rank reconstruction. For Problem~II, the rank-2 solution outperforms rank-1, rank-5, and full-rank solutions across all metrics for $k > 10$. Reconstructions of rank 5 achieves approximately the same error as full-rank rSVD reconstructions.
 
-As shown in Section~\ref{sec:target_rank_reconstruction}, full-rank rSVD solutions approach but do not outperform the exact Tikhonov solution in the range $k \in [5,\,100]$ (Figure~\ref{fig:rsvd_over_k_II}). The low-rank solutions do: for Problem~I, the rank-1 solution surpasses the exact Tikhonov solution in Euclidean error from $k = 26$ and in AUC-IoU from $k = 31$, though not in EMD. For Problem~II, the rank-2 solution surpasses it across all metrics by $k = 28$.
-
+As shown in Section~\ref{sec:target_rank_reconstruction}, full-rank rSVD solutions approach, but do not outperform the exact Tikhonov solution in the range $k \in [5,\,100]$ (Figure~\ref{fig:rsvd_over_k_II}). The low-rank solutions do: for Problem~I, the rank-1 solution surpasses the exact Tikhonov solution in Euclidean error from $k = 26$ and in AUC-IoU from $k = 31$, though not in EMD. For Problem~II, the rank-2 solution surpasses it across all metrics by $k = 28$.
 
 
 \subsubsection{Residuals of low-rank solutions}

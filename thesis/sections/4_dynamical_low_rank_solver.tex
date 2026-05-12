@@ -38,7 +38,7 @@ and requires no tuning (Section~8.2 in Chong et al. \cite{chong2023introduction}
 
 
 \subsection{Application to the inverse problem}\label{sec:application_to_inverse_problem}
-In many applications, the source $f \in L^2(\Omega)$ in Equation~\eqref{eq:problem} is sparse \cite{elvetunWeightedSparsityRegularization2023}, i.e., of low rank. If $x \in \mathbb{R}^{n^2}$ is some discretization of $f$, reordering $x$ into an $n \times n$ matrix $X = \operatorname{mat}(x)$, we expect that $r = \operatorname{rank}(X)$ is a small number ($r \ll n$). It is therefore natural to consider low-rank methods which can locate such solutions.
+In many applications, the source $f \in L^2(\Omega)$ in Equation~\eqref{eq:problem} is sparse \cite{elvetunWeightedSparsityRegularization2023}, and often well-approximated by low-rank matrices. If $x \in \mathbb{R}^{n^2}$ is some discretization of $f$, reordering $x$ into an $n \times n$ matrix $X = \operatorname{mat}(x)$, we can in often expect that $r = \operatorname{rank}(X)$ is a small number ($r \ll n$). It is therefore natural to consider low-rank methods that can recover such solutions.
 
 In the following sections, we consider the problem of minimizing a quadratic objective function
 \begin{equation*}
@@ -56,7 +56,7 @@ Using the product rule, we get the gradient $\nabla \Phi$ and Hessian $H$ of $\P
     H &= K^T M_\partial K + \lambda^2 W^T M W.
     \end{aligned}
 \end{equation*}
-The Hessian is SPD, since $K^T M_\partial K$ and $\lambda^2 W^T M W$ are SPD. By the optimality condition $\nabla \Phi (X) = 0$, the minimizer of $\Phi$ is the solution of $H x = K^T M_\partial y$, i.e., the normal equations of Equation~\eqref{eq:discrete_inverse_problem}.
+The Hessian is SPD, since $K^T M_\partial K$ is positive semidefinite, $\lambda^2 W^T M W$ is positive definite, and their sum is therefore positive definite. By the optimality condition $\nabla \Phi (X) = 0$, the minimizer of $\Phi$ is the solution of $H x = K^T M_\partial y$, i.e., the normal equations of Equation~\eqref{eq:discrete_inverse_problem}.
 \nomenclature[HC]{$\Phi$}{Objective function}%
 \nomenclature[HD]{$\nabla\Phi$}{Gradient of $\Phi$}%
 \nomenclature[HE]{$H$}{Hessian of $\Phi$}%
@@ -76,7 +76,7 @@ and updates the search direction by the Fletcher-Reeves rule \cite{fletcherFunct
     \beta_i = \frac{\|G^{(i+1)}\|_F^2}{\|G^{(i)}\|_F^2}.
 \end{equation}
 
-In our low-rank setting, we propose replacing the descent directions used in the method of Schotthöfer et al. (Algorithm~\ref{alg:DLRA-CG}) with $H$-conjugate search directions $\{D^{(i)}\}$ obtained via the CG method. The motivation is that $H$-conjugate directions exploit curvature information of $H$, leading to faster convergence. The full scheme is given in Algorithm~\ref{alg:DLRA-CG}, which we refer to as DLRA-CG throughout.
+In our low-rank setting, we propose replacing the descent directions used in the method of Schotthöfer et al. (Algorithm~\ref{alg:dlra}) with $H$-conjugate search directions $\{D^{(i)}\}$ obtained via the CG method. The motivation is that $H$-conjugate directions exploit curvature information of $H$, leading to faster convergence. The full scheme is given in Algorithm~\ref{alg:DLRA-CG}, which we refer to as DLRA-CG throughout.
 \input{algorithms/DLRA-CG.tex}
 
 

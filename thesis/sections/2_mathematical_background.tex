@@ -181,12 +181,15 @@ where $A_h$ is the stiffness matrix, $T$ the discrete trace operator, and $M_\pa
 
 
 \subsection{Tikhonov regularization}
-Let $A \in \mathbb{R}^{m \times n}$ and consider the inverse problem $Ax = y$. When the problem is ill-posed or $A$ is ill-conditioned, small perturbations in $y$ cause large changes in the solution. Tikhonov regularization stabilizes the problem by solving
+Let $A \in \mathbb{R}^{m \times n}$ and consider the inverse problem $Ax = y$. If $A$ is ill-conditioned, the matrix $A^T A$ in the normal equations $A^T A x = A^T y$ is also ill-conditioned, and small perturbations in $y$ 
+cause large changes in the solution. Tikhonov regularization stabilizes the problem by solving
 \begin{equation}\label{eq:tikhonov}
     \min_{x \in \mathbb{R}^n}
     \|Ax - y\|^2 + \lambda^2 \|Wx\|^2,
 \end{equation}
-where $\lambda \ge 0$ is the regularization parameter and $W \in \mathbb{R}^{n \times n}$ is the weight matrix. $W$ can include prior knowledge about the solution to punish specific types of unwanted solutions \cite{hansen2010discrete}. With $W = I$, this is standard Tikhonov regularization.
+where $\lambda \ge 0$ is the regularization parameter and $W \in \mathbb{R}^{n \times n}$ is the weight matrix. The normal equations of Equation~\eqref{eq:tikhonov} are $(A^T A + \lambda^2 W^T W) x = A^T y$, so if $W$ is diagonal with $\operatorname{diag}(W) > 0$ and $\lambda > 0$, then $(A^T A + \lambda^2 W^T W)$ is SPD, stabilizing the problem and making the solution unique.
+
+The weights $W$ can include prior knowledge about the solution to penalize specific types of unwanted solutions \cite{hansen2010discrete}. With $W = I$, this is standard Tikhonov regularization.
 \nomenclature[EI]{$W$}{Tikhonov weight matrix}%
 
 

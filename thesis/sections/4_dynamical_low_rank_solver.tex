@@ -13,36 +13,34 @@ matrix $X$.
 \input{figures/low_rank_manifold.tex}
 Consider the problem of finding a rank-$r$ solution $X$ via the update scheme $X^{(i+1)} = X^{(i)} + \alpha_i D^{(i)}$, where $D^{(i)}$ is a search direction and $\alpha_i > 0$ a step size. Starting from a rank-$r$ matrix $X^{(0)}$, there is in general no guarantee that $D^{(i)}$ preserves low rank, so that $X^{(i)}$ may leave the space $\mathcal{M}_r$ of rank-$r$ matrices after a single step.
 
-One can replace $D^{(i)}$ by its projection onto the tangent space $\mathcal{T}_{X^{(i)}}(\mathcal{M}_r)$, a classical concept from Riemannian geometry \cite{docarmoRiemannianGeometry1992,absilOptimizationAlgorithmsMatrix2008}. This is the idea behind the Dynamical Low-Rank Approximation (DLRA) of Koch and Lubich \cite{kochDynamicalLowrankApproximation2007}. They proposed, in a continuous-time setting, evolving an approximation on $\mathcal{M}_r$ by projecting the derivative of the matrix onto the tangent space at the current approximation. Using this concept in our discrete setting, we replace $D^{(i)}$ by its tangent-space projection $\mathcal{P}_{X^{(i)}}[D^{(i)}]$, yielding the update
+One can replace $D^{(i)}$ by its projection onto the tangent space $\mathcal{T}_{X^{(i)}}(\mathcal{M}_r)$, a classical concept from Riemannian geometry \cite{docarmoRiemannianGeometry1992,absilOptimizationAlgorithmsMatrix2008}. This is the idea behind the Dynamical Low-Rank Approximation (DLRA) of Koch and Lubich \cite{kochDynamicalLowrankApproximation2007}. They proposed, in a continuous-time setting, evolving an approximation on $\mathcal{M}_r$ by projecting the derivative of the matrix onto the tangent space at the current approximation (see Appendix~\ref{appendix:dynamical_low_rank_approximation} for details). Using this concept in our discrete setting, we replace $D^{(i)}$ by its tangent-space projection $\mathcal{P}_{X^{(i)}}[D^{(i)}]$, yielding the update
 \begin{equation*}
     X^{(i+1)} = X^{(i)} 
     + \alpha_i \mathcal{P}_{X^{(i)}}(D^{(i)}).
 \end{equation*}
-This is illustrated in Figure~\ref{fig:low_rank_manifold}. Rather than updating $X^{(i)}$ directly, the DLRA algorithm operates on its SVD factorization $X^{(i)} = U_x \Sigma_x V_x^T$, updating the factors $U_x$, $\Sigma_x$, and $V_x$ at each iteration, see Appendix~\ref{appendix:dynamical_low_rank_approximation} for details (we use the subscript ``$x$'' to
-distinguish these factors from those of the forward operator
-$K = U \Sigma V^T$).
+This is illustrated in Figure~\ref{fig:low_rank_manifold}. Rather than updating $X^{(i)}$ directly, the DLRA algorithm operates on a factorization $X^{(i)} = U_x \Sigma_x V_x^T$, where $U_x$ and $V_x$ have orthonormal columns and $\Sigma_x$ is non-singular (and diagonal if using the SVD), updating the factors at each iteration. We use the subscript ``$x$'' to distinguish these factors from those of the forward operator $K = U \Sigma V^T$.
 
 However, as pointed out by Koch and Lubich, when $\Sigma_x$ is ill-conditioned, which occurs when $r$ exceeds the effective rank of $X^{(i)}$, the projector $\mathcal{P}_{X^{(i)}}$ suffers from stiffness, leading to very small step sizes and issues with rounding errors.
 
 To address this, Lubich and Oseledets proposed splitting the projector $\mathcal{P}_{X^{(i)}}$ into simpler sub-projections \cite{lubichProjectorsplittingIntegratorDynamical2013}. Crucially, each sub-projection can be evaluated without forming $\Sigma_x^{-1}$, and avoids the stiffness problem present in the original formulation \cite{kieriDiscretizedDynamicalLowrank2016}. In recent years, additional advancements have been made to DLRA, offering improved stability \cite{kuschStabilityRobustDynamical2023a}, parallelism \cite{cerutiParallelRankadaptiveIntegrator2024}, and rank-adaptivity \cite{cerutiRankadaptiveRobustIntegrator2021}.
 
-Historically, DLRA was developed for time-continuous matrix differential equations. Schotthöfer et al. recently proposed a discrete rank-adaptive update scheme based on a robust projector-splitting integrator for training low-rank neural networks \cite{schotthoferLowrankLotteryTickets2022}, see Algorithm~\ref{alg:dlra}. The discrete DLRA scheme used in this thesis follows their formulation.
+Schotthöfer et al.\ \cite{schotthoferLowrankLotteryTickets2022} recently proposed a discrete rank-adaptive update scheme based on the ``unconventional'' basis update and Galerkin step integrator \cite{cerutiUnconventionalRobustIntegrator2020} for training low-rank neural networks, see Algorithm~\ref{alg:dlra}. The discrete DLRA scheme used in this thesis follows their formulation.
 \input{algorithms/DLRA.tex}
-
 
 \subsection{Step-size selection and rank adaptation}
 Algorithm~\ref{alg:dlra} admits several choices for the step size $\alpha_i$ and the truncation criterion.
 
 \paragraph{Step size.}
-A fixed step size $\alpha_i = \alpha > 0$ coincides with one step of gradient descent on the factors $K'$, $L'$, and
-$\hat \Sigma$, analogous to the stochastic gradient descent (SGD) step used by Schotthöfer et al. \cite{schotthoferLowrankLotteryTickets2022}, but using the full gradient. Adam computes adaptive step sizes from estimates of the first and second moments of the gradient \cite{kingmaAdamMethodStochastic2017}, and Schotthöfer et al. find it converges faster in practice than SGD for training neural networks \cite{schotthoferLowrankLotteryTickets2022}. For the quadratic objective $\Phi$ considered in this thesis (Equation~\eqref{eq:discrete_inverse_problem}), steepest descent selects the step size that minimizes $\Phi$ along $D^{(i)}$,
-\begin{equation*}
-    \alpha_i
-    = \frac{\|\nabla\Phi(X^{(i)})\|_F^2}
-           {\langle D^{(i)},\, H D^{(i)} \rangle_F},
-\end{equation*}
-and requires no tuning (Section~8.2 in Chong et al. \cite{chong2023introduction}).
+We consider three step-size rules. A fixed step size $\alpha_i = \alpha > 0$ coincides with one step of gradient descent on the factors $K'$, $L'$, and
+$\hat \Sigma$, analogous to the stochastic gradient descent (SGD) step used by Schotthöfer et al. \cite{schotthoferLowrankLotteryTickets2022}, but using the full gradient. Adam computes adaptive step sizes from estimates of the first and second moments of the gradient \cite{kingmaAdamMethodStochastic2017}, and Schotthöfer et al. find it converges faster in practice than SGD for training neural networks \cite{schotthoferLowrankLotteryTickets2022}. More recently, they showed that classical momentum methods like Adam can struggle due to the geometry of $\mathcal{M}_r$ \cite{schotthoferGeometricFrameworkMomentumbased2025}.
 
+For the quadratic objective $\Phi$ considered in this thesis (Equation~\eqref{eq:discrete_inverse_problem}), steepest descent selects the step size that minimizes $\Phi$ along $D^{(i)}$,
+\begin{equation*}
+    \alpha_i = \frac{\|\nabla\Phi(X^{(i)})\|_F^2}
+                    {\langle D^{(i)},\, H D^{(i)} \rangle_F},
+\end{equation*}
+and requires no tuning (Section~8.2 in Chong et al.\ 
+\cite{chong2023introduction}).
 
 \paragraph{Rank adaption.} In the dynamical low-rank update (KLS) step of Algorithm~\ref{alg:dlra}, the factors $\hat{U}$ and $\hat{V}$ have $2r$ columns and $\hat{\Sigma}$ is of shape $2r \times 2r$. The truncation step (line 10) moves the factors back to a specified maximum rank $r$ \cite{schotthoferLowrankLotteryTickets2022}. The truncation can also be done adaptively via a truncation threshold $\vartheta$, as done by Schotthöfer et al \cite{schotthoferLowrankLotteryTickets2022}. 
 
@@ -71,7 +69,7 @@ The Hessian is SPD, since $K^T M_\partial K$ is positive semidefinite, $\lambda^
 
 
 \subsection{DLRA with conjugate search directions}
-Since $\Phi$ is quadratic with a SPD Hessian $H$, the conjugate gradient (CG) method is a natural minimization strategy \cite{saadIterativeMethodsSparse2003,fletcherFunctionMinimizationConjugate1964,hestenesMethodsConjugateGradients1952}, see Appendix~\ref{appendix:conjugate_gradient_algorithm}.
+Since $\Phi$ is quadratic with an SPD Hessian $H$, the conjugate gradient (CG) method is a natural minimization strategy \cite{saadIterativeMethodsSparse2003,fletcherFunctionMinimizationConjugate1964,hestenesMethodsConjugateGradients1952}, see Appendix~\ref{appendix:conjugate_gradient_algorithm}.
 
 CG generates a sequence of search directions $\{D^{(i)}\}$ that are $H$-conjugate, i.e.\ $\langle D^{(i)}, H D^{(j)}\rangle_F = 0$ for $i \neq j$. Starting from the initial search direction $D^{(0)} = -G^{(0)}$, each step computes an optimal step size
 \begin{equation*}
@@ -97,7 +95,7 @@ independently of the manifold iterates $X^{(i)}$. After the first step, $G^{(i)}
 not along the manifold iterates. As $Y^{(i)}$ and $X^{(i)}$ drift apart, 
 $G^{(i)} = \nabla\Phi(Y^{(i)}) \to 0$ as plain CG converges along $Y^{(i)}$, so $\alpha_i \to 0$ and $X^{(i)}$ may stall at a sub-optimal solution.
 
-Restarted CG \cite{powellRestartProceduresConjugate1977} re-computes the true gradient $G^{(i)} = \nabla\Phi(X^{(i)})$ and resets the search direction to $D^{(i)} = -G^{(i)}$ every $N_r$ iterations, discarding the previous search directions. This was originally proposed as a method to counteract the loss of $H$-conjugacy in the construction of $\{D^{(i)}\}$ because of numerical round-off errors \cite{hestenesMethodsConjugateGradients1952, powellRestartProceduresConjugate1977}. In the DLRA-CG setting, restart serves a second purpose beyond correcting round-off: it resets the full-rank trajectory to $Y^{(i)} = X^{(i)}$, restoring $G^{(i)} = \nabla\Phi(X^{(i)})$ and giving the CG recurrence a fresh start from the true iterate position $X^{(i)}$
+Restarted CG \cite{powellRestartProceduresConjugate1977} re-computes the true gradient $G^{(i)} = \nabla\Phi(X^{(i)})$ and resets the search direction to $D^{(i)} = -G^{(i)}$ every $N_r$ iterations, discarding the previous search directions. This was originally proposed as a method to counteract the loss of $H$-conjugacy in the construction of $\{D^{(i)}\}$ because of numerical round-off errors \cite{hestenesMethodsConjugateGradients1952, powellRestartProceduresConjugate1977}. In the DLRA-CG setting, restart serves a second purpose beyond correcting round-off: it resets the full-rank trajectory to $Y^{(i)} = X^{(i)}$, restoring $G^{(i)} = \nabla\Phi(X^{(i)})$ and giving the CG recurrence a fresh start from the true iterate position $X^{(i)}$.
 
 In Algorithm~\ref{alg:DLRA-CG}, this replaces the recurrence $G^{(i+1)} = G^{(i)} + \alpha_i HD^{(i)}$ with a fresh gradient evaluation $G^{(i+1)} = \nabla\Phi(X^{(i+1)})$, and sets $D^{(i+1)} = -G^{(i+1)}$, skipping the $\beta_i$ step.
 

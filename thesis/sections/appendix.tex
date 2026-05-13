@@ -163,10 +163,11 @@ In \cite{kochDynamicalLowrankApproximation2007}, Koch and Lubich study the probl
 \end{equation*}
 where $\mathcal{M}_r = \{M \in \mathbb{R}^{m \times n} : \operatorname{rank}(M) = r \}$. Instead of computing a best approximation via SVD at every time $t$, they propose a dynamical approach. They seek a low-rank matrix $Y(t) \in \mathcal{M}_r$ such that its derivative $\dot{Y}(t)$ approximates $\dot{A}(t)$:
 \begin{equation}\label{eq:dlra1}
-    \min_{\dot{Y}(t) \in \mathcal{T}_{Y(t)}(\mathcal{M}_r)} \| \dot{Y}(t) - \dot{A}(t) \|_F.
+    \min_{\dot{Y}(t) \in \mathcal{T}_{Y(t)}(\mathcal{M}_r)} \| \dot{Y}(t) - \dot{A}(t) \|_F,
 \end{equation}
+where $\mathcal{T}_{Y(t)}(\mathcal{M}_r)$ denotes the tangent space of $\mathcal{M}_r$ at $Y(t)$.
 
-Let $Y = U \Sigma V^T$ be a factorization where $U \in \mathbb{R}^{m \times r}$ and $V \in \mathbb{R}^{n \times r}$ have orthonormal columns, and $\Sigma \in \mathbb{R}^{r \times r}$ is non-singular (using the SVD yields a diagonal $\Sigma$, but this not a necessary assumption). Koch and Lubich show that Equation~\eqref{eq:dlra1} is equivalent to the Galerkin condition: find $\dot{Y} \in \mathcal{T}_{Y}(\mathcal{M}_r)$ such that
+Let $Y = U \Sigma V^T$ be a factorization where $U \in \mathbb{R}^{m \times r}$ and $V \in \mathbb{R}^{n \times r}$ have orthonormal columns, and $\Sigma \in \mathbb{R}^{r \times r}$ is non-singular (using the SVD yields a diagonal $\Sigma$, but this is not a necessary assumption). Koch and Lubich show that Equation~\eqref{eq:dlra1} is equivalent to the Galerkin condition: find $\dot{Y} \in \mathcal{T}_{Y}(\mathcal{M}_r)$ such that
 \begin{equation*}
     \langle \dot{Y} - \dot{A},\, \delta Y \rangle_F = 0,\quad \text{for all } \delta Y \in \mathcal{T}_{Y}(\mathcal{M}_r).
 \end{equation*}

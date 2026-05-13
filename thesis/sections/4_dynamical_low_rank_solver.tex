@@ -12,8 +12,9 @@ matrix $X$.
 \subsection{The low-rank manifold}
 \input{figures/low_rank_manifold.tex}
 Consider the problem of finding a rank-$r$ solution $X$ via the update scheme $X^{(i+1)} = X^{(i)} + \alpha_i D^{(i)}$, where $D^{(i)}$ is a search direction and $\alpha_i > 0$ a step size. Starting from a rank-$r$ matrix $X^{(0)}$, there is in general no guarantee that $D^{(i)}$ preserves low rank, so that $X^{(i)}$ may leave the space $\mathcal{M}_r$ of rank-$r$ matrices after a single step.
+\nomenclature[HB]{$\mathcal{M}_r$}{Manifold of rank-$r$ matrices}%
 
-One can replace $D^{(i)}$ by its projection onto the tangent space $\mathcal{T}_{X^{(i)}}(\mathcal{M}_r)$, a classical concept from Riemannian geometry \cite{docarmoRiemannianGeometry1992,absilOptimizationAlgorithmsMatrix2008}. This is the idea behind the Dynamical Low-Rank Approximation (DLRA) of Koch and Lubich \cite{kochDynamicalLowrankApproximation2007}. They proposed, in a continuous-time setting, evolving an approximation on $\mathcal{M}_r$ by projecting the derivative of the matrix onto the tangent space at the current approximation (see Appendix~\ref{appendix:dynamical_low_rank_approximation} for details). Using this concept in our discrete setting, we replace $D^{(i)}$ by its tangent-space projection $\mathcal{P}_{X^{(i)}}[D^{(i)}]$, yielding the update
+One can replace $D^{(i)}$ by its projection onto the tangent space $\mathcal{T}_{X^{(i)}}(\mathcal{M}_r)$, a classical concept from Riemannian geometry \cite{docarmoRiemannianGeometry1992,absilOptimizationAlgorithmsMatrix2008}. This is the idea behind the Dynamical Low-Rank Approximation (DLRA) of Koch and Lubich \cite{kochDynamicalLowrankApproximation2007}. They proposed, in a continuous-time setting, evolving an approximation on $\mathcal{M}_r$ by projecting the derivative of the matrix onto the tangent space at the current approximation (see Appendix~\ref{appendix:dynamical_low_rank_approximation} for details). Using this concept in our discrete setting, we replace $D^{(i)}$ by its tangent-space projection $\mathcal{P}_{X^{(i)}}(D^{(i)})$, yielding the update
 \begin{equation*}
     X^{(i+1)} = X^{(i)} 
     + \alpha_i \mathcal{P}_{X^{(i)}}(D^{(i)}).
@@ -34,7 +35,7 @@ Algorithm~\ref{alg:dlra} admits several choices for the step size $\alpha_i$ and
 We consider three step-size rules. A fixed step size $\alpha_i = \alpha > 0$ coincides with one step of gradient descent on the factors $K'$, $L'$, and
 $\hat \Sigma$, analogous to the stochastic gradient descent (SGD) step used by Schotthöfer et al. \cite{schotthoferLowrankLotteryTickets2022}, but using the full gradient. Adam computes adaptive step sizes from estimates of the first and second moments of the gradient \cite{kingmaAdamMethodStochastic2017}, and Schotthöfer et al. find it converges faster in practice than SGD for training neural networks \cite{schotthoferLowrankLotteryTickets2022}. More recently, they showed that classical momentum methods like Adam can struggle due to the geometry of $\mathcal{M}_r$ \cite{schotthoferGeometricFrameworkMomentumbased2025}.
 
-For the quadratic objective $\Phi$ considered in this thesis (Equation~\eqref{eq:discrete_inverse_problem}), steepest descent selects the step size that minimizes $\Phi$ along $D^{(i)}$,
+For the quadratic objective $\Phi$ considered in this thesis (Equation~\eqref{eq:discrete_inverse_problem}), steepest descent selects the step size that minimizes $\Phi$ along $D^{(i)} = -\nabla \Phi(X^{(i)})$,
 \begin{equation*}
     \alpha_i = \frac{\|\nabla\Phi(X^{(i)})\|_F^2}
                     {\langle D^{(i)},\, H D^{(i)} \rangle_F},
@@ -42,7 +43,7 @@ For the quadratic objective $\Phi$ considered in this thesis (Equation~\eqref{eq
 and requires no tuning (Section~8.2 in Chong et al.\ 
 \cite{chong2023introduction}).
 
-\paragraph{Rank adaption.} In the dynamical low-rank update (KLS) step of Algorithm~\ref{alg:dlra}, the factors $\hat{U}$ and $\hat{V}$ have $2r$ columns and $\hat{\Sigma}$ is of shape $2r \times 2r$. The truncation step (line 10) moves the factors back to a specified maximum rank $r$ \cite{schotthoferLowrankLotteryTickets2022}. The truncation can also be done adaptively via a truncation threshold $\vartheta$, as done by Schotthöfer et al \cite{schotthoferLowrankLotteryTickets2022}. 
+\paragraph{Rank adaptation.} In the dynamical low-rank update (KLS) step of Algorithm~\ref{alg:dlra}, the factors $\hat{U}$ and $\hat{V}$ have $2r$ columns and $\hat{\Sigma}$ is of shape $2r \times 2r$. The truncation step (line 10) moves the factors back to a specified maximum rank $r$ \cite{schotthoferLowrankLotteryTickets2022}. The truncation can also be done adaptively via a truncation threshold $\vartheta$, as done by Schotthöfer et al.\ \cite{schotthoferLowrankLotteryTickets2022}. 
 
 
 \subsection{Application to the inverse problem}\label{sec:application_to_inverse_problem}
@@ -73,7 +74,7 @@ Since $\Phi$ is quadratic with an SPD Hessian $H$, the conjugate gradient (CG) m
 
 CG generates a sequence of search directions $\{D^{(i)}\}$ that are $H$-conjugate, i.e., $\langle D^{(i)}, H D^{(j)}\rangle_F = 0$ for $i \neq j$. Starting from the initial search direction $D^{(0)} = -G^{(0)}$, each step computes an optimal step size
 \begin{equation*}
-    \alpha_k = \frac{\|G^{(i)}\|_F^2}{\langle D^{(i)},\, H D^{(i)}\rangle_F},
+    \alpha_i = \frac{\|G^{(i)}\|_F^2}{\langle D^{(i)},\, H D^{(i)}\rangle_F},
 \end{equation*}
 and updates the search direction by the Fletcher-Reeves rule \cite{fletcherFunctionMinimizationConjugate1964},
 \begin{equation}\label{eq:fletcher-reeves}

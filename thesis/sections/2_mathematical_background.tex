@@ -14,7 +14,7 @@ Equation~\eqref{eq:pde} is a linear diffusion-reaction problem with Neumann boun
 \begin{equation}\label{eq:S_cont}
     \mathcal S: L^2(\Omega) \rightarrow H^1(\Omega), \quad \mathcal{S} f = u.
 \end{equation}
-Here, $L^2(\Omega)$ is the space of square integrable functions and $H^1(\Omega) \subset L^2(\Omega)$ a first-order Sobolev space, see Appendix~\ref{appendix:functional_analysis_and_the_fem}
+Here, $L^2(\Omega)$ is the space of square integrable functions and $H^1(\Omega) \subset L^2(\Omega)$ a first-order Sobolev space, see Appendix~\ref{appendix:functional_analysis_and_the_fem}.
 \nomenclature[CA]{$\mathcal{S}$}{PDE operator}
 \nomenclature[D]{$L^2(\Omega)$}{Space of square integrable functions}
 \nomenclature[D]{$H^1(\Omega)$}{First-order Sobolev space}
@@ -24,7 +24,7 @@ To model boundary observations, we introduce the trace operator
     \mathcal T: H^1(\Omega) \rightarrow L^2(\partial\Omega), \quad \mathcal{T} u = u|_{\partial\Omega}.
 \end{equation}
 \nomenclature[CB]{$\mathcal{T}$}{Trace operator}
-The term $\mathcal{T} u$ represents the the boundary observations of the solution $u$.
+The term $\mathcal{T} u$ represents the boundary observations of the solution $u$.
 
 The forward operator is then defined as the composition
 \begin{equation}\label{eq:K}
@@ -45,7 +45,7 @@ A problem is said to be well-posed if its solution exists, is unique, and is sta
 
 The null space of $\mathcal{K}$ is non-trivial: any $f_0$ satisfying $\mathcal{K}f_0 = 0$ can be added to a solution without changing the boundary data $y$. The solution is therefore not unique.
 
-The instability of the solution $f$ is more severe in practice. The compactness of $\mathcal{K}$, and the ellipticity of the PDE in Equation~\eqref{eq:pde}, results in a rapid decay of its singular values towards zero \cite{evansPartialDifferentialEquations2010,engl1996regularization}. Solution components corresponding to small singular values are strongly suppressed by the forward operator and cannot be recovered from noisy data: a small perturbation in $y$ produces a large error in the reconstructed source. This motivates the regularized formulation stated in Equation~\eqref{eq:problem}.
+The instability of the solution $f$ is more severe in practice. The compactness of $\mathcal{K}$, and the ellipticity of the PDE in Equation~\eqref{eq:pde}, result in a rapid decay of its singular values towards zero \cite{evansPartialDifferentialEquations2010,engl1996regularization}. Solution components corresponding to small singular values are strongly suppressed by the forward operator and cannot be recovered from noisy data: a small perturbation in $y$ produces a large error in the reconstructed source. This motivates the regularized formulation stated in Equation~\eqref{eq:problem}.
 
 
 \subsection{Finite element discretization}
@@ -105,7 +105,7 @@ Equation~\eqref{eq:matrix_system} implies that the discrete PDE operator $S$ tak
 \begin{equation*}
     S = A_h^{-1} M \in \mathbb{R}^{N \times N}.
 \end{equation*}
-Note that $S$ is a mapping of coefficients vectors: mapping $x$ to $u$.
+Note that $S$ is a mapping of coefficient vectors: mapping $x$ to $u$.
 
 The trace operator is discretized by a matrix 
 $T \in \mathbb{R}^{N_b \times N}$ that extracts the boundary coefficients. If $y$ denotes the vector of boundary coefficients, then
@@ -249,11 +249,11 @@ For the least-squares problem $\min \|Ax - y \|$, the pseudo-inverse provides th
 
 
 \subsubsection{Randomized SVD}
-The randomized SVD is a technique used to compute a rank-$k$ approximation of an $m\times n$ matrix without computing the SVD. The core idea is to use random sampling to find a low-rank matrix $Q$ which approximates the range of $A$, project $A$ onto $\operatorname{range}(Q)$, and compute the SVD of the projection. The projection $QQ^T A$ will, with high probability, capture the dominant actions of $A$ \cite{halkoFindingStructureRandomness2011}. Computing $B = Q^T A$ and its SVD $B = \tilde U \Sigma V^T$ then gives an approximate SVD $A \approx (Q \tilde U) \Sigma V^T$. This procedure is summarized in Algorithm \ref{alg:rsvd}. The construction of an orthonormal basis $Q$ of $Y$ is done through a QR factorization.
+The randomized SVD is a technique used to compute a rank-$k$ approximation of an $m\times n$ matrix without computing the SVD. The core idea is to use random sampling $Y = A \Psi$ with a random matrix $\Psi$ to find a low-rank matrix $Q = \operatorname{orth}(Y)$ which approximates the range of $A$, project $A$ onto $\operatorname{range}(Q)$, and compute the SVD of the projection. The projection $QQ^T A$ will, with high probability, capture the dominant actions of $A$ \cite{halkoFindingStructureRandomness2011}. Computing $B = Q^T A$ and its SVD $B = \tilde U \Sigma V^T$ then gives an approximate SVD $A \approx (Q \tilde U) \Sigma V^T$. This procedure is summarized in Algorithm \ref{alg:rsvd}. The basis $Q$ is obtained via a QR factorization of $Y$.
 
 Let $A_k$ denote a rank-$k$ approximation of $A$ obtained using rSVD with a random test matrix $\Psi$. Error analysis of rSVD is an active area of research. Halko et al. derived initial reference error analysis in terms of expectation \cite{halkoFindingStructureRandomness2011}, which was later improved upon by Gu \cite{guSubspaceIterationRandomization2015}. Diouane et al. have recently derived further improvements \cite{diouaneGeneralErrorAnalysis2022}.
 
-Although theoretical upper bounds are useful in many applications, it is well known that randomized algorithms for low-rank approximations, like Algorithm~\ref{alg:rsvd} and alike, far outperform their error bounds in numerical experiments \cite{halkoFindingStructureRandomness2011,guSubspaceIterationRandomization2015,rokhlinFastRandomizedAlgorithm2008}.
+Although theoretical upper bounds are useful in many applications, it is well known that randomized algorithms for low-rank approximations, like Algorithm~\ref{alg:rsvd} and the like, far outperform their error bounds in numerical experiments \cite{halkoFindingStructureRandomness2011,guSubspaceIterationRandomization2015,rokhlinFastRandomizedAlgorithm2008}.
 \input{algorithms/rsvd.tex}
 \nomenclature[GA]{$k$}{Target rank}
 \nomenclature[GB]{$p$}{Oversampling parameter}
@@ -261,7 +261,7 @@ Although theoretical upper bounds are useful in many applications, it is well kn
 
 \subsection{The discrete inverse problem}\label{sec:the_discrete_inverse_problem}
 \input{figures/standard_tikhonov_solution.tex}
-Replacing $\mathcal{K}$ by its discretization $K \in \mathbb{R}^{N_b \times N}$ and the $L^2(\Omega)$ norms by the FEM inner products in Equations~\eqref{eq:fem_norm} and~\eqref{eq:fem_norm_ds}, the Tikhonov problem in Equation~\eqref{eq:problem} takes the discrete form
+Replacing $\mathcal{K}$ by its discretization $K \in \mathbb{R}^{N_b \times N}$ and the $L^2$ norms by the FEM inner products in Equations~\eqref{eq:fem_norm} and~\eqref{eq:fem_norm_ds}, the Tikhonov problem in Equation~\eqref{eq:problem} takes the discrete form
 \begin{equation}\label{eq:discrete_inverse_problem}
     \min_{x \in \mathbb{R}^N}
     \| K x - y \|_{M_\partial}^2
@@ -273,7 +273,7 @@ Standard Tikhonov ($W = I$) does not work here. Because $K$ has a large null spa
 
 
 \subsubsection{Regularization weights}
-Assume that $\{ \phi_i \}$ is an orthonormal basis of $V_h$, let $\operatorname{Nul}(\mathcal{K})$ denote the null space of $\mathcal{K}$ and $\operatorname{Nul}(\mathcal{K})^\perp$ its orthogonal complement. Any source $f \in V_h$ can be written as $f = f_\perp + f_0$, where $f_\perp \in \operatorname{Nul}(\mathcal{K})^\perp$ and $f_0 \in \operatorname{Nul}(\mathcal{K})$. As Elvetun and Nielsen points out in \cite{elvetunRegularizationOperatorSource2020}, sources $f$ located near the domain boundary have a larger $f_\perp$ component, and sources deep within the domain have a larger $f_0$ component. If $f^* = \mathcal{K}^+ y$ denotes the least-squares minimum-norm solution, they show that for the case when $f = \phi_j$, we have that
+Assume that $\{ \phi_i \}$ is an orthonormal basis of $V_h$, let $\operatorname{Nul}(\mathcal{K})$ denote the null space of $\mathcal{K}$ and $\operatorname{Nul}(\mathcal{K})^\perp$ its orthogonal complement. Any source $f \in V_h$ can be written as $f = f_\perp + f_0$, where $f_\perp \in \operatorname{Nul}(\mathcal{K})^\perp$ and $f_0 \in \operatorname{Nul}(\mathcal{K})$. As Elvetun and Nielsen point out in \cite{elvetunRegularizationOperatorSource2020}, sources $f$ located near the domain boundary have a larger $f_\perp$ component, and sources deep within the domain have a larger $f_0$ component. If $f^* = \mathcal{K}^+ y$ denotes the least-squares minimum-norm solution, they show that for the case when $f = \phi_j$, we have that
 \begin{equation*}
     f^* = \sum_{i} \langle \hat P f, \phi_i \rangle \phi_i,    
 \end{equation*}
@@ -301,4 +301,4 @@ The weights in Equation~\eqref{eq:weights} are defined by measuring length in th
     + \lambda^2 \| W x \|_M^2.
 \end{equation}
 
-In practice, the pseudoinverse $K^+$ amplifies errors associated with small singular values of $K$, and must therefore be approximated by the truncated pseudoinverse $K_k^+$, defined using the $k$ largest singular vector in Equation~\eqref{eq:pseudoinverse}. The weights are correspondingly approximated using $P_k = K_k^+ K$.
+In practice, the pseudoinverse $K^+$ amplifies errors associated with small singular values of $K$, and must therefore be approximated by the truncated pseudoinverse $K_k^+$, defined using the $k$ largest singular vectors in Equation~\eqref{eq:pseudoinverse}. The weights are correspondingly approximated using $P_k = K_k^+ K$.

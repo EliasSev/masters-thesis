@@ -62,7 +62,7 @@ Using the product rule, we get the gradient $\nabla \Phi$ and Hessian $H$ of $\P
     H &= K^T M_\partial K + \lambda^2 W^T M W.
     \end{aligned}
 \end{equation*}
-The Hessian is SPD, since $K^T M_\partial K$ is positive semidefinite, $\lambda^2 W^T M W$ is positive definite, and their sum is therefore positive definite. By the optimality condition $\nabla \Phi (X) = 0$, the minimizer of $\Phi$ is the solution of $H x = K^T M_\partial y$, i.e., the normal equations of Equation~\eqref{eq:discrete_inverse_problem}.
+The Hessian is SPD, since $K^T M_\partial K$ is positive semidefinite, $\lambda^2 W^T M W$ is positive definite, and their sum is therefore positive definite. By the optimality condition $\nabla \Phi (X) = 0$, the minimizer of $\Phi$ is the solution of $H x = K^T M_\partial y$, i.e.,~the normal equations of Equation~\eqref{eq:discrete_inverse_problem}.
 \nomenclature[HC]{$\Phi$}{Objective function}%
 \nomenclature[HD]{$\nabla\Phi$}{Gradient of $\Phi$}%
 \nomenclature[HE]{$H$}{Hessian of $\Phi$}%
@@ -71,7 +71,7 @@ The Hessian is SPD, since $K^T M_\partial K$ is positive semidefinite, $\lambda^
 \subsection{DLRA with conjugate search directions}
 Since $\Phi$ is quadratic with an SPD Hessian $H$, the conjugate gradient (CG) method is a natural minimization strategy \cite{saadIterativeMethodsSparse2003,fletcherFunctionMinimizationConjugate1964,hestenesMethodsConjugateGradients1952}, see Appendix~\ref{appendix:conjugate_gradient_algorithm}.
 
-CG generates a sequence of search directions $\{D^{(i)}\}$ that are $H$-conjugate, i.e.\ $\langle D^{(i)}, H D^{(j)}\rangle_F = 0$ for $i \neq j$. Starting from the initial search direction $D^{(0)} = -G^{(0)}$, each step computes an optimal step size
+CG generates a sequence of search directions $\{D^{(i)}\}$ that are $H$-conjugate, i.e., $\langle D^{(i)}, H D^{(j)}\rangle_F = 0$ for $i \neq j$. Starting from the initial search direction $D^{(0)} = -G^{(0)}$, each step computes an optimal step size
 \begin{equation*}
     \alpha_k = \frac{\|G^{(i)}\|_F^2}{\langle D^{(i)},\, H D^{(i)}\rangle_F},
 \end{equation*}
@@ -129,7 +129,7 @@ The effectiveness of PCG depends on the choice of $P$. A good preconditioner mus
     + \underbrace{\lambda^2 W^T M W}_{\text{sparse}}
     = F + S.
 \end{equation*}
-To see why, we can insert the rank-$k$ SVD of $K$ into $F = K^T M_\partial K$ to get $V \Sigma U^T M_\partial U \Sigma V^T$. Since $U^T M_\partial U \in \mathbb{R}^{k \times k}$ is SPD, it has full rank $k$, and hence $F$ has rank $k$. The term $S = \lambda^2 W^T M W$ is sparse since it is just a scaling of $M$, which itself is sparse.
+To see why, insert the rank-$k$ SVD of $K$ into $F = K^T M_\partial K$ to get $V \Sigma U^T M_\partial U \Sigma V^T$. Since $U^T M_\partial U \in \mathbb{R}^{k \times k}$ is SPD, it has full rank $k$, and hence $F$ has rank $k$. The term $S = \lambda^2 W^T M W$ is sparse since it is just a scaling of $M$, which itself is sparse.
 
 Since $S$ is SPD, it can effectively be approximated using an incomplete Cholesky factorization $S \approx L L^T$, where $L$ is lower-triangular (Section~11.5, \cite{golubMatrixComputations4th2013}). The preconditioner can then be set as $P^{-1} = L^{-T} L^{-1}$. This preconditioner works well when the sparse part approximates the Hessian well ($H \approx S$).
 

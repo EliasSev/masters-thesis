@@ -1,7 +1,17 @@
 \section{Dynamical low-rank approximation}\label{sec:dynamical_low_rank_approximation}
+\input{figures/low_rank_source.tex}
+In many applications, the source $f \in L^2(\Omega)$ in Equation~\eqref{eq:problem} is sparse \cite{elvetunWeightedSparsityRegularization2023}, and often well-approximated by low-rank matrices. If $x \in \mathbb{R}^{n^2}$ is a discretization of $f$ and $X = \operatorname{mat}(x)$ is its reordering into an $n \times n$ matrix, we can often expect $r = \operatorname{rank}(X) \ll n$. The SVD writes $X$ as a sum of $r$ outer products,
+\begin{equation*}
+    X = \sum_{i=1}^{r} \sigma_i u_i v_i^T,
+\end{equation*}
+each parameterized by two vectors $u_i, v_i \in \mathbb{R}^n$ (Figure~\ref{fig:low_rank_source}), with $r$ roughly tracking the number of distinct localized sources. Since the source itself is low-rank, we restrict the search to rank-$r$ matrices, working directly with the factors $u_i, v_i$ rather than the full 
+matrix $X$.
+\nomenclature[HA]{$r$}{Solution rank}%
+
+
+\subsection{The low-rank manifold}
 \input{figures/low_rank_manifold.tex}
 Consider the problem of finding a rank-$r$ solution $X$ via the update scheme $X^{(i+1)} = X^{(i)} + \alpha_i D^{(i)}$, where $D^{(i)}$ is a search direction and $\alpha_i > 0$ a step size. Starting from a rank-$r$ matrix $X^{(0)}$, there is in general no guarantee that $D^{(i)}$ preserves low rank, so that $X^{(i)}$ may leave the space $\mathcal{M}_r$ of rank-$r$ matrices after a single step.
-\nomenclature[HA]{$r$}{Solution rank}%
 
 One can replace $D^{(i)}$ by its projection onto the tangent space $\mathcal{T}_{X^{(i)}}(\mathcal{M}_r)$, a classical concept from Riemannian geometry \cite{docarmoRiemannianGeometry1992,absilOptimizationAlgorithmsMatrix2008}. This is the idea behind the Dynamical Low-Rank Approximation (DLRA) of Koch and Lubich \cite{kochDynamicalLowrankApproximation2007}. They proposed, in a continuous-time setting, evolving an approximation on $\mathcal{M}_r$ by projecting the derivative of the matrix onto the tangent space at the current approximation. Using this concept in our discrete setting, we replace $D^{(i)}$ by its tangent-space projection $\mathcal{P}_{X^{(i)}}[D^{(i)}]$, yielding the update
 \begin{equation*}
@@ -38,8 +48,6 @@ and requires no tuning (Section~8.2 in Chong et al. \cite{chong2023introduction}
 
 
 \subsection{Application to the inverse problem}\label{sec:application_to_inverse_problem}
-In many applications, the source $f \in L^2(\Omega)$ in Equation~\eqref{eq:problem} is sparse \cite{elvetunWeightedSparsityRegularization2023}, and often well-approximated by low-rank matrices. If $x \in \mathbb{R}^{n^2}$ is some discretization of $f$, reordering $x$ into an $n \times n$ matrix $X = \operatorname{mat}(x)$, we can in often expect that $r = \operatorname{rank}(X)$ is a small number ($r \ll n$). It is therefore natural to consider low-rank methods that can recover such solutions.
-
 In the following sections, we consider the problem of minimizing a quadratic objective function
 \begin{equation*}
     \Phi(X): \mathbb{R}^{n \times n} \rightarrow \mathbb R.

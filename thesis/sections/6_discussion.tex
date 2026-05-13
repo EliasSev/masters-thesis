@@ -49,12 +49,12 @@ Right-multiplying by $\Psi$ and setting $\Psi_1 = V_1^T \Psi$ and $\Psi_2 = V_2^
     \Sigma_2 \Psi_2
     \end{bmatrix}.
 \end{equation*}
-Intuitively, $\Sigma_1 \Psi_1$ represents the actions of $K$, while $\Sigma_2 \Psi_2$ represents the perturbation. By Theorem~10.5 in \cite{halkoFindingStructureRandomness2011}, if $\Psi \in \mathbb{R}^{N \times l}$ is a random Gaussian matrix, then
+Here, $\Sigma_1 \Psi_1$ is the contribution from the $k$ dominant singular components we wish to recover, while $\Sigma_2 \Psi_2$ comes from the truncated tail and acts as a perturbation. By Theorem~10.5 in \cite{halkoFindingStructureRandomness2011}, if $\Psi \in \mathbb{R}^{N \times l}$ is a random Gaussian matrix, then
 \begin{equation}\label{eq:rsvd_error_bound}
     \mathbb{E}\| K - K_k \|_F \le
     \gamma_k \sqrt{\sum_{i = k+1}^{N_b} \sigma_i^2},
 \end{equation}
-where $\mathbb{E}$ denotes the expected value, $\gamma_k = \sqrt{1 + k / (p - 1)}$, and $K_k$ is the rank-$k$ approximation obtained from Algorithm~\ref{alg:discrete_rsvd}.
+where $\mathbb{E}$ denotes the expected value, $\gamma_k = \sqrt{1 + k / (p - 1)}$, and $K_k$ is the rank-$k$ approximation obtained from the rSVD (Algorithm~\ref{alg:discrete_rsvd} or \ref{alg:discrete_rsvd_Kstar}).
 
 When the singular values of $K$ decay rapidly, the perturbation $\Sigma_2 \Psi_2$ remains low and the sum in Equation~\eqref{eq:rsvd_error_bound} is small, resulting in a good rank-$k$ approximation. If the singular values decay more slowly, $\sum_{i=k+1}^{N_b} \sigma_i^2$ will be larger, and the expected error increases.
 
@@ -66,7 +66,7 @@ approximation: the main actions of $K$ are captured in $\Sigma_1 \Psi_1$. This a
 
 \subsubsection{Reconstruction error using the adjoint operator}
 \input{figures/true_singular_values.tex}
-Using rSVD on $K$ gives slightly lower reconstruction error than rSVD on $K^*$ (Section~\ref{sec:reconstruction_error_using_the_adjoint_operator}). The quality of the random sampling $Y = K\Psi$ versus $Y' = K^* \Psi'$ depends on the spectral decay of the operators. Figure~\ref{fig:true_singular_values} shows that the singular values of $K^*$ have a slower decay than those of $K$, and we therefore expect a higher approximation error by Equation~\eqref{eq:rsvd_error_bound}. The difference originates in the mass matrix factors of the relation $K^* = M^{-1} K^T M_\partial$ (Equation~\eqref{eq:K_star_def}).
+Using rSVD on $K$ gives slightly lower reconstruction error than rSVD on $K^*$ (Section~\ref{sec:reconstruction_error_using_the_adjoint_operator}). The quality of the random sampling $Y = K\Psi$ versus $Y' = K^* \Psi'$ depends on the spectral decay of the operators. Figure~\ref{fig:true_singular_values} shows that the singular values of $K^*$ have a slower decay than those of $K$, and we therefore expect a higher approximation error by Equation~\eqref{eq:rsvd_error_bound}. The matrices $K$ and $K^T$ have the same singular values, so the difference originates in the mass matrix factors of the relation $K^* = M^{-1} K^T M_\partial$ (Equation~\eqref{eq:K_star_def}).
 
 
 \subsubsection{Effect of the test vector distribution}
@@ -75,7 +75,7 @@ Some test vector distributions slightly reduce reconstruction error, with the ``
 
 Consider a single sample $y = K \psi = U \Sigma V^T \psi$. In the best case, $\psi = a v_1$ with $a \neq 0$: then $V^T(a v_1) = a e_1$, $K(a v_1) = a \sigma_1 u_1$, and the QR factorization gives $Q = u_1$. More generally, choosing $k$ linearly independent $\psi_i \in \operatorname{span}\{ v_1,\dots,v_k \}$ gives $\operatorname{range}(Q) = \operatorname{span}\{u_1,\dots,u_k\}$ and the rank-$k$ projection $QQ^T K$ recovers the exact rank-$k$ SVD of $K$.
 
-Figure~\ref{fig:singular_vectors_of_K} plots the first four right singular vectors of $K$. We see that they are smooth, more closely matching the ``Peak'' test vectors than the Gaussian or Rade\-macher test vectors, explaining the small improvement in error.
+Figure~\ref{fig:singular_vectors_of_K} plots the first four right singular vectors of $K$. We see that they are smooth, more closely matching the ``Peak'' test vectors than the Gaussian or Rade\-macher test vectors, potentially explaining the small improvement in error.
 
 
 \subsubsection{Independence from mesh resolution}
@@ -87,7 +87,7 @@ The target rank $k$ can therefore be selected on a coarse mesh, where rSVD is in
 
 
 \subsubsection{Estimation of singular values}
-Let $\hat P = QQ^T$ with $Q$ produced by Algorithm~\ref{alg:discrete_rsvd}. This is an orthogonal projection onto $\operatorname{range}(Q)$, and $\hat P K$ is the projected matrix from which the rSVD approximation is obtained. The projector satisfies $\| \hat P z \| \le \| z \|$, meaning it shrinks vectors, so $\| \hat P K x  \| \le \|K x \|$ for every $x$. Consequently, $\hat P K$ stretches every vector at most as much as $K$ does, and singular values measure exactly this stretching. This is what we saw inSection~\ref{sec:approximation_of_singular_values}. By choosing a higher oversampling parameter $p$, $\operatorname{range}(Q)$ more closely matches $\operatorname{range}(K)$ (in particular, the $k$ first left singular vectors), and the underestimation reduces. Algorithm~\ref{alg:discrete_rsvd_Kstar} gave a worse approximation (Section~\ref{sec:reconstruction_error_using_the_adjoint_operator}), so the underestimation increases.
+Let $\hat P = QQ^T$ with $Q$ produced by Algorithm~\ref{alg:discrete_rsvd}. This is an orthogonal projection onto $\operatorname{range}(Q)$, and $\hat P K$ is the projected matrix from which the rSVD approximation is obtained. The projector satisfies $\| \hat P z \| \le \| z \|$, meaning it shrinks vectors, so $\| \hat P K x  \| \le \|K x \|$ for every $x$. Consequently, $\hat P K$ stretches every vector at most as much as $K$ does, and singular values measure exactly this stretching. This is what we saw in Section~\ref{sec:approximation_of_singular_values}. By choosing a higher oversampling parameter $p$, $\operatorname{range}(Q)$ more closely matches $\operatorname{range}(K)$ (in particular, the $k$ first left singular vectors), and the underestimation reduces. Algorithm~\ref{alg:discrete_rsvd_Kstar} gave a worse approximation (Section~\ref{sec:reconstruction_error_using_the_adjoint_operator}), so the underestimation increases.
 
 The captured subspace $\operatorname{range}(Q)$ depends on the random test vectors $\psi_i$, and so does the degree of underestimation. This is an active area of research. Lemma~4.2 and Theorem~4.3 of Gu \cite{guSubspaceIterationRandomization2015} provide lower bounds for the power-iteration method, which reduces to the plain rSVD used in Algorithm~\ref{alg:discrete_rsvd} when $q = 0$.
 
@@ -100,7 +100,7 @@ For a noisy measurement $\tilde y = y + \epsilon$, $y = K x$, we can write the m
     x^* = \sum_{i=1}^{N_b}
     \left(\frac{u_i^T y + u_i^T \epsilon}{\sigma_i}\right) v_i,
 \end{equation*}
-we see that the $i$-th component depends on the exact term $u_i^T y$ and the noise term $u_i^T \epsilon$. Components where $|u_i^T y| \le |u_i^T \epsilon|$ are dominated by noise, and the $\tfrac{1}{\sigma_i}$ factor amplifies this contribution. By the Picard condition \cite{hansen2010discrete}, $u_i^T y$ decays to zero as $i$ increases while $u_i^T \epsilon$ stays approximately constant, so for large $i$ every component is noise-dominated and amplified by a growing $\tfrac{1}{\sigma_i}$.
+we see that the $i$-th component depends on the exact term $u_i^T y$ and the noise term $u_i^T \epsilon$. Components where $|u_i^T y| \le |u_i^T \epsilon|$ are dominated by noise, and the $\tfrac{1}{\sigma_i}$ factor amplifies this contribution. Assuming that the Picard condition \cite{hansen2010discrete} holds, $u_i^T y$ decays to zero as $i$ increases while $u_i^T \epsilon$ stays approximately constant, so for large $i$ every component is noise-dominated and amplified by a growing $\tfrac{1}{\sigma_i}$.
 
 By truncating the $N_b - k$ terms of the solution, we remove the noisy SVD components. We wish to choose $k$ such that $|u_k^T y| > |u_k^T \epsilon|$ while $|u_{k+1}^T y| < |u_{k+1}^T \epsilon|$, removing only the noise-dominated SVD components $k+1,\, k+2,\dots,\, N_b$.
 

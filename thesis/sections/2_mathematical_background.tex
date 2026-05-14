@@ -58,7 +58,7 @@ Consider the PDE in Equation~\eqref{eq:pde}. Multiplying the equation by a test 
 \end{equation}
 For details on the derivation, see Section~4 in Larson and Bengzon \cite{larsonFiniteElementMethod2013}.
 
-Let $\mathcal M$ be a triangulation of $\Omega$ made up of $N$ nodes, with $N_b$ boundary nodes, see Fig.~\ref{fig:triangulation} as an example. Introduce the finite element space $V_h \subset H^1(\Omega)$,
+Let $\mathcal M$ be a triangulation of $\Omega$ made up of $N$ nodes, with $N_b$ boundary nodes, see Figure~\ref{fig:triangulation} as an example. Introduce the finite element space $V_h \subset H^1(\Omega)$,
 \begin{equation}\label{eq:fem_space}
     V_h = \{v \in C^0(\Omega) : v|_M \text{ is linear for all } M \in \mathcal M \}.
 \end{equation}
@@ -166,7 +166,7 @@ Using the definition in Equation~\eqref{eq:K_star_cont}, we get the weak formula
 \end{equation}
 The solution $w$ then satisfies $\mathcal K^* g = w$. See Appendix~\ref{appendix:adjoint_derivation} for a complete derivation.
 
-In the discrete case, under the inner products and norms defined in Equation~\eqref{eq:fem_norm} and \eqref{eq:fem_norm_ds}, the adjoint operator $K^* \in \mathbb{R}^{N \times N_b}$ of $K \in \mathbb{R}^{N_b \times N}$ satisfies
+In the discrete case, under the inner products and norms defined in Equations~\eqref{eq:fem_norm} and~\eqref{eq:fem_norm_ds}, the adjoint operator $K^* \in \mathbb{R}^{N \times N_b}$ of $K \in \mathbb{R}^{N_b \times N}$ satisfies
 \begin{equation}\label{eq:K_star_def}
     (K x)^T M_\partial y = x^T M K^* y,
 \end{equation}

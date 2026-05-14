@@ -79,7 +79,7 @@ In Equation~\eqref{eq:bilinear_form}, choose $v = w = \mathcal{K}^* g$. We see t
 \begin{equation}\label{eq:adjoint_identity_2}
     a(u, w) = \int_{\Omega} f w \, dx = \langle f,\, \mathcal{K}^* g \rangle_{L^2(\Omega)}.
 \end{equation}
-Insert Equation~\eqref{eq:adjoint_identity_1} and \eqref{eq:adjoint_identity_2} into the definition of $\mathcal{K}^*$, and using the identity $a^*(v,\, u) = a(u,\, v)$ (by the definition of $a^*$ \cite{kreyszigIntroductoryFunctionalAnalysis1989}),
+Inserting Equations~\eqref{eq:adjoint_identity_1} and~\eqref{eq:adjoint_identity_2} into the definition of $\mathcal{K}^*$, and using the identity $a^*(v,\, u) = a(u,\, v)$ (by the definition of $a^*$ \cite{kreyszigIntroductoryFunctionalAnalysis1989}),
 \begin{equation}\label{eq:adjoint_identity_3}
     a^*(w,\, u) = \int_{\partial\Omega} g u \, ds.
 \end{equation}
@@ -121,7 +121,7 @@ where $Q\in\mathbb R^{m\times n}$ has orthonormal columns and $R\in\mathbb R^{n\
 \begin{equation*}
     A = L U,
 \end{equation*}
-where $L$ is a lower triangular matrix and $U$ an upper triangular matrix. $A$ has an LU decomposition under the condition that $\operatorname{det}(A[1:k, 1:k]) \neq 0$ for $k=1,\dots, n-1$. More generally, any square matrix $A$ has a LU decomposition with partial pivoting (LUP), $PA = LU$. Computing the LU decomposition costs $\mathcal{O}(n^3)$ flops, specifically, $\tfrac{2}{3}n^3$.
+where $L$ is a lower triangular matrix and $U$ an upper triangular matrix. $A$ has an LU decomposition under the condition that $\operatorname{det}(A[1:k, 1:k]) \neq 0$ for $k=1,\dots, n-1$. More generally, any square matrix $A$ has an LU decomposition with partial pivoting (LUP), $PA = LU$. Computing the LU decomposition costs $\mathcal{O}(n^3)$ flops, specifically, $\tfrac{2}{3}n^3$.
 
 
 \paragraph{Cholesky factorization.} Assume that $A\in\mathbb R^{n\times n}$ is SPD. Then $A$ has a unique Cholesky factorization

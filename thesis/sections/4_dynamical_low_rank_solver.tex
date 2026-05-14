@@ -49,7 +49,7 @@ and requires no tuning (Section~8.2 in Chong et al.\
 \subsection{Application to the inverse problem}\label{sec:application_to_inverse_problem}
 In the following sections, we consider the problem of minimizing a quadratic objective function
 \begin{equation*}
-    \Phi(X): \mathbb{R}^{n \times n} \rightarrow \mathbb R.
+    \Phi: \mathbb{R}^{n \times n} \rightarrow \mathbb R.
 \end{equation*}
 In our discrete case, the minimization problem given in Equation~\eqref{eq:discrete_inverse_problem} translates into minimizing
 \begin{equation*}
@@ -103,7 +103,7 @@ In Algorithm~\ref{alg:DLRA-CG}, this replaces the recurrence $G^{(i+1)} = G^{(i)
 
 
 \subsection{DLRA using preconditioned CG}
-Preconditioning is a standard technique for accelerating CG methods, referred to as preconditioned CG (PCG). The system $H x = K^T M_\partial y$ is replaced by the equivalent system $P^{-1} H x = P^{-1} K^T M_\partial y$, where $P \approx H$ is the preconditioner matrix. The convergence of CG depends on $\kappa(H)$ (see Sec.~6.11.3 in Saad) \cite{saadIterativeMethodsSparse2003}, so $P$ is chosen such that $\kappa(P^{-1} H) \ll \kappa(H)$. For elliptic PDE-based forward operators $K$, the Hessian $H = K^T M_\partial K + \lambda^2 W^T M W$ typically has a large condition number, making preconditioning effective.
+Preconditioning is a standard technique for accelerating CG methods, referred to as preconditioned CG (PCG). The system $H x = K^T M_\partial y$ is replaced by the equivalent system $P^{-1} H x = P^{-1} K^T M_\partial y$, where $P \approx H$ is the preconditioner matrix. The convergence of CG depends on $\kappa(H)$ (see Section~6.11.3 in Saad \cite{saadIterativeMethodsSparse2003}), so $P$ is chosen such that $\kappa(P^{-1} H) \ll \kappa(H)$. For elliptic PDE-based forward operators $K$, the Hessian $H = K^T M_\partial K + \lambda^2 W^T M W$ typically has a large condition number, making preconditioning effective.
 
 In the DLRA-CG scheme, the preconditioned system $P^{-1} H x = P^{-1} K^T M_\partial y$ leads to the following adjustments in Algorithm \ref{alg:DLRA-CG}:
 \begin{equation*}

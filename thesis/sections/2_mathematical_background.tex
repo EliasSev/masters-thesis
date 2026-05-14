@@ -4,20 +4,20 @@
 \subsection{The forward operator}
 \input{figures/forward_operator.tex}
 Let $\Omega \subset \mathbb R^2$ be a bounded domain with boundary $\partial \Omega$, and consider the boundary value problem (BVP) in Equation~\eqref{eq:pde}. The coefficient $\sigma = \sigma(x) > 0$ denotes the diffusion coefficient and determines the rate and direction of diffusion in the problem. It may be either scalar-valued or matrix-valued. In the latter case, we assume that $\sigma(x)$ is symmetric and positive definite (see Appendix~\ref{sec:positive_definiteness}) to keep the problem elliptic. The reaction coefficient $c = c(x) > 0$ describes the absorption or decay within the problem. Finally, $f = f(x)$ denotes the source term, which is the unknown input of the inverse problem.
-\nomenclature[AA]{$\Omega$}{Computational domain}
-\nomenclature[AB]{$\partial\Omega$}{Boundary of the domain}
-\nomenclature[BA]{$\sigma$}{Diffusion coefficient}
-\nomenclature[BB]{$c$}{Reaction coefficient}
-\nomenclature[BC]{$f$}{Source function}
+\nomenclature[AA]{$\Omega$}{Computational domain}%
+\nomenclature[AB]{$\partial\Omega$}{Boundary of the domain}%
+\nomenclature[BA]{$\sigma$}{Diffusion coefficient}%
+\nomenclature[BB]{$c$}{Reaction coefficient}%
+\nomenclature[BC]{$f$}{Source function}%
 
 Equation~\eqref{eq:pde} is a linear diffusion-reaction problem with Neumann boundary conditions, and defines a mapping
 \begin{equation}\label{eq:S_cont}
     \mathcal S: L^2(\Omega) \rightarrow H^1(\Omega), \quad \mathcal{S} f = u.
 \end{equation}
 Here, $L^2(\Omega)$ is the space of square integrable functions and $H^1(\Omega) \subset L^2(\Omega)$ a first-order Sobolev space, see Appendix~\ref{appendix:functional_analysis_and_the_fem}.
-\nomenclature[CA]{$\mathcal{S}$}{PDE operator}
-\nomenclature[D]{$L^2(\Omega)$}{Space of square integrable functions}
-\nomenclature[D]{$H^1(\Omega)$}{First-order Sobolev space}
+\nomenclature[CA]{$\mathcal{S}$}{PDE operator}%
+\nomenclature[DA]{$L^2(\Omega)$}{Space of square integrable functions}%
+\nomenclature[DB]{$H^1(\Omega)$}{First-order Sobolev space}%
 
 To model boundary observations, we introduce the trace operator
 \begin{equation}\label{eq:trace}
@@ -67,11 +67,11 @@ Let $\{\phi_1, \dots, \phi_N\}$ denote a basis for $V_h$, so that
     V_h = \operatorname{span}\{ \phi_1, \dots, \phi_N \}.
 \end{equation*}
 The basis functions $\phi_i$ are piecewise linear hat functions associated with the nodes of the mesh (see \cite[p.~51]{larsonFiniteElementMethod2013}).
-
-\nomenclature[AC]{$\mathcal{M}$}{Triangulation (mesh)}
-\nomenclature[AD]{$N$}{Number of mesh nodes}
-\nomenclature[AE]{$N_b$}{Number of boundary mesh nodes}
-\nomenclature[D]{$V_h$}{Finite element space}
+\nomenclature[AC]{$\mathcal{M}$}{Triangulation (mesh)}%
+\nomenclature[AD]{$N$}{Number of mesh nodes}%
+\nomenclature[AE]{$N_b$}{Number of boundary mesh nodes}%
+\nomenclature[DC]{$V_h$}{Finite element space}%
+\nomenclature[DD]{$\phi_i$}{Finite element basis function}%
 
 The finite element approximation of \eqref{eq:variational_formulation} then reads: 
 find $u_h \in V_h$ such that
@@ -191,6 +191,7 @@ where $\lambda \ge 0$ is the regularization parameter and $W \in \mathbb{R}^{n \
 
 The weights $W$ can include prior knowledge about the solution to penalize specific types of unwanted solutions \cite{hansen2010discrete}. With $W = I$, this is standard Tikhonov regularization.
 \nomenclature[EI]{$W$}{Tikhonov weight matrix}%
+\nomenclature[EJ]{$\lambda$}{Regularization parameter}%
 
 
 \subsection{SVD and low-rank approximations}
@@ -255,8 +256,8 @@ Let $A_k$ denote a rank-$k$ approximation of $A$ obtained using rSVD with a rand
 
 Although theoretical upper bounds are useful in many applications, it is well known that randomized algorithms for low-rank approximations, like Algorithm~\ref{alg:rsvd} and the like, far outperform their error bounds in numerical experiments \cite{halkoFindingStructureRandomness2011,guSubspaceIterationRandomization2015,rokhlinFastRandomizedAlgorithm2008}.
 \input{algorithms/rsvd.tex}
-\nomenclature[GA]{$k$}{Target rank}
-\nomenclature[GB]{$p$}{Oversampling parameter}
+\nomenclature[GA]{$k$}{Target rank}%
+\nomenclature[GB]{$p$}{Oversampling parameter}%
 
 
 \subsection{The discrete inverse problem}\label{sec:the_discrete_inverse_problem}

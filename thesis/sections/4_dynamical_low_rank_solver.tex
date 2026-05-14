@@ -99,6 +99,7 @@ $G^{(i)} = \nabla\Phi(Y^{(i)}) \to 0$ as plain CG converges along $Y^{(i)}$, so 
 Restarted CG \cite{powellRestartProceduresConjugate1977} re-computes the true gradient $G^{(i)} = \nabla\Phi(X^{(i)})$ and resets the search direction to $D^{(i)} = -G^{(i)}$ every $N_r$ iterations, discarding the previous search directions. This was originally proposed as a method to counteract the loss of $H$-conjugacy in the construction of $\{D^{(i)}\}$ because of numerical round-off errors \cite{hestenesMethodsConjugateGradients1952, powellRestartProceduresConjugate1977}. In the DLRA-CG setting, restart serves a second purpose beyond correcting round-off: it resets the full-rank trajectory to $Y^{(i)} = X^{(i)}$, restoring $G^{(i)} = \nabla\Phi(X^{(i)})$ and giving the CG recurrence a fresh start from the true iterate position $X^{(i)}$.
 
 In Algorithm~\ref{alg:DLRA-CG}, this replaces the recurrence $G^{(i+1)} = G^{(i)} + \alpha_i HD^{(i)}$ with a fresh gradient evaluation $G^{(i+1)} = \nabla\Phi(X^{(i+1)})$, and sets $D^{(i+1)} = -G^{(i+1)}$, skipping the $\beta_i$ step.
+\nomenclature[HF]{$N_r$}{Restart period}%
 
 
 \subsection{DLRA using preconditioned CG}
@@ -115,7 +116,7 @@ In the DLRA-CG scheme, the preconditioned system $P^{-1} H x = P^{-1} K^T M_\par
     D^{(i+1)} = -Z^{(i+1)} + \beta_i D^{(i)},
 \end{equation*}
 with $Z^{(i)} = P^{-1} G^{(i)}$. These modifications are equivalent to standard preconditioned conjugate gradient, as originally described by Concus et al. \cite{concusGeneralizedConjugateGradient1976}. The resulting scheme is summarized in Algorithm \ref{alg:DLRA-PCG}, which we refer to as DLRA-PCG.
-\nomenclature[HF]{$P$}{Preconditioner matrix}%
+\nomenclature[HG]{$P$}{Preconditioner matrix}%
 \input{algorithms/DLRA-PCG.tex}
 
 

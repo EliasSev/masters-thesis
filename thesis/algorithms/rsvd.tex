@@ -10,5 +10,6 @@
     \State Set $B = Q^TA$
     \State Compute the SVD $B = \tilde U\Sigma V^T$
     \State Set $U = Q\tilde U$
+    \State Truncate to rank $k$: $U, \Sigma, V^T \leftarrow \operatorname{truncate}_k(U, \Sigma, V^T)$
 \end{algorithmic}
 \end{algorithm}

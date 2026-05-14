@@ -18,7 +18,7 @@
 
     \State \textbf{Dynamical low-rank update (KLS step):}
     \State $K' = U_x \Sigma_x + \alpha_i D^{(i)} V_x$
-    \State $L' = V_x \Sigma_x + \alpha_i (D^{(i)})^T U_x$
+    \State $L' = V_x \Sigma_x^T + \alpha_i (D^{(i)})^T U_x$
     \State $\hat U = \operatorname{orth}([U_x, K'])$
     \State $\hat V = \operatorname{orth}([V_x, L'])$
     \State $\hat \Sigma = (\hat U^T U_x)\Sigma_x(V_x^T \hat V) + \alpha_i (\hat U^T D^{(i)} \hat V)$
@@ -31,9 +31,9 @@
     \State $\displaystyle \beta_i =
     \frac{\| G^{(i+1)} \|^2_F}
          {\| G^{(i)} \|^2_F}$
-    \Comment{or $\displaystyle \beta_i =
-    \frac{\langle G^{(i+1)}, H G^{(i)} \rangle_F}
-         {\langle G^{(i)}, H G^{(i)} \rangle_F}$}
+    %\Comment{or $\displaystyle \beta_i =
+    %\frac{\langle G^{(i+1)}, H G^{(i)} \rangle_F}
+    %     {\langle G^{(i)}, H G^{(i)} \rangle_F}$}
     \State $D^{(i+1)} = -G^{(i+1)} + \beta_i D^{(i)}$
 
 \EndFor

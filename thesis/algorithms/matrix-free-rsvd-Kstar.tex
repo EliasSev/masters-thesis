@@ -28,7 +28,7 @@
 
     \State Compute the SVD: $B = \tilde{U} \bar \Sigma \bar V^T$
     \State Set $\bar U = Q \tilde{U}$
-    \State Truncate back to rank $k$: $\bar U, \bar \Sigma, \bar V^T \leftarrow \operatorname{truncate}(\bar U, \bar \Sigma, \bar V^T)$
+    \State Truncate to rank $k$: $\bar U, \bar \Sigma, \bar V^T \leftarrow \operatorname{truncate}_k(\bar U, \bar \Sigma, \bar V^T)$
 
 \end{algorithmic}
 \end{algorithm}

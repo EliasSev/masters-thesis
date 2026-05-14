@@ -7,14 +7,14 @@
     
     \State \textbf{Range sketch:}
     \State Set $l = k + p$
-    \Comment Ensure that $l \le N_b$
+    \Comment{Ensure that $l \le N_b$}
     \For{$i = 1, \dots, l$}
         \State Draw a random vector $\psi_i \in \mathbb{R}^N$
         \State Apply the forward operator: $y_i = K \psi_i \in \mathbb{R}^{N_b}$
     \EndFor
 
     \State Form the matrix $Y = [y_1, \dots, y_l] \in \mathbb{R}^{N_b \times l}$ \Comment{Equivalent to $Y = K \Psi$}
-    \State Compute an orthonormal basis: $Q = \text{orth}(Y)$
+    \State Compute an orthonormal basis: $Q = \operatorname{orth}(Y)$
 
     \State \textbf{Projection onto the basis:}
     \For{$i = 1, \dots, l$}
@@ -28,7 +28,7 @@
 
     \State Compute the SVD: $B = \tilde U \Sigma V^T$
     \State Set $U = Q \tilde U$
-    \State Truncate back to rank $k$: $U, \Sigma, V^T \leftarrow \operatorname{truncate}(U, \Sigma, V^T)$
+    \State Truncate to rank $k$: $U, \Sigma, V^T \leftarrow \operatorname{truncate}_k(U, \Sigma, V^T)$
     
 \end{algorithmic}
 \end{algorithm}

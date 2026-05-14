@@ -116,7 +116,7 @@ For the weighted Tikhonov solution, the reconstruction already has some regulari
 \subsubsection{Convergence of DLRA-CG}\label{sec:convergence_of_DLRA_CG}
 Replacing the steepest descent search directions with directions $\{D^{(i)}\}$ from CG increased convergence significantly: DLRA-CG reached the relative error $e^{(i)} < 0.85$ approximately $210$ times faster than steepest descent (Section~\ref{sec:rate_of_convergence}).
 
-In an unconstrained setting, the convergence of CG and steepest-descent depends on the condition number $\kappa = \kappa(H)$, with larger $\kappa$ leading to slower convergence \cite{saadIterativeMethodsSparse2003}. If $x^*$ is the unconstrained minimizer of $\Phi(x)$ and $x^{(i)}$ the $i$-th iterate of CG, then by Theorem~6.29 in Saad \cite{saadIterativeMethodsSparse2003},
+In an unconstrained setting, the convergence of CG and steepest descent depends on the condition number $\kappa = \kappa(H)$, with larger $\kappa$ leading to slower convergence \cite{saadIterativeMethodsSparse2003}. If $x^*$ is the unconstrained minimizer of $\Phi(x)$ and $x^{(i)}$ the $i$-th iterate of CG, then by Theorem~6.29 in Saad \cite{saadIterativeMethodsSparse2003},
 \begin{equation}\label{eq:convergence_of_CG}
     \| x^* - x^{(i)} \|_H \le 2 \left(
         \frac{\sqrt{\kappa} - 1}{\sqrt{\kappa} + 1}
@@ -134,15 +134,18 @@ The same argument partially transfers to DLRA-CG, as demonstrated by Table~\ref{
 \input{figures/cg_direction_disagreement}
 DLRA-CG shows semi-convergence: initially the relative error reduces, and then it rises again before stalling (Section~\ref{sec:rate_of_convergence}). Restarted DLRA-CG avoids this, but shows slower convergence.
 
-As discussed in Section~\ref{sec:restarted_cg}, the DLRA-CG algorithm constructs $(\alpha_i,\, G^{(i)},\, D^{(i)})$ independent of $X^{(i)}$. The search directions $\{D^{(i)}\}$ follow the trajectory of the full-rank solution $Y^{(i)}$, meaning $G^{(i)} = \nabla \Phi(Y^{(i)})$. When $i$ increases, $X^{(i)}$ and $Y^{(i)}$ may drift apart, and $G^{(i)}$ starts disagreeing with the projected gradient 
+As discussed in Section~\ref{sec:restarted_cg}, the DLRA-CG algorithm constructs $(\alpha_i,\, G^{(i)},\, D^{(i)})$ independently of $X^{(i)}$. The search directions $\{D^{(i)}\}$ follow the trajectory of the full-rank solution $Y^{(i)}$, meaning $G^{(i)} = \nabla \Phi(Y^{(i)})$. When $i$ increases, $X^{(i)}$ and $Y^{(i)}$ may drift apart so that $G^{(i)}$ and the true gradient $\hat G^{(i)} = \nabla \Phi(X^{(i)})$ increasingly disagree. The projections of $D^{(i)}$ and $\hat D^{(i)} = -\hat G^{(i)}$,
 \begin{equation*}
-    \mathcal{P} G^{(i)} = \mathcal{P}_{X^{(i)}}(\nabla \Phi(X^{(i)})),
+    \mathcal{P} D^{(i)}
+    = \mathcal{P}_{X^{(i)}}(D^{(i)}),\quad
+    \mathcal{P} \hat D^{(i)}
+    = \mathcal{P}_{X^{(i)}}(\hat D^{(i)}),
 \end{equation*}
-to such an extent that the relative error $e^{(i)}$ rises again, resulting in semi-convergence.
+may disagree to the point that the relative error $e^{(i)}$ rises again, resulting in semi-convergence. This is illustrated in Figure~\ref{fig:cg_direction_disagreement}.
 
-Restarting sets $D^{(i)} = -\nabla\Phi(X^{(i)})$, so the projected step $\mathcal{P}_{X^{(i)}}(D^{(i)}) = -\mathcal{P}G^{(i)}$ is the descent direction at $X^{(i)}$. As the iterations continue and the CG directions $D^{(i)}$ drift away from $-\mathcal{P}G^{(i)}$, this alignment gradually breaks down until the next restart. When the restart period $N_r$ is too small, the convergence of DLRA-CG will approach the steepest descent rate (at $N_r = 1$ they are equal), but choosing $N_r$ too large gives $X^{(i)}$ and $Y^{(i)}$ time to drift apart, so that semi-convergence re-appears.
+Restarting sets $D^{(i)} = \hat D^{(i)}$, so the projected step $\mathcal{P}D^{(i)} = \mathcal{P}\hat D^{(i)}$ is the descent direction at $X^{(i)}$. As the iterations continue and $X^{(i)}$ drifts away from $Y^{(i)}$, this alignment gradually breaks down until the next restart. When the restart period $N_r$ is too small, the convergence of DLRA-CG will approach the steepest descent rate (at $N_r = 1$ they are equal), but choosing $N_r$ too large gives $X^{(i)}$ and $Y^{(i)}$ time to drift apart, so that semi-convergence re-appears.
 
-An adaptive selection of $N_r$ could be considered, for example only restarting once the angle or relative difference between $G^{(i)}$ and the true projected gradient $\mathcal{P}G^{(i)}$ is above some threshold. 
+An adaptive selection of $N_r$ could be considered, for example only restarting once the angle or relative difference between $G^{(i)}$ and the true gradient $\hat G^{(i)}$ is above some threshold.
 
 
 \subsubsection{Rank as a regularization parameter}\label{sec:rank_as_a_regularization_parameter}

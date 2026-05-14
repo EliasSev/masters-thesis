@@ -3,7 +3,7 @@
 
 \subsection{The forward operator}
 \input{figures/forward_operator.tex}
-Let $\Omega \subset \mathbb R^2$ be a bounded domain with boundary $\partial \Omega$, and consider the boundary value problem (BVP) in Equation~\eqref{eq:pde}. The coefficient $\sigma = \sigma(x) > 0$ denotes the diffusion coefficient and determines the rate and direction of diffusion in the problem. It may be either scalar-valued or matrix-valued. In the latter case, we assume that $\sigma(x)$ is symmetric and positive definite (see Appendix~\ref{sec:positive_definiteness}) to keep the problem elliptic. The reaction coefficient $c = c(x) > 0$ describes the absorption or decay within the problem. Finally, $f = f(x)$ denotes the source term, which is the unknown input of the inverse problem.
+Let $\Omega \subset \mathbb R^2$ be a bounded domain with boundary $\partial \Omega$, and consider the boundary value problem (BVP) in Equation~\eqref{eq:pde}. The coefficient $\sigma = \sigma(x) > 0$ denotes the diffusion coefficient and determines the rate and direction of diffusion in the problem. It may be either scalar-valued or matrix-valued. In the latter case, we assume that $\sigma(x)$ is symmetric and positive definite (see Appendix~\ref{appendix:linear_algebra}) to keep the problem elliptic. The reaction coefficient $c = c(x) > 0$ describes the absorption or decay within the problem. Finally, $f = f(x)$ denotes the source term, which is the unknown input of the inverse problem.
 \nomenclature[AA]{$\Omega$}{Computational domain}%
 \nomenclature[AB]{$\partial\Omega$}{Boundary of the domain}%
 \nomenclature[BA]{$\sigma$}{Diffusion coefficient}%
@@ -53,7 +53,7 @@ The instability of the solution $f$ is more severe in practice. The compactness 
 \input{figures/triangulation.tex}
 Consider the PDE in Equation~\eqref{eq:pde}. Multiplying the equation by a test function $v \in H^1(\Omega)$, integrating over $\Omega$, and applying Green's identity yields the weak formulation: find $u \in H^1(\Omega)$ such that
 \begin{equation}\label{eq:variational_formulation}
-    \int_{\Omega} (\sigma \nabla u \cdot \nabla v + c u v) \, dx = \int_{\Omega} f v \space \, dx,
+    \int_{\Omega} (\sigma \nabla u \cdot \nabla v + c u v) \, dx = \int_{\Omega} f v \, dx,
     \text{ for all } v \in H^1(\Omega).
 \end{equation}
 For details on the derivation, see Section~4 in Larson and Bengzon \cite{larsonFiniteElementMethod2013}.
@@ -76,7 +76,7 @@ The basis functions $\phi_i$ are piecewise linear hat functions associated with 
 The finite element approximation of \eqref{eq:variational_formulation} then reads: 
 find $u_h \in V_h$ such that
  \begin{equation}\label{eq:fem_formulation}
-    \int_{\Omega} (\sigma \nabla u_h \cdot \nabla v + c u_h v) \, dx = \int_{\Omega} f v \space \, dx,
+    \int_{\Omega} (\sigma \nabla u_h \cdot \nabla v + c u_h v) \, dx = \int_{\Omega} f v \, dx,
     \text{ for all } v \in V_h.
 \end{equation}
 
@@ -195,7 +195,7 @@ The weights $W$ can include prior knowledge about the solution to penalize speci
 
 
 \subsection{SVD and low-rank approximations}
-The SVD of $K$ underlies the methods developed in this thesis. Since $K$ has a rapid decay of singular values, $K$ can be approximated well by a low-rank matrix. Additionally, the SVD is needed to construct the pseudo-inverse of $K$, which is used for the regularization weights in Section~\ref{sec:the_discrete_inverse_problem}.
+The SVD of $K$ underlies the methods developed in this thesis. Since $K$ has a rapid decay of singular values, $K$ can be approximated well by a low-rank matrix. Additionally, the SVD is needed to construct the pseudoinverse of $K$, which is used for the regularization weights in Section~\ref{sec:the_discrete_inverse_problem}.
 
 Consider the goal of finding a rank-$k$ approximation to an $m \times n$ matrix $A$. We seek a matrix $A_k$ with $\operatorname{rank}(A_k) \le k$ which approximates $A$. The problem formulation is
 \begin{equation}\label{eq:low_rank_problem}
@@ -245,12 +245,12 @@ For a matrix $A \in \mathbb{R}^{m \times n}$, the Moore-Penrose inverse $A^+$, o
 \end{equation}
 where $\Sigma^+$ is the pseudoinverse of $\Sigma$. The pseudoinverse of $\Sigma$ can be computed by transposing the matrix and replacing each non-zero diagonal entry with its reciprocal \cite{golubMatrixComputations4th2013}. The pseudoinverse $A^+$ is unique and always exists, and for invertible $A$, $A^+ = A^{-1}$.
 
-For the least-squares problem $\min \|Ax - y \|$, the pseudo-inverse provides the least-squares solution $x = A^+ y$. If the least-squares solution is not unique, then $A^+ y$ is the solution with the smallest Euclidean norm. For details, see Section~5.5 in Golub and Van Loan \cite{golubMatrixComputations4th2013}.
+For the least-squares problem $\min \|Ax - y \|$, the pseudoinverse provides the least-squares solution $x = A^+ y$. If the least-squares solution is not unique, then $A^+ y$ is the solution with the smallest Euclidean norm. For details, see Section~5.5 in Golub and Van Loan \cite{golubMatrixComputations4th2013}.
 \nomenclature[FH]{$A^+$}{Pseudoinverse}%
 
 
 \subsubsection{Randomized SVD}
-The randomized SVD is a technique used to compute a rank-$k$ approximation of an $m\times n$ matrix without computing the SVD. The core idea is to use random sampling $Y = A \Psi$ with a random matrix $\Psi$ to find a low-rank matrix $Q = \operatorname{orth}(Y)$ which approximates the range of $A$, project $A$ onto $\operatorname{range}(Q)$, and compute the SVD of the projection. The projection $QQ^T A$ will, with high probability, capture the dominant actions of $A$ \cite{halkoFindingStructureRandomness2011}. Computing $B = Q^T A$ and its SVD $B = \tilde U \Sigma V^T$ then gives an approximate SVD $A \approx (Q \tilde U) \Sigma V^T$. This procedure is summarized in Algorithm \ref{alg:rsvd}. The basis $Q$ is obtained via a QR factorization of $Y$.
+The randomized SVD is a technique used to compute a rank-$k$ approximation of an $m\times n$ matrix without computing the SVD. The core idea is to use random sampling $Y = A \Psi$ with a random matrix $\Psi$ to find a low-rank matrix $Q = \operatorname{orth}(Y)$ which approximates the range of $A$, project $A$ onto $\operatorname{range}(Q)$, and compute the SVD of the projection. The projection $QQ^T A$ will, with high probability, capture the dominant actions of $A$ \cite{halkoFindingStructureRandomness2011}. Computing $B = Q^T A$ and its SVD $B = \tilde U \Sigma V^T$ then gives an approximate SVD $A \approx (Q \tilde U) \Sigma V^T$. This procedure is summarized in Algorithm \ref{alg:rsvd}. The basis $Q$ is obtained via a QR factorization of $Y$ (see Appendix~\ref{appendix:linear_algebra}).
 
 Let $A_k$ denote a rank-$k$ approximation of $A$ obtained using rSVD with a random test matrix $\Psi$. Error analysis of rSVD is an active area of research. Halko et al. derived initial reference error analysis in terms of expectation \cite{halkoFindingStructureRandomness2011}, which was later improved upon by Gu \cite{guSubspaceIterationRandomization2015}. Diouane et al. have recently derived further improvements \cite{diouaneGeneralErrorAnalysis2022}.
 
@@ -278,7 +278,7 @@ Assume that $\{ \phi_i \}$ is an orthonormal basis of $V_h$, let $\operatorname{
 \begin{equation*}
     f^* = \sum_{i} \langle \hat P f, \phi_i \rangle \phi_i,    
 \end{equation*}
-where $\hat P: V_h \to \operatorname{Nul}(K)^\perp$ is the orthogonal projection onto $\operatorname{Nul}(K)^\perp$. Since $\hat{P}\phi_i = \phi_{i,\perp}$, basis functions deep in the interior have small $\|\hat{P}\phi_i \|$. By the Cauchy-Schwarz inequality, if $\| \hat P \phi_i \|$ is small, then $\langle \hat Pf, \phi_i \rangle$ is small, and the corresponding component of $f^*$ is small. This means that for any $\phi_i$ far away from $\partial \Omega$, the corresponding component of $f^*$ is forced to be small, introducing bias to the solution. This issue transfers to the standard Tikhonov solution $f_\lambda$ since $f_\lambda \to f^*$ as $\lambda \to 0$ \cite{engl1996regularization}.
+where $\hat P: V_h \to \operatorname{Nul}(\mathcal{K})^\perp$ is the orthogonal projection onto $\operatorname{Nul}(\mathcal{K})^\perp$. Since $\hat{P}\phi_i = \phi_{i,\perp}$, basis functions deep in the interior have small $\|\hat{P}\phi_i \|$. By the Cauchy-Schwarz inequality, if $\| \hat P \phi_i \|$ is small, then $\langle \hat Pf, \phi_i \rangle$ is small, and the corresponding component of $f^*$ is small. This means that for any $\phi_i$ far away from $\partial \Omega$, the corresponding component of $f^*$ is forced to be small, introducing bias to the solution. This issue transfers to the standard Tikhonov solution $f_\lambda$ since $f_\lambda \to f^*$ as $\lambda \to 0$ \cite{engl1996regularization}.
 
 Elvetun and Nielsen counteract this by re-scaling the norm of $\hat P \phi_i$ such that $\| \hat P \phi_i \| = 1$. This is achieved by setting $w_i = \| \hat P \phi_i \|$ with $W = \operatorname{diag}(w_i)$ in the Tikhonov formulation, equalizing the contribution of all components. In the discrete formulation, $\hat P = K^+ K$ is the orthogonal projection onto the complement of the null space, and the weights are computed as $w_i = \|K^+ K e_i\|$.
 

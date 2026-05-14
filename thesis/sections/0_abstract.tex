@@ -3,13 +3,13 @@
 We study source identification as an elliptic PDE-constrained inverse problem, where the forward operator has rapid decay of singular values and a large nullspace, making solutions unstable and non-unique. The use of Tikhonov regularization results in biased solutions, concentrating reconstructions near the boundary of the domain regardless of the true source location. True sources are often sparse, yet Tikhonov yields smooth reconstructions, blending distinct sources into connected regions.
 
 % Gap
-Elvetun and Nielsen correct the bias by applying a regularization operator, but the procedure requires explicit assembly of the forward operator and its singular value decomposition (SVD), making it infeasible at scale. It suffers from the same smoothing issues as the Tikhonov method, making low-rank solutions a more natural approach for sparse sources. Dynamical low-rank approximation (DLRA) provides a robust framework for computing them but converges slowly for ill-posed problems.
+Elvetun and Nielsen correct the bias by applying a regularization operator, but the procedure requires explicit assembly of the forward operator and its singular value decomposition (SVD), making it infeasible at scale. It also suffers from the same smoothing issues as the Tikhonov method, making low-rank solutions a more natural approach for sparse sources. Dynamical low-rank approximation (DLRA) provides a robust framework for computing them but converges slowly for ill-posed problems.
 
 % Contribution
 We propose a matrix-free variant of the randomized SVD (rSVD), avoiding explicit construction of the forward operator, and making the weighted Tikhonov approach scalable. We also apply conjugate gradient (CG) within the DLRA framework (DLRA-CG) to accelerate convergence and recover sparse sources.
 
 % Key results
-We apply the matrix-free rSVD approach to previously inaccessible problems with no meaningful loss in reconstruction quality. Using DLRA-CG, we recover low-rank solutions that separate distinct sources more clearly and achieve lower reconstruction error than full-rank weighted Tikhonov. The method converges substantially faster than DLRA.
+We apply the matrix-free rSVD approach to previously inaccessible problems with no significant loss in reconstruction quality. Using DLRA-CG, we recover low-rank solutions that separate distinct sources more clearly and achieve lower reconstruction error than full-rank weighted Tikhonov. The method converges substantially faster than DLRA.
 
 % Takeaways
 Together, these contributions make large-scale sparse source identification possible, addressing the computational cost of the weighted Tikhonov approach and the tendency of these methods to blur distinct sources.

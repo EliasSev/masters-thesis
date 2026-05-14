@@ -32,7 +32,7 @@ The computational times $t_{\text{rSVD}}$ for target ranks $10$, $25$ and $50$ a
 \subsubsection{Computational breakdown}\label{sec:computational_breakdown}
 \input{figures/rsvd_computational_breakdown.tex}
 \input{tables/rsvd_computational_breakdown.tex}
-Figure~\ref{fig:rsvd_computational_breakdown} shows the median computational time for each stage of Algorithm~\ref{alg:discrete_rsvd} for selected $N$ and increasing $k$, with the relative computational cost shown in the bottom row. The median is taken over 30 runs for $N \le 40{,}000$ and 10 runs for $N = 400{,}000$. The `Setup' stage includes the assembly and factorization of the mass matrices $M$ and $M_\partial$, and the setup of the $K$ and $K^*$ solvers (Section~\ref{sec:initial_matrix_factorizations}). The remaining stages of Algorithm~\ref{alg:discrete_rsvd} are `2. $Y = K\Psi$' (lines 1--6), `3. $QR = Y$' (lines 7--8), `4. $B = Q^T K$' (lines 9--14), and `5. SVD' (lines 15--18). Table~\ref{tab:rsvd_computational_breakdown} shows relative computational time for selected target ranks and mesh sizes.
+Figure~\ref{fig:rsvd_computational_breakdown} shows the median computational time for each stage of Algorithm~\ref{alg:discrete_rsvd} for selected $N$ and increasing $k$, with the relative computational cost shown in the bottom row. The `Setup' stage includes factorization of the mass matrix $M_\partial$, and the setup of the $K$ and $K^*$ solvers (Section~\ref{sec:initial_matrix_factorizations}). The remaining stages of Algorithm~\ref{alg:discrete_rsvd} are `2. $Y = K\Psi$' (lines 1--6), `3. $QR = Y$' (lines 7--8), `4. $B = Q^T K$' (lines 9--14), and `5. SVD' (lines 15--18). Table~\ref{tab:rsvd_computational_breakdown} shows relative computational time for selected target ranks and mesh sizes.
 
 The dominant costs of Algorithm~\ref{alg:discrete_rsvd} are the forward solves using $K$ (stage 2) and the adjoint solves using $K^*$ (stage 4), both of which scale roughly linearly with $N$, matching the theoretical cost of $\mathcal{O}(l N \log N)$ with $l = k + p$ (Section~\ref{sec:initial_matrix_factorizations}). The setup stage has theoretical cost $\mathcal{O}(N^{3/2})$ but appears near-linear in $N$ over the range considered here. Its share of total time decreases with $k$, because setup is independent of the target rank.
 
@@ -41,7 +41,7 @@ Stage 5's relative cost is primarily determined by the target rank $k$, but also
 
 \subsubsection{Target rank effect on reconstruction quality}\label{sec:target_rank_reconstruction}
 \input{figures/test_problems_selected.tex}
-Figure~\ref{fig:test_problems_selected} shows the weighted Tikhonov solution of Equation~\eqref{eq:discrete_inverse_problem}: the left panel uses the exact $K$ and $W$, while the middle and right panels use $K$ and $W$ approximated by Algorithm~\ref{alg:discrete_rsvd} at target ranks $k = 10$ and $k = 50$.
+Figure~\ref{fig:test_problems_selected} shows the weighted Tikhonov solution of Equation~\eqref{eq:discrete_inverse_problem}, with $K$ and $W$ either exact or approximated by Algorithm~\ref{alg:discrete_rsvd} at target ranks $k = 10$ and $k = 50$.
 
 For Problem~I (Figure~\ref{fig:test_problem_I}) at $k = 10$, the location of the source is partially identified (middle), slightly shifted towards the interior and with more smoothing than the exact Tikhonov solution (left). The weighted Tikhonov regularization itself already produces significant smoothing \cite{elvetunRegularizationOperatorSource2020}, and low-rank approximations amplify this effect at small $k$. At $k = 50$ (right), the reconstruction is visually identical to the exact Tikhonov solution. In Problems~II and~III (Figures~\ref{fig:test_problem_II} and~\ref{fig:test_problem_III}), $k = 10$ shows the same over-smoothing and shift of each source. These issues disappear at $k = 50$. Across all three problems, $k = 50$ matches the exact Tikhonov reconstruction visually at a small fraction of the computational cost of solving the exact problem (Section~\ref{sec:computational_time}).
 
@@ -63,15 +63,14 @@ where the center of the peak $x_0$ is sampled uniformly from the domain and $\si
 \input{figures/random_vectors_error.tex}
 \input{figures/clipped_random_vectors.tex}
 Figure~\ref{fig:random_vectors_error} compares reconstruction error across the three distributions for Problem~I (similar results hold for Problems~II and III), using the Euclidean norm, EMD, and
-AUC-IoU. Each curve shows the mean over 50 runs with $\pm 1$ standard deviation. Rademacher and standard Gaussian yield nearly identical errors across all three metrics. The Gaussian peak produces
+AUC-IoU. Rademacher and standard Gaussian yield nearly identical errors across all three metrics. The Gaussian peak produces
 lower EMD error and smaller run-to-run variance. Figure~\ref{fig:clipped_random_vectors} shows individual reconstructions with the colormap clipped to $0.05$, revealing that the peak distribution
 generates less low-amplitude noise than Gaussian or Rademacher.
 
 
 \subsubsection{Mesh resolution effect on reconstruction error}\label{sec:mesh_resolution_effect_on_reconstruction_error}
 \input{figures/mesh_resolution_effect.tex}
-In Figure~\ref{fig:mesh_resolution_effect}, we see that fixing the target rank $k$ and refining the mesh resolution $N$ does not decrease the Euclidean or AUC-IoU error.
-The EMD shows a slight decrease with $N$, likely because finer meshes produce smoother spatial transitions between neighboring mesh elements.
+In Figure~\ref{fig:mesh_resolution_effect}, we see that fixing the target rank $k$ and refining the mesh resolution $N$ does not decrease the Euclidean or AUC-IoU error. The EMD shows a slight decrease with $N$, likely because finer meshes produce smoother spatial transitions between neighboring mesh elements.
 
 Although $\operatorname{rank}(K) = N_b$ grows with $N$, the target rank $k$ need not be adjusted: refining the mesh adds no new information about the source $f$.
 
@@ -80,21 +79,21 @@ Although $\operatorname{rank}(K) = N_b$ grows with $N$, the target rank $k$ need
 \input{tables/singular_values_comparison.tex}
 Table~\ref{tab:singular_values_comparison} shows that both rSVD on $K$ and rSVD on $K^*$ underestimate the true singular values $\sigma_i$, with the bias increasing for higher-index values. Larger $p$ reduces the underestimation, and rSVD on $K^*$ underestimates more than rSVD on $K$ across all tested $p$.
 
-At $k = 50$, reconstruction errors were within 1\%-4\% of the exact Tikhonov solution in terms of Euclidean and AUC-IoU (Section~\ref{sec:target_rank_reconstruction}). At this rank with $p = 5$, the ratio $\tilde \sigma_{50}/\sigma_{50}$ is $0.969$ for rSVD on $K$ and $0.929$ for rSVD on $K^*$: the underestimation is small where reconstruction quality is already high. If $\tilde \sigma_i \ll \sigma_i$, the approximated forward operator is more ill-posed than the true one, and reconstruction quality degrades.
+At $k = 50$, reconstruction errors were within 1\%-4\% of the exact Tikhonov solution in terms of Euclidean and AUC-IoU (Section~\ref{sec:target_rank_reconstruction}). At this rank with $p = 5$, the ratio $\tilde \sigma_{50}/\sigma_{50}$ is $0.969$ for rSVD on $K$ and $0.929$ for rSVD on $K^*$: the underestimation is small where reconstruction quality is already high. If $\tilde \sigma_i \ll \sigma_i$, the approximated forward operator is more ill-posed than the true one, and reconstruction quality degrades. This is not the case at $k = 50$, where $\tilde \sigma_i / \sigma_i$ remains close to 1.
 
 
 \subsubsection{Computational time of adjoint operator}
 \input{tables/computational_time_adjoint.tex}
 Table~\ref{tab:computational_time_adjoint} shows that rSVD on $K^*$ takes approximately 1.3 times longer than rSVD on $K$ for $k = 10$, $1.2$ times longer for $k = 50$, and $1.1$ times longer for $k = 200$, across all reported $N$. When the recovery of the SVD is included ($t_2 / t$), it takes approximately 1.3 times as long across all $k$ and $N$.
 
-For larger $k$, the recovery of the SVD takes up an increasing amount of time, as it involves QR factorizations of an $N_b \times k$ and an $N \times k$ matrix, in addition to an SVD of a $k \times k$ matrix (Section~\ref{sec:reconvering_the_svd}). Additionally, as $k$ goes to $200$, the ratio $t_1 / t$ gets closer to 1.0, as an increasing amount of the time of Algorithm~\ref{alg:discrete_rsvd} goes to the SVD step (Section~\ref{sec:computational_breakdown}).
+For larger $k$, the recovery of the SVD takes up an increasing amount of time, as it involves QR factorizations of an $N_b \times k$ and an $N \times k$ matrix, in addition to an SVD of a $k \times k$ matrix (Section~\ref{sec:reconvering_the_svd}). Additionally, as $k$ goes to $200$, the ratio $t_1 / t$ gets closer to 1.0, as an increasing amount of the time of Algorithm~\ref{alg:discrete_rsvd} goes to the SVD step (Section~\ref{sec:computational_breakdown}), which for Algorithm~\ref{alg:discrete_rsvd_Kstar} is much cheaper (SVD of $l \times N$ versus $l \times N_b$ matrix).
 
 
 \subsubsection{Reconstruction error using the adjoint operator}\label{sec:reconstruction_error_using_the_adjoint_operator}
 \input{figures/rsvd_adjoint_error.tex}
 \input{tables/rsvd_adjoint_error.tex}
 \input{figures/clipped_solutions.tex}
-Figure~\ref{fig:rsvd_adjoint_error} shows the reconstruction error of the weighted Tikhonov solution where $K$ and $W$ are approximated using rSVD on $K$ (Algorithm~\ref{alg:discrete_rsvd}) and rSVD on $K^*$ (Algorithm~\ref{alg:discrete_rsvd_Kstar}) for target ranks $k \in [10, 100)$. The error is measured in Euclidean norm, EMD, and AUC-IoU. Table~\ref{tab:rsvd_adjoint_error} reports the relative difference of rSVD on $K$ compared to rSVD on $K^*$, and Figure~\ref{fig:clipped_solutions} shows solutions of both methods at $k=15$ with the colormap clipped to expose low-amplitude noise in the reconstructions.
+Figures~\ref{fig:rsvd_adjoint_error},\ref{fig:clipped_solutions}, and Table\ref{tab:rsvd_adjoint_error} compare reconstruction error between rSVD on $K$ and rSVD on $K^*$ over the range $k \in [10, 100)$.
 
 In terms of Euclidean norm, both methods give practically the same error, within $\pm 1$\% across all problems and target ranks. For AUC-IoU, the relative difference at $k = 10$ is between $-6$\% and $-4$\%, and between -2\% and 1\% for $k \ge 25$ with no consistent direction.
 
@@ -104,10 +103,10 @@ The EMD shows that at $k = 10$, rSVD on $K$ gives 10\% to 19\% worse reconstruct
 \subsubsection{Accuracy on noisy data}\label{sec:accuracy_on_noisy_data}
 We measure the reconstruction error for the transformed weighted Tikhonov problem of Equation~\eqref{eq:transformed_discrete_inverse_problem}. We replace $y = K x$ with $\tilde y = y + \epsilon$, where $\epsilon_i \sim \mathcal{N}(0, 1)$ and $\tfrac{\| \epsilon \|}{\| y \|} = \delta$ with $\delta = 0.01$. The regularization parameter is set to $\lambda = \lambda_{\text{dp}}$, found using the discrepancy principle with safety factor $\nu_{\text{dp}} = 10$ (see Section~5.2 in Hansen \cite{hansen2010discrete}), so that $\lambda$ is selected independently for each method and rank.
 \input{tables/noisy_problem.tex}
-\input{figures/noisy_problem.tex}
 \input{figures/reconstruction_noisy_problem.tex}
+\input{figures/noisy_problem.tex}
 
-Figure~\ref{fig:noisy_problem} shows reconstruction errors when $K$ and $W$ are approximated using rSVD (Algorithm~\ref{alg:discrete_rsvd}) and tSVD (Section~\ref{sec:tsvd}) at increasing ranks $k$. The error is measured in Euclidean norm, EMD and AUC-IoU. The optimal rank $k^*$ is marked with vertical lines, and listed in Table~\ref{tab:noisy}. Figure~\ref{fig:reconstruction_noisy_problem} shows reconstructions for Problem~II at selected ranks, illustrating how a target rank that is too high includes noise in the reconstruction.
+Figure~\ref{fig:noisy_problem} and Table~\ref{tab:noisy} report reconstruction error and optimal ranks for rSVD (Algorithm~\ref{alg:discrete_rsvd}) and tSVD (Section~\ref{sec:tsvd}) on the noisy problem. Figure~\ref{fig:reconstruction_noisy_problem} illustrates how a target rank that is too high includes noise in the reconstruction.
 
 In terms of Euclidean error, the optimal rank is between 50 and 85 for rSVD, and 45 and 85 for tSVD. The EMD is more sensitive to higher ranks which include more noise (Figure~\ref{fig:reconstruction_noisy_problem}), and the optimal rank for EMD is between 20 and 30 for both methods. For AUC-IoU, optimal ranks are between 50 and 100 for rSVD, and between 65 and 95 for tSVD, except for Problem~III with rSVD where the optimal rank exceeds the tested range ($k \leq 100$).
 
@@ -153,16 +152,16 @@ Restarted DLRA-CG ($N_r = 10$) achieves a lower relative error than DLRA-CG with
 \subsubsection{Effect of rank on reconstructions}\label{sec:effect_of_rank_on_reconstructions}
 \input{figures/low_rank_different_r.tex}
 \input{figures/low_rank_solution_error.tex}
-Figure~\ref{fig:low_rank_different_r} shows DLRA-CG solutions for Problems~I and II at ranks $r = 1,\, 2,\, 5$. For Problem~I, the reconstruction error increases with rank, and at rank 5 the solution resembles the full-rank Tikhonov reconstruction (Figure~\ref{fig:test_problem_I}). For Problem~II, rank 2 is optimal; at rank 5 the reconstruction similarly resembles the full-rank case (Figure~\ref{fig:test_problem_II}).
+Figure~\ref{fig:low_rank_different_r} shows DLRA-CG solutions for Problems~I and II at ranks $r = 1,\, 2,\, 5$. For Problem~I, the reconstruction error increases with rank, and at rank 5 the solution resembles the full-rank Tikhonov reconstruction (Figure~\ref{fig:test_problem_I}). For Problem~II, rank 2 is optimal, even though the true source is of rank 3 (reported in Section~\ref{sec:residuals_of_low_rank_solutions}; discussed in Section~\ref{sec:rank_as_a_regularization_parameter}). At rank 5 the reconstruction resembles the full-rank case (Figure~\ref{fig:test_problem_II}).
 
-Figure~\ref{fig:low_rank_solution_error} shows that for Problem~I, the rank 1 DLRA-CG solution achieves lower Euclidean and AUC-IoU error than the full rank rSVD solution. For EMD, the full-rank solution is better, possibly because the focused distribution of the rank-1 solution differs more from the flat true source than the smoother full-rank reconstruction. For Problem~II, the rank-2 solution outperforms rank-1, rank-5, and full-rank solutions across all metrics for $k > 10$. Reconstructions of rank 5 achieve approximately the same error as full-rank rSVD reconstructions.
+Figure~\ref{fig:low_rank_solution_error} shows that for Problem~I, the rank-1 DLRA-CG solution achieves lower Euclidean and AUC-IoU error than the full rank rSVD solution. For EMD, the full-rank solution is better, possibly because the focused distribution of the rank-1 solution differs more from the flat true source than the smoother full-rank reconstruction. For Problem~II, the rank-2 solution outperforms rank-1, rank-5, and full-rank solutions across all metrics for $k > 10$. Reconstructions of rank 5 achieve approximately the same error as full-rank rSVD reconstructions.
 
 As shown in Section~\ref{sec:target_rank_reconstruction}, full-rank rSVD solutions approach, but do not outperform the exact Tikhonov solution in the range $k \in [5,\,100]$ (Figure~\ref{fig:rsvd_over_k_II}). The low-rank solutions do: for Problem~I, the rank-1 solution surpasses the exact Tikhonov solution in Euclidean error from $k = 26$ and in AUC-IoU from $k = 31$, though not in EMD. For Problem~II, the rank-2 solution surpasses it across all metrics by $k = 28$.
 
 
 \subsubsection{Residuals of low-rank solutions}\label{sec:residuals_of_low_rank_solutions}
 \input{figures/low_rank_residual.tex}
-For ProblemI, a rank-1 solution gives the best error, and for ProblemII, a rank-2 solution (Figure~\ref{fig:low_rank_residual}). The ProblemI residual rises and then falls with increasing rank, with no obvious connection to the optimal rank, while the ProblemII residual shows a sharp corner at the transition from rank-1 to rank-2. Using the residual curves could serve as a method for deciding a good rank, in particular to avoid choosing $r$ too small.
+For Problem~I, a rank-1 solution gives the best error, and for Problem~II, a rank-2 solution (Figure~\ref{fig:low_rank_residual}). The Problem~I residual rises and then falls with increasing rank, with no obvious connection to the optimal rank, while the Problem~II residual shows a sharp corner at the transition from rank~1 to rank~2. Using the residual curves could serve as a method for deciding a good rank, in particular to avoid choosing $r$ too small.
 
 
 \subsubsection{Rate of convergence using preconditioners}\label{sec:rate_of_convergence_using_preconditioners}

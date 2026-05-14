@@ -145,14 +145,14 @@ Restarting sets $D^{(i)} = -\nabla\Phi(X^{(i)})$, so the projected step $\mathca
 An adaptive selection of $N_r$ could be considered, for example only restarting once the angle or relative difference between $G^{(i)}$ and the true projected gradient $\mathcal{P}G^{(i)}$ is above some threshold. 
 
 
-\subsubsection{Rank as a regularization parameter}
+\subsubsection{Rank as a regularization parameter}\label{sec:rank_as_a_regularization_parameter}
 \input{figures/outer_product_II.tex}
 The low-rank solutions outperformed exact weighted Tikhonov reconstructions (Section~\ref{sec:quality_of_the_low_rank_solutions}), but were sensitive to the choice of $r$: choosing $r$ slightly above optimal gave reconstructions resembling the full-rank case, while choosing $r$ too small introduced spurious sources for Problem~II
 (Section~\ref{sec:effect_of_rank_on_reconstructions}).
 
 The sources in Problems~I and II are of low rank and already live on $\mathcal{M}_r$. Each square source factors as an outer product of two vectors, giving a rank-$1$ matrix. The single source of Problem~I is therefore of rank~$1$, and the three sources of Problem~II sum to a matrix of rank~$3$, see Figure~\ref{fig:outer_product_II}. However, we found that a rank-$2$ approximation of this source yielded better reconstruction error. We interpret this as the rank constraint counteracting Tikhonov's oversmoothing: the discarded component is the most heavily smoothed but the least important of the three, so removing it is beneficial.
 
-In practice, the residual as a function of rank served as a practical method for choosing $r$ in the case of multiple sources (ProblemII), but there was no obvious connection between the residual and the optimal rank for the simple rank-$1$ source of ProblemI (Section~\ref{sec:residuals_of_low_rank_solutions}).
+In practice, the residual as a function of rank served as a practical method for choosing $r$ in the case of multiple sources (Problem~II), but there was no obvious connection between the residual and the optimal rank for the simple rank-$1$ source of Problem~I (Section~\ref{sec:residuals_of_low_rank_solutions}).
 
 
 \subsubsection{Effect of preconditioning}

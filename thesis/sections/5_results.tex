@@ -80,7 +80,7 @@ Although $\operatorname{rank}(K) = N_b$ grows with $N$, the target rank $k$ need
 \input{tables/singular_values_comparison.tex}
 Table~\ref{tab:singular_values_comparison} shows that both rSVD on $K$ and rSVD on $K^*$ underestimate the true singular values $\sigma_i$, with the bias increasing for higher-index values. Larger $p$ reduces the underestimation, and rSVD on $K^*$ underestimates more than rSVD on $K$ across all tested $p$.
 
-At $k = 50$, reconstruction errors were within 1\%--4\% of the exact Tikhonov solution in terms of Euclidean and AUC-IoU (Section~\ref{sec:target_rank_reconstruction}). At this rank with $p = 5$, the ratio $\tilde \sigma_{50}/\sigma_{50}$ is $0.969$ for rSVD on $K$ and $0.929$ for rSVD on $K^*$: the underestimation is small where reconstruction quality is already high. If $\tilde \sigma_i \ll \sigma_i$, the approximated forward operator is more ill-posed than the true one, and reconstruction quality degrades.
+At $k = 50$, reconstruction errors were within 1\%-4\% of the exact Tikhonov solution in terms of Euclidean and AUC-IoU (Section~\ref{sec:target_rank_reconstruction}). At this rank with $p = 5$, the ratio $\tilde \sigma_{50}/\sigma_{50}$ is $0.969$ for rSVD on $K$ and $0.929$ for rSVD on $K^*$: the underestimation is small where reconstruction quality is already high. If $\tilde \sigma_i \ll \sigma_i$, the approximated forward operator is more ill-posed than the true one, and reconstruction quality degrades.
 
 
 \subsubsection{Computational time of adjoint operator}

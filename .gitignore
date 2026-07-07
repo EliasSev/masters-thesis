@@ -29,6 +29,8 @@ wheels/
 *.bbl-SAVE-ERROR
 *.xdv
 thesis/*.pdf
+thesis/presentation/*.nav
+thesis/presentation/*.snm
 
 .vscode
 *.npy

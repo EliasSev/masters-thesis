@@ -1,0 +1,4 @@
+# Beamer slides: pdflatex + biber (for the references frame).
+# latexmk runs biber automatically when biblatex is detected; no
+# nomencl custom dependency is needed here (unlike the thesis latexmkrc).
+$pdf_mode = 1;
